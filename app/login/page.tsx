@@ -13,7 +13,7 @@ export default function LoginPage() {
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('seekers2026');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,19 +28,11 @@ export default function LoginPage() {
           setAvailableUsers(data.map((u: any) => ({ name: u.name, email: u.email, role: u.role })));
           setEmail(data[0].email);
         } else {
-          setAvailableUsers([
-            { name: 'Sasindu Madushanka', email: 'sasindu77@gmail.com', role: 'Super Admin' },
-            { name: 'Super Admin', email: 'admin@seekersentertainment.lk', role: 'Super Admin' },
-          ]);
-          setEmail('sasindu77@gmail.com');
+
         }
       })
       .catch(() => {
-        setAvailableUsers([
-          { name: 'Sasindu Madushanka', email: 'sasindu77@gmail.com', role: 'Super Admin' },
-          { name: 'Super Admin', email: 'admin@seekersentertainment.lk', role: 'Super Admin' },
-        ]);
-        setEmail('sasindu77@gmail.com');
+
       });
   }, []);
 
@@ -65,12 +57,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const setDemoRole = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('seekers2026');
-    setError(null);
   };
 
   return (
@@ -162,32 +148,6 @@ export default function LoginPage() {
             <ArrowRight className="h-4 w-4" />
           </button>
         </form>
-
-        {/* Quick Role Switcher for Testing RBAC */}
-        <div className="mt-6 pt-6 border-t border-[#1a2738] text-xs">
-          <p className="text-[11px] text-slate-400 font-semibold mb-2 text-center uppercase tracking-wider">
-            Quick Operator Session Profiles
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {availableUsers.map((acc) => (
-              <button
-                key={acc.email}
-                type="button"
-                onClick={() => setDemoRole(acc.email)}
-                className={`flex items-center justify-between p-2 rounded-lg border text-[11px] font-medium transition-all ${email === acc.email
-                    ? 'border-[#00e5c9] bg-[#152434] text-white shadow-sm'
-                    : 'border-[#1e2e42] bg-[#101926] text-slate-400 hover:border-slate-600 hover:text-white'
-                  }`}
-              >
-                <div className="text-left truncate">
-                  <span className="block truncate text-white">{acc.name}</span>
-                  <span className="block text-[10px] text-[#00e5c9] truncate">{acc.role}</span>
-                </div>
-                {email === acc.email && <Check className="h-3 w-3 text-[#00e5c9] shrink-0 ml-2" />}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -1,28 +1,76 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Sparkles, ArrowRight } from 'lucide-react';
+import { ShieldCheck, ArrowRight, KeyRound, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { UserRole } from '@/lib/types';
 
 export default function LoginPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const [email, setEmail] = useState('admin@seekersentertainment.lk');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('seekers2026');
-  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [availableUsers, setAvailableUsers] = useState<Array<{ name: string; email: string; role: string }>>([]);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  // Load existing operators for quick profile selection
+  useEffect(() => {
+    fetch('http://localhost:5000/api/users')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setAvailableUsers(data.map((u: any) => ({ name: u.name, email: u.email, role: u.role })));
+          setEmail(data[0].email);
+        } else {
+          setAvailableUsers([
+            { name: 'Sasindu Madushanka', email: 'sasindu77@gmail.com', role: 'Super Admin' },
+            { name: 'Super Admin', email: 'admin@seekersentertainment.lk', role: 'Super Admin' },
+          ]);
+          setEmail('sasindu77@gmail.com');
+        }
+      })
+      .catch(() => {
+        setAvailableUsers([
+          { name: 'Sasindu Madushanka', email: 'sasindu77@gmail.com', role: 'Super Admin' },
+          { name: 'Super Admin', email: 'admin@seekersentertainment.lk', role: 'Super Admin' },
+        ]);
+        setEmail('sasindu77@gmail.com');
+      });
+  }, []);
 
-    setTimeout(() => {
-      // Set mock JWT token
-      localStorage.setItem('seekers_auth_token', 'mock_jwt_token_seekers_production_ops_2026');
-      showToast('✓ Welcome back, Seeker! Signed into command center.');
+  // If already authenticated, redirect to command center
+  useEffect(() => {
+    if (isAuthenticated) {
       router.push('/');
-    }, 400);
+    }
+  }, [isAuthenticated, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      await login(email, password);
+      showToast('✓ Welcome back! Authentication successful.');
+      router.push('/');
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed. Please verify credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setDemoRole = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword('seekers2026');
+    setError(null);
   };
 
   return (
@@ -49,15 +97,25 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-rose-800/60 bg-rose-950/40 p-3 text-xs text-rose-300 animate-fade-in">
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-4 text-xs">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Staff / Manager Email</label>
+            <label className="block font-medium text-slate-300 mb-1">Operator / Manager Email</label>
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="ops@seekersentertainment.lk"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
+              placeholder="operator@seekersentertainment.lk"
               className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-3 text-white text-xs focus:border-[#00e5c9] focus:outline-none"
               required
             />
@@ -66,35 +124,68 @@ export default function LoginPage() {
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block font-medium text-slate-300">Password</label>
-              <a href="#" className="text-[11px] text-[#00e5c9] hover:underline">
-                Forgot password?
-              </a>
             </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••••••"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-3 text-white text-xs focus:border-[#00e5c9] focus:outline-none"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError(null);
+                }}
+                placeholder="••••••••••••"
+                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-3 pr-10 text-white text-xs focus:border-[#00e5c9] focus:outline-none"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                title={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#00e5c9] py-3 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/20 transition-all disabled:opacity-50 mt-2"
+            disabled={loading || authLoading}
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#00e5c9] py-3 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/20 transition-all disabled:opacity-50 mt-2 cursor-pointer"
           >
-            <span>{isLoading ? 'Authenticating...' : 'Sign In to Command Center'}</span>
+            <span>{loading ? 'Authenticating Session...' : 'Sign In to Command Center'}</span>
             <ArrowRight className="h-4 w-4" />
           </button>
         </form>
 
-        {/* Demo Quick Access */}
-        <div className="mt-6 pt-6 border-t border-[#1a2738] text-center text-xs text-slate-400">
-          <p className="text-[11px] text-slate-500 mb-2">Demo Credentials Pre-filled</p>
-          <div className="rounded-lg bg-[#0f1824] border border-[#1b2a3b] p-2.5 font-mono text-[11px] text-slate-300">
-            Role: <strong className="text-white">Production Director / Admin</strong>
+        {/* Quick Role Switcher for Testing RBAC */}
+        <div className="mt-6 pt-6 border-t border-[#1a2738] text-xs">
+          <p className="text-[11px] text-slate-400 font-semibold mb-2 text-center uppercase tracking-wider">
+            Quick Operator Session Profiles
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {availableUsers.map((acc) => (
+              <button
+                key={acc.email}
+                type="button"
+                onClick={() => setDemoRole(acc.email)}
+                className={`flex items-center justify-between p-2 rounded-lg border text-[11px] font-medium transition-all ${email === acc.email
+                    ? 'border-[#00e5c9] bg-[#152434] text-white shadow-sm'
+                    : 'border-[#1e2e42] bg-[#101926] text-slate-400 hover:border-slate-600 hover:text-white'
+                  }`}
+              >
+                <div className="text-left truncate">
+                  <span className="block truncate text-white">{acc.name}</span>
+                  <span className="block text-[10px] text-[#00e5c9] truncate">{acc.role}</span>
+                </div>
+                {email === acc.email && <Check className="h-3 w-3 text-[#00e5c9] shrink-0 ml-2" />}
+              </button>
+            ))}
           </div>
         </div>
       </div>

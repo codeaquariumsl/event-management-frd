@@ -22,8 +22,19 @@ export const apiClient = {
     });
 
     if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`API Error [${response.status}]: ${errorBody}`);
+      let errorMessage = `API Error [${response.status}]`;
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch {
+        try {
+          const errorBody = await response.text();
+          if (errorBody) errorMessage = errorBody;
+        } catch {}
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();

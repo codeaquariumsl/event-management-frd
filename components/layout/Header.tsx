@@ -15,6 +15,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { mockStore } from '@/lib/mock/store';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { GlobalSearchModal } from '../ui/GlobalSearchModal';
 
 interface HeaderProps {
@@ -23,6 +24,7 @@ interface HeaderProps {
 
 export function Header({ onOpenMobile }: HeaderProps) {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -31,8 +33,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleLogout = () => {
-    localStorage.removeItem('seekers_auth_token');
-    router.push('/login');
+    logout();
   };
 
   return (
@@ -127,20 +128,27 @@ export function Header({ onOpenMobile }: HeaderProps) {
               className="flex items-center gap-2.5 rounded-lg p-1 text-left hover:bg-[#14202e] transition-colors"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-[#7c5cff] to-[#00e5c9] text-xs font-bold text-white shadow">
-                SE
+                {user?.avatar || (user?.name ? user.name.slice(0, 2).toUpperCase() : 'SE')}
               </div>
               <div className="hidden md:block text-xs">
-                <span className="block font-semibold text-white">Seekers Admin</span>
-                <span className="block text-[10px] text-[#00e5c9]">Production Director</span>
+                <span className="block font-semibold text-white truncate max-w-[140px]">
+                  {user?.name || 'Seekers Admin'}
+                </span>
+                <span className="block text-[10px] text-[#00e5c9] font-medium">
+                  {user?.role || 'Production Director'}
+                </span>
               </div>
             </button>
 
             {/* Profile Menu */}
             {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-52 rounded-xl border border-[#233549] bg-[#0c1420] shadow-2xl z-50 p-2 animate-fade-in text-xs">
+              <div className="absolute right-0 mt-2 w-56 rounded-xl border border-[#233549] bg-[#0c1420] shadow-2xl z-50 p-2 animate-fade-in text-xs">
                 <div className="px-3 py-2 border-b border-[#1b293a]">
-                  <p className="font-semibold text-white">Seekers Operations</p>
-                  <p className="text-[11px] text-slate-400">admin@seekers.lk</p>
+                  <p className="font-semibold text-white truncate">{user?.name || 'Seekers Operations'}</p>
+                  <p className="text-[11px] text-slate-400 truncate">{user?.email || 'admin@seekers.lk'}</p>
+                  <span className="mt-1 inline-block rounded bg-[#00e5c9]/10 px-2 py-0.5 text-[10px] font-bold text-[#00e5c9]">
+                    {user?.role || 'Super Admin'}
+                  </span>
                 </div>
                 <div className="py-1 space-y-0.5">
                   <Link

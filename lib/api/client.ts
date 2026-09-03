@@ -1,7 +1,7 @@
 // Base API Client Configuration
 // This enables seamless communication with the live Node.js + MongoDB REST backend.
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
 export const apiClient = {
@@ -16,7 +16,8 @@ export const apiClient = {
       headers.set('Authorization', `Bearer ${token}`);
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const response = await fetch(`${this.baseUrl}${normalizedEndpoint}`, {
       ...options,
       headers,
     });

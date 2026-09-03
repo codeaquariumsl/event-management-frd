@@ -765,7 +765,7 @@ class MockStore {
     setStorageItem(STORAGE_KEYS.USERS, users);
 
     // Forward to live backend
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
     fetch(`${API_URL}/users${existingIndex >= 0 ? `/${saved.id}` : ''}`, {
       method: existingIndex >= 0 ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -780,7 +780,7 @@ class MockStore {
     const filtered = users.filter((u) => u.id !== id);
     if (filtered.length !== users.length) {
       setStorageItem(STORAGE_KEYS.USERS, filtered);
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
       fetch(`${API_URL}/users/${id}`, { method: 'DELETE' }).catch(() => {});
       return true;
     }
@@ -809,7 +809,7 @@ class MockStore {
   // REAL BACKEND INTEGRATION
   async syncWithBackend(): Promise<void> {
     if (typeof window === 'undefined') return;
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
     try {
       const healthRes = await fetch(`${API_URL}/health`);
       if (!healthRes.ok) return;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileBarChart,
   Calendar,
@@ -16,18 +16,45 @@ import {
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatCard } from '@/components/ui/StatCard';
+import { eventService } from '@/lib/api/eventService';
+import { staffService } from '@/lib/api/staffService';
+import { customerService } from '@/lib/api/customerService';
+import { paymentService } from '@/lib/api/paymentService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
+import { EventItem, Staff, Customer, CustomerPayment, StaffPayment } from '@/lib/types';
 
 export default function ReportsPage() {
   const [reportCategory, setReportCategory] = useState<'financial' | 'events' | 'staff' | 'customers'>('financial');
   const [dateRange, setDateRange] = useState('This Quarter');
 
-  const events = mockStore.getEvents();
-  const staff = mockStore.getStaff();
-  const customers = mockStore.getCustomers();
-  const customerPayments = mockStore.getCustomerPayments();
-  const staffPayments = mockStore.getStaffPayments();
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerPayments, setCustomerPayments] = useState<CustomerPayment[]>([]);
+  const [staffPayments, setStaffPayments] = useState<StaffPayment[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      eventService.getEvents(),
+      staffService.getStaff(),
+      customerService.getCustomers(),
+      paymentService.getCustomerPayments(),
+      paymentService.getStaffPayments(),
+    ]).then(([evts, stf, custs, cpays, spays]) => {
+      if (Array.isArray(evts)) setEvents(evts);
+      if (Array.isArray(stf)) setStaff(stf);
+      if (Array.isArray(custs)) setCustomers(custs);
+      if (Array.isArray(cpays)) setCustomerPayments(cpays);
+      if (Array.isArray(spays)) setStaffPayments(spays);
+    }).catch(() => {
+      setEvents(mockStore.getEvents());
+      setStaff(mockStore.getStaff());
+      setCustomers(mockStore.getCustomers());
+      setCustomerPayments(mockStore.getCustomerPayments());
+      setStaffPayments(mockStore.getStaffPayments());
+    });
+  }, []);
 
   const totalRevenue = events.reduce((sum, e) => sum + e.totalAmount, 0);
   const totalCollections = customerPayments.reduce((sum, p) => sum + p.amount, 0);

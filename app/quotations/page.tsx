@@ -26,6 +26,7 @@ import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
+import { quotationService } from '@/lib/api/quotationService';
 import { Quotation, QuotationStatus } from '@/lib/types';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
@@ -39,8 +40,13 @@ export default function QuotationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [deleteTarget, setDeleteTarget] = useState<Quotation | null>(null);
 
-  const loadData = () => {
-    setQuotations(mockStore.getQuotations());
+  const loadData = async () => {
+    try {
+      const data = await quotationService.getAll();
+      if (Array.isArray(data)) setQuotations(data);
+    } catch {
+      setQuotations(mockStore.getQuotations());
+    }
   };
 
   useEffect(() => {
@@ -83,15 +89,16 @@ export default function QuotationsPage() {
     });
   }, [quotations, searchQuery, statusFilter]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    mockStore.deleteQuotation(deleteTarget.id);
+    await quotationService.delete(deleteTarget.id);
     showToast(`Quotation ${deleteTarget.quotationNumber} deleted`, 'success');
     setDeleteTarget(null);
+    loadData();
   };
 
-  const handleConvertToEvent = (quotation: Quotation) => {
-    const newEvent = mockStore.convertQuotationToEvent(quotation.id);
+  const handleConvertToEvent = async (quotation: Quotation) => {
+    const newEvent = await quotationService.convertToEvent(quotation.id);
     if (newEvent) {
       showToast(`Quotation converted to Event "${newEvent.name}"!`, 'success');
       router.push(`/events/${newEvent.id}`);

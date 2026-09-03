@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { mockStore } from '@/lib/mock/store';
 import { useAuth } from '@/lib/auth/AuthContext';
 
 interface AppShellProps {
@@ -21,8 +20,6 @@ export function AppShell({ children }: AppShellProps) {
 
   useEffect(() => {
     setMounted(true);
-    // Automatically load & sync live data from Node.js + MongoDB backend
-    mockStore.syncWithBackend();
   }, []);
 
   useEffect(() => {

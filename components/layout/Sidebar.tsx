@@ -24,8 +24,8 @@ import {
   Boxes,
   Layers,
 } from 'lucide-react';
+import { eventService } from '@/lib/api/eventService';
 import { cn } from '@/lib/utils';
-import { mockStore } from '@/lib/mock/store';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -33,6 +33,9 @@ interface SidebarProps {
   isMobileOpen: boolean;
   onCloseMobile: () => void;
 }
+
+let cachedEventsBadge: number | undefined = undefined;
+let badgeFetchedAt = 0;
 
 export function Sidebar({
   isCollapsed,
@@ -42,17 +45,24 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const [mounted, setMounted] = React.useState(false);
-  const [eventsCount, setEventsCount] = React.useState<number | undefined>(undefined);
+  const [eventsCount, setEventsCount] = React.useState<number | undefined>(cachedEventsBadge);
 
   React.useEffect(() => {
     setMounted(true);
-    const updateCount = () => {
-      const count = mockStore.getEvents().filter((e) => e.status !== 'Completed' && e.status !== 'Cancelled').length;
-      setEventsCount(count > 0 ? count : undefined);
-    };
-    updateCount();
-    window.addEventListener('seekers_store_updated', updateCount);
-    return () => window.removeEventListener('seekers_store_updated', updateCount);
+    const now = Date.now();
+    if (cachedEventsBadge !== undefined && now - badgeFetchedAt < 60000) {
+      setEventsCount(cachedEventsBadge);
+      return;
+    }
+
+    eventService.getEvents().then((events) => {
+      if (Array.isArray(events)) {
+        const count = events.filter((e) => e.status !== 'Completed' && e.status !== 'Cancelled').length;
+        cachedEventsBadge = count > 0 ? count : undefined;
+        badgeFetchedAt = Date.now();
+        setEventsCount(cachedEventsBadge);
+      }
+    }).catch(() => {});
   }, []);
 
   const navItems = [

@@ -26,6 +26,8 @@ import {
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
+import { quotationService } from '@/lib/api/quotationService';
+import { settingsService } from '@/lib/api/reportService';
 import { Quotation, QuotationLineItem, QuotationStatus, CompanyProfile } from '@/lib/types';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
@@ -46,13 +48,25 @@ export default function QuotationDetailPage() {
   // Edit form state
   const [editData, setEditData] = useState<Partial<Quotation>>({});
 
-  const loadData = () => {
-    const q = mockStore.getQuotationById(id);
-    if (q) {
-      setQuotation(q);
-      setEditData({ ...q });
+  const loadData = async () => {
+    try {
+      const q = await quotationService.getById(id);
+      if (q) {
+        setQuotation(q);
+        setEditData({ ...q });
+      }
+    } catch {
+      const q = mockStore.getQuotationById(id);
+      if (q) {
+        setQuotation(q);
+        setEditData({ ...q });
+      }
     }
-    setProfile(mockStore.getCompanyProfile());
+    settingsService.getCompanyProfile().then((p) => {
+      if (p) setProfile(p);
+    }).catch(() => {
+      setProfile(mockStore.getCompanyProfile());
+    });
   };
 
   useEffect(() => {
@@ -91,9 +105,9 @@ export default function QuotationDetailPage() {
     });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!quotation) return;
-    const saved = mockStore.saveQuotation({
+    const saved = await quotationService.update(quotation.id, {
       ...editData,
       id: quotation.id,
       customerName: editData.customerName || quotation.customerName,
@@ -104,9 +118,9 @@ export default function QuotationDetailPage() {
     showToast('Quotation updated successfully!', 'success');
   };
 
-  const handleStatusChange = (newStatus: QuotationStatus) => {
+  const handleStatusChange = async (newStatus: QuotationStatus) => {
     if (!quotation) return;
-    const updated = mockStore.saveQuotation({
+    const updated = await quotationService.update(quotation.id, {
       ...quotation,
       status: newStatus,
     });
@@ -114,9 +128,9 @@ export default function QuotationDetailPage() {
     showToast(`Quotation status updated to ${newStatus}`, 'info');
   };
 
-  const handleConvertToEvent = () => {
+  const handleConvertToEvent = async () => {
     if (!quotation) return;
-    const newEvent = mockStore.convertQuotationToEvent(quotation.id);
+    const newEvent = await quotationService.convertToEvent(quotation.id);
     if (newEvent) {
       showToast(`Quotation converted to Event "${newEvent.name}"!`, 'success');
       router.push(`/events/${newEvent.id}`);

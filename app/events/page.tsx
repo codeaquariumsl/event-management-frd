@@ -23,6 +23,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { InvoiceModal } from '@/components/ui/InvoiceModal';
 import { RecordPaymentModal } from '@/features/events/RecordPaymentModal';
 import { StaffAssignmentModal } from '@/features/events/StaffAssignmentModal';
+import { eventService } from '@/lib/api/eventService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { EventItem, EventStatus, EventType } from '@/lib/types';
@@ -42,8 +43,13 @@ export default function EventsPage() {
   const [paymentEvent, setPaymentEvent] = useState<EventItem | null>(null);
   const [assignStaffEvent, setAssignStaffEvent] = useState<EventItem | null>(null);
 
-  const loadData = () => {
-    setEvents(mockStore.getEvents());
+  const loadData = async () => {
+    try {
+      const data = await eventService.getEvents();
+      if (Array.isArray(data)) setEvents(data);
+    } catch {
+      setEvents(mockStore.getEvents());
+    }
   };
 
   useEffect(() => {
@@ -60,9 +66,9 @@ export default function EventsPage() {
     });
   }, [events, statusFilter, typeFilter]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteCandidateId) return;
-    mockStore.deleteEvent(deleteCandidateId);
+    await eventService.deleteEvent(deleteCandidateId);
     showToast('✓ Event deleted successfully');
     setDeleteCandidateId(null);
     loadData();

@@ -5,41 +5,55 @@ import { apiClient } from './client';
 export const paymentService = {
   // Customer Payments
   async getCustomerPayments(): Promise<CustomerPayment[]> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 50));
-      return mockStore.getCustomerPayments();
+    try {
+      const payments = await apiClient.request<CustomerPayment[]>('/payments/customer');
+      if (Array.isArray(payments)) return payments;
+    } catch (err) {
+      console.warn('Backend API /payments/customer unreachable:', err);
     }
-    return apiClient.request<CustomerPayment[]>('/payments/customer');
+    return mockStore.getCustomerPayments();
   },
 
   async recordCustomerPayment(data: Omit<CustomerPayment, 'id'>): Promise<CustomerPayment> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 120));
-      return mockStore.saveCustomerPayment(data);
+    try {
+      const saved = await apiClient.request<CustomerPayment>('/payments/customer', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      if (saved && saved.id) {
+        mockStore.saveCustomerPayment(saved);
+        return saved;
+      }
+    } catch (err) {
+      console.warn('Backend POST /payments/customer failed:', err);
     }
-    return apiClient.request<CustomerPayment>('/payments/customer', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return mockStore.saveCustomerPayment(data);
   },
 
   // Staff Payments
   async getStaffPayments(): Promise<StaffPayment[]> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 50));
-      return mockStore.getStaffPayments();
+    try {
+      const payments = await apiClient.request<StaffPayment[]>('/payments/staff');
+      if (Array.isArray(payments)) return payments;
+    } catch (err) {
+      console.warn('Backend API /payments/staff unreachable:', err);
     }
-    return apiClient.request<StaffPayment[]>('/payments/staff');
+    return mockStore.getStaffPayments();
   },
 
   async recordStaffPayment(data: Omit<StaffPayment, 'id'>): Promise<StaffPayment> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 120));
-      return mockStore.saveStaffPayment(data);
+    try {
+      const saved = await apiClient.request<StaffPayment>('/payments/staff', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      if (saved && saved.id) {
+        mockStore.saveStaffPayment(saved);
+        return saved;
+      }
+    } catch (err) {
+      console.warn('Backend POST /payments/staff failed:', err);
     }
-    return apiClient.request<StaffPayment>('/payments/staff', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return mockStore.saveStaffPayment(data);
   },
 };

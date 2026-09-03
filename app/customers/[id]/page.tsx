@@ -13,38 +13,75 @@ import {
   CreditCard,
   Plus,
   Receipt,
+  Edit2,
+  Trash2,
+  CheckCircle2,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { CustomerModal } from '@/features/customers/CustomerModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { customerService } from '@/lib/api/customerService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Customer, EventItem, CustomerPayment } from '@/lib/types';
+import { useToast } from '@/components/ui/Toast';
 
 export default function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [payments, setPayments] = useState<CustomerPayment[]>([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const loadData = () => {
-    const found = mockStore.getCustomerById(resolvedParams.id);
-    if (found) {
-      setCustomer({ ...found });
-      const clientEvents = mockStore.getEvents().filter((e) => e.customerId === found.id);
+  const loadData = async () => {
+    try {
+      const found = await customerService.getCustomerById(resolvedParams.id);
+      if (found) {
+        setCustomer({ ...found });
+        const clientEvents = mockStore.getEvents().filter((e) => e.customerId === found.id);
+        setEvents(clientEvents);
+
+        const clientPayments = mockStore.getCustomerPayments().filter((p) => p.customerId === found.id);
+        setPayments(clientPayments);
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+
+    const fallback = mockStore.getCustomerById(resolvedParams.id);
+    if (fallback) {
+      setCustomer({ ...fallback });
+      const clientEvents = mockStore.getEvents().filter((e) => e.customerId === fallback.id);
       setEvents(clientEvents);
 
-      const clientPayments = mockStore.getCustomerPayments().filter((p) => p.customerId === found.id);
+      const clientPayments = mockStore.getCustomerPayments().filter((p) => p.customerId === fallback.id);
       setPayments(clientPayments);
     }
   };
 
   useEffect(() => {
     loadData();
-    window.addEventListener('seekers_store_updated', loadData);
-    return () => window.removeEventListener('seekers_store_updated', loadData);
+    const handleUpdate = () => loadData();
+    window.addEventListener('seekers_store_updated', handleUpdate);
+    return () => window.removeEventListener('seekers_store_updated', handleUpdate);
   }, [resolvedParams.id]);
+
+  const handleDelete = async () => {
+    if (!customer) return;
+    try {
+      await customerService.deleteCustomer(customer.id);
+      showToast(`Customer ${customer.name} deleted`, 'success');
+      router.push('/customers');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete customer', 'error');
+    }
+  };
 
   if (!customer) {
     return (
@@ -64,13 +101,32 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   return (
     <AppShell>
       <div className="space-y-6">
-        <Link
-          href="/customers"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Customers</span>
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/customers"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Customers</span>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#14202e] border border-[#233549] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:text-white hover:bg-[#1a2b3d] transition-colors"
+            >
+              <Edit2 className="h-3.5 w-3.5" />
+              <span>Edit Client</span>
+            </button>
+            <button
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500/10 border border-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/20 transition-colors"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete</span>
+            </button>
+          </div>
+        </div>
 
         {/* Customer Header Card */}
         <div className="rounded-2xl border border-[#1f2f42] bg-gradient-to-r from-[#0b1420] to-[#121c2b] p-6 sm:p-8 shadow-xl">
@@ -138,31 +194,38 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           </div>
 
           <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
-            <span className="text-slate-400 block text-[11px]">Total Payments Received</span>
+            <span className="text-slate-400 block text-[11px]">Paid Collections</span>
             <strong className="text-2xl font-extrabold text-emerald-400 font-mono block mt-1">
               {formatCurrency(totalPaid)}
             </strong>
-            <span className="text-emerald-500/80 mt-1 block">Across {payments.length} transactions</span>
+            <span className="text-slate-500 mt-1 block">{payments.length} payments recorded</span>
           </div>
 
           <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
-            <span className="text-slate-400 block text-[11px]">Outstanding Receivables</span>
-            <strong className="text-2xl font-extrabold text-amber-300 font-mono block mt-1">
+            <span className="text-slate-400 block text-[11px]">Outstanding Balance</span>
+            <strong
+              className={`text-2xl font-extrabold font-mono block mt-1 ${
+                customer.outstandingBalance > 0 ? 'text-amber-300' : 'text-slate-400'
+              }`}
+            >
               {formatCurrency(customer.outstandingBalance)}
             </strong>
-            <span className="text-amber-500/80 mt-1 block">Due to Seekers</span>
+            <span className="text-slate-500 mt-1 block">Receivable balance</span>
           </div>
         </div>
 
-        {/* Client Event History */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-4">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-            Client Event History ({events.length})
-          </h2>
-          {events.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 border border-dashed border-[#1f2f42] rounded-lg">
-              No events booked for this customer yet.
+        {/* Event History */}
+        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-5 shadow-sm text-xs">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#182535]">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-[#00e5c9]" />
+              <h2 className="text-sm font-bold text-white">Event Bookings History</h2>
             </div>
+            <span className="text-slate-400">{events.length} Events Total</span>
+          </div>
+
+          {events.length === 0 ? (
+            <p className="text-center py-8 text-slate-500">No events booked for this client yet.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -170,34 +233,32 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   <tr className="border-b border-[#233549] text-slate-400 text-[11px] uppercase">
                     <th className="py-2.5 px-3">Event Name</th>
                     <th className="py-2.5 px-3">Date</th>
+                    <th className="py-2.5 px-3">Category</th>
                     <th className="py-2.5 px-3">Location</th>
                     <th className="py-2.5 px-3 text-right">Contract Value</th>
-                    <th className="py-2.5 px-3 text-right">Paid</th>
-                    <th className="py-2.5 px-3 text-right">Balance</th>
+                    <th className="py-2.5 px-3 text-right">Balance Due</th>
                     <th className="py-2.5 px-3 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#182535]">
-                  {events.map((evt) => (
-                    <tr key={evt.id} className="hover:bg-[#101824]">
-                      <td className="py-3 px-3 font-semibold text-white">
-                        <Link href={`/events/${evt.id}`} className="hover:text-[#00e5c9]">
-                          {evt.name}
-                        </Link>
+                  {events.map((e) => (
+                    <tr
+                      key={e.id}
+                      onClick={() => router.push(`/events/${e.id}`)}
+                      className="cursor-pointer hover:bg-[#101824] transition-colors"
+                    >
+                      <td className="py-3 px-3 font-medium text-white hover:text-[#00e5c9]">{e.name}</td>
+                      <td className="py-3 px-3 text-slate-300">{formatDate(e.eventDate)}</td>
+                      <td className="py-3 px-3 text-slate-400">{e.eventType}</td>
+                      <td className="py-3 px-3 text-slate-400">{e.location}</td>
+                      <td className="py-3 px-3 text-right font-mono font-semibold text-white">
+                        {formatCurrency(e.totalAmount)}
                       </td>
-                      <td className="py-3 px-3 text-slate-300">{formatDate(evt.eventDate)}</td>
-                      <td className="py-3 px-3 text-slate-400">{evt.location}</td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-white">
-                        {formatCurrency(evt.totalAmount)}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono text-emerald-400">
-                        {formatCurrency(evt.paidAmount)}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-amber-300">
-                        {formatCurrency(evt.balance)}
+                      <td className="py-3 px-3 text-right font-mono font-semibold text-amber-300">
+                        {formatCurrency(e.balance)}
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <StatusBadge status={evt.status} size="sm" />
+                        <StatusBadge status={e.status} size="sm" />
                       </td>
                     </tr>
                   ))}
@@ -207,15 +268,18 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           )}
         </div>
 
-        {/* Client Payment Transactions */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-4">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-            Payment & Settlement History ({payments.length})
-          </h2>
-          {payments.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 border border-dashed border-[#1f2f42] rounded-lg">
-              No transactions recorded for this client.
+        {/* Payment History */}
+        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-5 shadow-sm text-xs">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#182535]">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-[#00e5c9]" />
+              <h2 className="text-sm font-bold text-white">Payments & Receipts</h2>
             </div>
+            <span className="text-slate-400">{payments.length} Payments Total</span>
+          </div>
+
+          {payments.length === 0 ? (
+            <p className="text-center py-8 text-slate-500">No payment records found for this client.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -254,6 +318,28 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           )}
         </div>
       </div>
+
+      {/* Edit Customer Modal */}
+      <CustomerModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        initialData={customer}
+        onSuccess={() => {
+          loadData();
+          setIsEditModalOpen(false);
+        }}
+      />
+
+      {/* Delete Customer Confirmation */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Customer"
+        message={`Are you sure you want to delete customer "${customer.name}"? This action cannot be undone.`}
+        confirmLabel="Delete Customer"
+        isDestructive={true}
+      />
     </AppShell>
   );
 }

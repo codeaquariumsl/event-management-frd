@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserAccount, UserRole } from '@/lib/types';
 import { Modal } from '@/components/ui/Modal';
+import { userService } from '@/lib/api/userService';
 import { mockStore, ROLE_PERMISSIONS_MATRIX } from '@/lib/mock/store';
 import { useToast } from '@/components/ui/Toast';
 import { ShieldCheck, Lock, UserCheck, KeyRound } from 'lucide-react';
@@ -74,24 +75,34 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
     setPermissions(ROLE_PERMISSIONS_MATRIX[newRole] || []);
   };
 
-  const togglePermission = (permKey: string) => {
+  const handleTogglePermission = (key: string) => {
     setPermissions((prev) =>
-      prev.includes(permKey) ? prev.filter((p) => p !== permKey) : [...prev, permKey]
+      prev.includes(key) ? prev.filter((p) => p !== key) : [...prev, key]
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    mockStore.saveUser({
-      id: user ? user.id : undefined,
-      name,
-      email,
-      phone,
-      role,
-      status,
-      permissions,
-    });
+    if (user) {
+      await userService.updateUser(user.id, {
+        name,
+        email,
+        phone,
+        role,
+        status,
+        permissions,
+      });
+    } else {
+      await userService.createUser({
+        name,
+        email,
+        phone,
+        role,
+        status,
+        permissions,
+      });
+    }
 
     showToast(user ? '✓ Operator account updated' : '✓ New operator created successfully');
     onSuccess();
@@ -230,7 +241,7 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            onChange={() => togglePermission(p.key)}
+                            onChange={() => handleTogglePermission(p.key)}
                             className="h-3.5 w-3.5 rounded border-[#243549] bg-[#111b27] text-[#00e5c9] accent-[#00e5c9]"
                           />
                           <span className="text-xs font-medium">{p.label}</span>

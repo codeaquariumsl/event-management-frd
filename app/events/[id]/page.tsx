@@ -29,6 +29,7 @@ import { RecordPaymentModal } from '@/features/events/RecordPaymentModal';
 import { StaffAssignmentModal } from '@/features/events/StaffAssignmentModal';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { eventService } from '@/lib/api/eventService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate, calculateProfit } from '@/lib/utils';
 import { EventItem, EventExpense, StaffAssignment } from '@/lib/types';
@@ -55,9 +56,16 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   const [expenseCategory, setExpenseCategory] = useState<any>('Transport');
   const [expenseAmount, setExpenseAmount] = useState<number>(10000);
 
-  const loadData = () => {
-    const found = mockStore.getEventById(resolvedParams.id);
-    if (found) setEvent({ ...found });
+  const loadData = async () => {
+    try {
+      const found = await eventService.getEventById(resolvedParams.id);
+      if (found) {
+        setEvent({ ...found });
+        return;
+      }
+    } catch {}
+    const fallback = mockStore.getEventById(resolvedParams.id);
+    if (fallback) setEvent({ ...fallback });
   };
 
   useEffect(() => {

@@ -25,7 +25,10 @@ import {
   EventStatusChart,
   ServiceDistributionChart,
 } from '@/components/ui/Charts';
-import { mockStore } from '@/lib/mock/store';
+import { eventService } from '@/lib/api/eventService';
+import { customerService } from '@/lib/api/customerService';
+import { paymentService } from '@/lib/api/paymentService';
+import { staffService } from '@/lib/api/staffService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { EventItem, CustomerPayment } from '@/lib/types';
 
@@ -40,17 +43,23 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true);
-    const load = () => {
-      setEvents(mockStore.getEvents());
-      setPayments(mockStore.getCustomerPayments());
-      setActiveStaffCount(mockStore.getStaff().filter((s) => s.status === 'Active').length);
-      setCustomersCount(mockStore.getCustomers().length);
-      setPendingStaffPay(
-        mockStore
-          .getStaffPayments()
-          .filter((sp) => sp.status === 'Pending')
-          .reduce((sum, sp) => sum + sp.balance, 0)
-      );
+    const load = async () => {
+      try {
+        const [evts, custs, pays, staffList] = await Promise.all([
+          eventService.getEvents(),
+          customerService.getCustomers(),
+          paymentService.getCustomerPayments(),
+          staffService.getStaff(),
+        ]);
+        if (Array.isArray(evts)) setEvents(evts);
+        if (Array.isArray(pays)) setPayments(pays);
+        if (Array.isArray(custs)) setCustomersCount(custs.length);
+        if (Array.isArray(staffList)) {
+          setActiveStaffCount(staffList.filter((s) => s.status === 'Active').length);
+        }
+      } catch (err) {
+        console.warn('Dashboard fetch error:', err);
+      }
     };
     load();
 

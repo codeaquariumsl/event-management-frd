@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   CalendarDays,
@@ -13,14 +13,19 @@ import {
   FileText,
   Percent,
 } from 'lucide-react';
+import { eventService } from '@/lib/api/eventService';
+import { customerService } from '@/lib/api/customerService';
+import { eventTypeService } from '@/lib/api/eventTypeService';
+import { mockStore } from '@/lib/mock/store';
+import { formatCurrency } from '@/lib/utils';
 import {
+  Customer,
   EventItem,
   EventType,
+  EventTypeItem,
   ServiceItem,
   StaffAssignment,
 } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
-import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
 import { CustomerModal } from '../customers/CustomerModal';
 import { StaffAssignmentModal } from './StaffAssignmentModal';
@@ -33,9 +38,23 @@ export function EventForm({ initialData }: EventFormProps) {
   const router = useRouter();
   const { showToast } = useToast();
 
-  const customers = mockStore.getCustomers();
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [dynamicEventTypes, setDynamicEventTypes] = useState<EventTypeItem[]>([]);
   const servicesCatalog = mockStore.getServicesCatalog();
-  const dynamicEventTypes = mockStore.getEventTypes();
+
+  useEffect(() => {
+    customerService.getCustomers().then((c) => {
+      if (Array.isArray(c)) setCustomers(c);
+    }).catch(() => {
+      setCustomers(mockStore.getCustomers());
+    });
+
+    eventTypeService.getEventTypes().then((t) => {
+      if (Array.isArray(t)) setDynamicEventTypes(t);
+    }).catch(() => {
+      setDynamicEventTypes(mockStore.getEventTypes());
+    });
+  }, []);
 
   // Modals state
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
@@ -43,7 +62,7 @@ export function EventForm({ initialData }: EventFormProps) {
 
   // 1. Event Information
   const [name, setName] = useState(initialData?.name || '');
-  const [eventType, setEventType] = useState<any>(initialData?.eventType || dynamicEventTypes[0]?.name || 'Wedding');
+  const [eventType, setEventType] = useState<any>(initialData?.eventType || 'Wedding');
   const [eventDate, setEventDate] = useState(initialData?.eventDate || new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState(initialData?.startTime || '18:00');
   const [endTime, setEndTime] = useState(initialData?.endTime || '23:30');
@@ -138,7 +157,7 @@ export function EventForm({ initialData }: EventFormProps) {
   };
 
   // Form Submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       alert('Event Name is required');
@@ -155,7 +174,7 @@ export function EventForm({ initialData }: EventFormProps) {
 
     const selectedCustomer = customers.find((c) => c.id === customerId);
 
-    const savedEvent = mockStore.saveEvent({
+    const eventPayload = {
       id: initialData?.id,
       name,
       customerId,
@@ -181,7 +200,14 @@ export function EventForm({ initialData }: EventFormProps) {
       totalAmount,
       paidAmount: Number(paidAmount || 0),
       balance,
-    });
+    };
+
+    let savedEvent: EventItem;
+    if (initialData?.id) {
+      savedEvent = await eventService.updateEvent(initialData.id, eventPayload);
+    } else {
+      savedEvent = await eventService.createEvent(eventPayload);
+    }
 
     showToast(initialData ? '✓ Event updated successfully' : '✓ Event created successfully');
     router.push(`/events/${savedEvent.id}`);

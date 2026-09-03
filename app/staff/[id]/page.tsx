@@ -18,27 +18,40 @@ import {
 import { AppShell } from '@/components/layout/AppShell';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
+import { staffService } from '@/lib/api/staffService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Staff, StaffPayment, EventItem } from '@/lib/types';
+import { Staff, EventItem, StaffPayment } from '@/lib/types';
+import { useToast } from '@/components/ui/Toast';
 
 export default function StaffProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { showToast } = useToast();
+
   const [staff, setStaff] = useState<Staff | null>(null);
   const [assignedEvents, setAssignedEvents] = useState<EventItem[]>([]);
   const [paymentHistory, setPaymentHistory] = useState<StaffPayment[]>([]);
+
+  // Modals
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  const loadData = () => {
-    const foundStaff = mockStore.getStaffById(resolvedParams.id);
-    if (foundStaff) {
-      setStaff({ ...foundStaff });
+  const loadData = async () => {
+    try {
+      const foundStaff = await staffService.getStaffById(resolvedParams.id);
+      if (foundStaff) {
+        setStaff({ ...foundStaff });
+      }
+    } catch {}
+    const fallback = mockStore.getStaffById(resolvedParams.id);
+    if (fallback) {
+      setStaff({ ...fallback });
       const events = mockStore.getEvents().filter((e) =>
-        e.assignedStaff.some((as) => as.staffId === foundStaff.id)
+        e.assignedStaff.some((as) => as.staffId === fallback.id)
       );
       setAssignedEvents(events);
 
-      const payments = mockStore.getStaffPayments().filter((p) => p.staffId === foundStaff.id);
+      const payments = mockStore.getStaffPayments().filter((p) => p.staffId === fallback.id);
       setPaymentHistory(payments);
     }
   };

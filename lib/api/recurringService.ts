@@ -4,32 +4,41 @@ import { apiClient } from './client';
 
 export const recurringService = {
   async getRecurringEvents(): Promise<RecurringEvent[]> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 50));
-      return mockStore.getRecurringEvents();
+    try {
+      const series = await apiClient.request<RecurringEvent[]>('/recurring-events');
+      if (Array.isArray(series)) return series;
+    } catch (err) {
+      console.warn('Backend API /recurring-events unreachable:', err);
     }
-    return apiClient.request<RecurringEvent[]>('/recurring-events');
+    return mockStore.getRecurringEvents();
   },
 
   async createRecurringEvent(data: Partial<RecurringEvent> & { seriesName: string; customerId: string }): Promise<RecurringEvent> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 100));
-      return mockStore.saveRecurringEvent(data);
+    try {
+      const saved = await apiClient.request<RecurringEvent>('/recurring-events', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      if (saved && saved.id) {
+        mockStore.saveRecurringEvent(saved);
+        return saved;
+      }
+    } catch (err) {
+      console.warn('Backend POST /recurring-events failed:', err);
     }
-    return apiClient.request<RecurringEvent>('/recurring-events', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return mockStore.saveRecurringEvent(data);
   },
 
   async generateEvents(seriesId: string, count: number = 4): Promise<EventItem[]> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 200));
-      return mockStore.generateEventsFromRecurring(seriesId, count);
+    try {
+      const generated = await apiClient.request<EventItem[]>(`/recurring-events/${seriesId}/generate`, {
+        method: 'POST',
+        body: JSON.stringify({ count }),
+      });
+      if (Array.isArray(generated)) return generated;
+    } catch (err) {
+      console.warn(`Backend POST /recurring-events/${seriesId}/generate failed:`, err);
     }
-    return apiClient.request<EventItem[]>(`/recurring-events/${seriesId}/generate`, {
-      method: 'POST',
-      body: JSON.stringify({ count }),
-    });
+    return mockStore.generateEventsFromRecurring(seriesId, count);
   },
 };

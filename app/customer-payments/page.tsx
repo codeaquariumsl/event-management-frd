@@ -18,6 +18,8 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
 import { InvoiceModal } from '@/components/ui/InvoiceModal';
 import { RecordPaymentModal } from '@/features/events/RecordPaymentModal';
+import { paymentService } from '@/lib/api/paymentService';
+import { eventService } from '@/lib/api/eventService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { CustomerPayment, EventItem } from '@/lib/types';
@@ -28,9 +30,18 @@ export default function CustomerPaymentsPage() {
   const [selectedInvoiceEvent, setSelectedInvoiceEvent] = useState<EventItem | null>(null);
   const [selectedPaymentEvent, setSelectedPaymentEvent] = useState<EventItem | null>(null);
 
-  const loadData = () => {
-    setPayments(mockStore.getCustomerPayments());
-    setEvents(mockStore.getEvents());
+  const loadData = async () => {
+    try {
+      const [pays, evts] = await Promise.all([
+        paymentService.getCustomerPayments(),
+        eventService.getEvents(),
+      ]);
+      if (Array.isArray(pays)) setPayments(pays);
+      if (Array.isArray(evts)) setEvents(evts);
+    } catch {
+      setPayments(mockStore.getCustomerPayments());
+      setEvents(mockStore.getEvents());
+    }
   };
 
   useEffect(() => {

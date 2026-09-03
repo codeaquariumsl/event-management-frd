@@ -4,59 +4,81 @@ import { apiClient } from './client';
 
 export const eventService = {
   async getEvents(): Promise<EventItem[]> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 60));
-      return mockStore.getEvents();
+    try {
+      const events = await apiClient.request<EventItem[]>('/events');
+      if (Array.isArray(events)) {
+        return events;
+      }
+    } catch (err) {
+      console.warn('Backend API /events unreachable, using local cache:', err);
     }
-    return apiClient.request<EventItem[]>('/events');
+    return mockStore.getEvents();
   },
 
   async getEventById(id: string): Promise<EventItem | undefined> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 60));
-      return mockStore.getEventById(id);
+    try {
+      const event = await apiClient.request<EventItem>(`/events/${id}`);
+      if (event && event.id) {
+        return event;
+      }
+    } catch (err) {
+      console.warn(`Backend API /events/${id} unreachable, using local cache:`, err);
     }
-    return apiClient.request<EventItem>(`/events/${id}`);
+    return mockStore.getEventById(id);
   },
 
   async createEvent(data: Partial<EventItem> & { name: string; customerId: string }): Promise<EventItem> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 120));
-      return mockStore.saveEvent(data);
+    try {
+      const saved = await apiClient.request<EventItem>('/events', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      if (saved && saved.id) {
+        mockStore.saveEvent(saved);
+        return saved;
+      }
+    } catch (err) {
+      console.warn('Backend POST /events failed, saving to local store:', err);
     }
-    return apiClient.request<EventItem>('/events', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return mockStore.saveEvent(data);
   },
 
   async updateEvent(id: string, data: Partial<EventItem>): Promise<EventItem> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 120));
-      return mockStore.saveEvent({ ...data, id, name: data.name || '', customerId: data.customerId || '' });
+    try {
+      const updated = await apiClient.request<EventItem>(`/events/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      if (updated && updated.id) {
+        mockStore.saveEvent(updated);
+        return updated;
+      }
+    } catch (err) {
+      console.warn(`Backend PUT /events/${id} failed, saving locally:`, err);
     }
-    return apiClient.request<EventItem>(`/events/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+    return mockStore.saveEvent({ ...data, id, name: data.name || '', customerId: data.customerId || '' });
   },
 
   async deleteEvent(id: string): Promise<boolean> {
-    if (apiClient.isMock) {
-      await new Promise((res) => setTimeout(res, 80));
-      return mockStore.deleteEvent(id);
+    try {
+      await apiClient.request<{ success: boolean }>(`/events/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.warn(`Backend DELETE /events/${id} failed:`, err);
     }
-    return apiClient.request<boolean>(`/events/${id}`, {
-      method: 'DELETE',
-    });
+    return mockStore.deleteEvent(id);
   },
 
   async checkStaffConflict(staffId: string, date: string, startTime: string, endTime: string, excludeEventId?: string) {
-    if (apiClient.isMock) {
+    try {
+      return await apiClient.request<{ hasConflict: boolean; conflictingEvent?: EventItem; staffName?: string }>(
+        `/events/check-conflict?staffId=${staffId}&date=${date}&startTime=${startTime}&endTime=${endTime}${
+          excludeEventId ? `&excludeEventId=${excludeEventId}` : ''
+        }`
+      );
+    } catch {
       return mockStore.checkStaffConflict(staffId, date, startTime, endTime, excludeEventId);
     }
-    return apiClient.request<{ hasConflict: boolean; conflictingEvent?: EventItem; staffName?: string }>(
-      `/events/check-conflict?staffId=${staffId}&date=${date}&startTime=${startTime}&endTime=${endTime}`
-    );
   },
 };

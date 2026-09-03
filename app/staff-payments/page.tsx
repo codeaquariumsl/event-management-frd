@@ -18,6 +18,8 @@ import { DataTable, Column } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
+import { paymentService } from '@/lib/api/paymentService';
+import { staffService } from '@/lib/api/staffService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { StaffPayment, StaffPayrollSummary, PaymentType } from '@/lib/types';
@@ -29,9 +31,18 @@ export default function StaffPaymentsPage() {
   const [selectedMonth, setSelectedMonth] = useState('2026-09');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  const loadData = () => {
-    setPayments(mockStore.getStaffPayments());
-    setPayrollSummary(mockStore.getPayrollSummary(selectedMonth));
+  const loadData = async () => {
+    try {
+      const [pays, payroll] = await Promise.all([
+        paymentService.getStaffPayments(),
+        staffService.getPayrollSummary(selectedMonth),
+      ]);
+      if (Array.isArray(pays)) setPayments(pays);
+      if (Array.isArray(payroll)) setPayrollSummary(payroll);
+    } catch {
+      setPayments(mockStore.getStaffPayments());
+      setPayrollSummary(mockStore.getPayrollSummary(selectedMonth));
+    }
   };
 
   useEffect(() => {

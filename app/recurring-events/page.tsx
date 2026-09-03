@@ -21,6 +21,7 @@ import { DataTable, Column } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { RecurringEventModal } from '@/features/recurring-events/RecurringEventModal';
 import { Modal } from '@/components/ui/Modal';
+import { recurringService } from '@/lib/api/recurringService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { RecurringEvent } from '@/lib/types';
@@ -35,8 +36,13 @@ export default function RecurringEventsPage() {
   const [selectedSeriesForGeneration, setSelectedSeriesForGeneration] = useState<RecurringEvent | null>(null);
   const [generateCount, setGenerateCount] = useState<number>(4);
 
-  const loadData = () => {
-    setRecurringList(mockStore.getRecurringEvents());
+  const loadData = async () => {
+    try {
+      const data = await recurringService.getRecurringEvents();
+      if (Array.isArray(data)) setRecurringList(data);
+    } catch {
+      setRecurringList(mockStore.getRecurringEvents());
+    }
   };
 
   useEffect(() => {
@@ -45,10 +51,10 @@ export default function RecurringEventsPage() {
     return () => window.removeEventListener('seekers_store_updated', loadData);
   }, []);
 
-  const handleExecuteGeneration = () => {
+  const handleExecuteGeneration = async () => {
     if (!selectedSeriesForGeneration) return;
 
-    const created = mockStore.generateEventsFromRecurring(
+    const created = await recurringService.generateEvents(
       selectedSeriesForGeneration.id,
       Number(generateCount)
     );

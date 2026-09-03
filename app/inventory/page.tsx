@@ -25,6 +25,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
+import { inventoryService } from '@/lib/api/inventoryService';
 import { InventoryItem, InventoryCategory } from '@/lib/types';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
@@ -76,9 +77,18 @@ export default function InventoryPage() {
     item: InventoryItem | InventoryCategory;
   } | null>(null);
 
-  const loadData = () => {
-    setItems(mockStore.getInventoryItems());
-    setCategories(mockStore.getInventoryCategories());
+  const loadData = async () => {
+    try {
+      const [itms, cats] = await Promise.all([
+        inventoryService.getItems(),
+        inventoryService.getCategories(),
+      ]);
+      if (Array.isArray(itms)) setItems(itms);
+      if (Array.isArray(cats)) setCategories(cats);
+    } catch {
+      setItems(mockStore.getInventoryItems());
+      setCategories(mockStore.getInventoryCategories());
+    }
   };
 
   useEffect(() => {
@@ -149,14 +159,14 @@ export default function InventoryPage() {
     setIsItemModalOpen(true);
   };
 
-  const handleSaveItem = (e: React.FormEvent) => {
+  const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemFormData.name?.trim() || !itemFormData.category) {
       showToast('Item name and category are required', 'error');
       return;
     }
 
-    mockStore.saveInventoryItem({
+    const payload = {
       ...itemFormData,
       id: editingItem ? editingItem.id : undefined,
       name: itemFormData.name.trim(),
@@ -165,22 +175,30 @@ export default function InventoryPage() {
       rentalRate: Number(itemFormData.rentalRate || 0),
       totalStock: Number(itemFormData.totalStock || 1),
       availableQuantity: Number(itemFormData.availableQuantity ?? itemFormData.totalStock ?? 1),
-    });
+    };
+
+    if (editingItem) {
+      await inventoryService.updateItem(editingItem.id, payload);
+    } else {
+      await inventoryService.createItem(payload as any);
+    }
 
     showToast(
       editingItem ? 'Inventory item updated successfully' : 'New equipment added to inventory',
       'success'
     );
     setIsItemModalOpen(false);
+    loadData();
   };
 
-  const adjustStock = (item: InventoryItem, delta: number) => {
+  const adjustStock = async (item: InventoryItem, delta: number) => {
     const newAvailable = Math.max(0, Math.min(item.totalStock, item.availableQuantity + delta));
-    mockStore.saveInventoryItem({
+    await inventoryService.updateItem(item.id, {
       ...item,
       availableQuantity: newAvailable,
     });
     showToast(`${item.name} stock updated to ${newAvailable}`, 'info');
+    loadData();
   };
 
   // Category Handlers
@@ -202,7 +220,7 @@ export default function InventoryPage() {
     setIsCategoryModalOpen(true);
   };
 
-  const handleSaveCategory = (e: React.FormEvent) => {
+  const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!categoryFormData.name?.trim()) {
       showToast('Category name is required', 'error');
@@ -213,32 +231,40 @@ export default function InventoryPage() {
       categoryFormData.code?.trim() ||
       categoryFormData.name.toUpperCase().replace(/[^A-Z0-9]/g, '_').slice(0, 10);
 
-    mockStore.saveInventoryCategory({
+    const payload = {
       ...categoryFormData,
       id: editingCategory ? editingCategory.id : undefined,
       name: categoryFormData.name.trim(),
       code,
       color: categoryFormData.color || '#00e5c9',
       status: categoryFormData.status || 'Active',
-    });
+    };
+
+    if (editingCategory) {
+      await inventoryService.updateCategory(editingCategory.id, payload);
+    } else {
+      await inventoryService.createCategory(payload as any);
+    }
 
     showToast(
       editingCategory ? 'Category updated successfully' : 'New inventory category created',
       'success'
     );
     setIsCategoryModalOpen(false);
+    loadData();
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     if (deleteTarget.type === 'item') {
-      mockStore.deleteInventoryItem(deleteTarget.item.id);
+      await inventoryService.deleteItem(deleteTarget.item.id);
       showToast(`Item "${deleteTarget.item.name}" removed from inventory`, 'success');
     } else {
-      mockStore.deleteInventoryCategory(deleteTarget.item.id);
+      await inventoryService.deleteCategory(deleteTarget.item.id);
       showToast(`Category "${deleteTarget.item.name}" deleted`, 'success');
     }
     setDeleteTarget(null);
+    loadData();
   };
 
   return (

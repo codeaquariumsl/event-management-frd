@@ -5,10 +5,24 @@ export const dynamic = 'force-dynamic';
 const rawBackendUrl =
   process.env.BACKEND_URL ||
   process.env.NEXT_PUBLIC_BACKEND_URL ||
-  'http://localhost:5000/api';
+  'http://127.0.0.1:5000/api';
 
 // Strip trailing slashes from the backend URL
 const BACKEND_URL = rawBackendUrl.replace(/\/+$/, '');
+
+// Hop-by-hop headers that must NOT be forwarded to avoid fetch failures in Node.js
+const HOP_BY_HOP_HEADERS = new Set([
+  'host',
+  'connection',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+  'content-length',
+]);
 
 async function handleProxy(req: NextRequest) {
   try {
@@ -17,13 +31,11 @@ async function handleProxy(req: NextRequest) {
     const searchParams = req.nextUrl.search;
     const target = `${BACKEND_URL}${pathname}${searchParams}`;
 
-    console.log('Proxy forwarding to:', target);
-
-    // Forward request headers (excluding host and content-length)
+    // Clean headers for forwarding
     const headers = new Headers();
     req.headers.forEach((value, key) => {
       const lowerKey = key.toLowerCase();
-      if (lowerKey !== 'host' && lowerKey !== 'content-length') {
+      if (!HOP_BY_HOP_HEADERS.has(lowerKey)) {
         headers.set(key, value);
       }
     });
@@ -33,13 +45,14 @@ async function handleProxy(req: NextRequest) {
       headers,
     };
 
-    // Forward body for HTTP methods that support a payload
+    // Forward request payload for mutation methods
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
       const contentType = req.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
         const text = await req.text();
         if (text) {
           options.body = text;
+          headers.set('content-type', 'application/json');
         }
       } else if (contentType.includes('multipart/form-data')) {
         options.body = await req.formData();
@@ -51,19 +64,26 @@ async function handleProxy(req: NextRequest) {
       }
     }
 
-    const res = await fetch(target, options);
+    let res: Response;
+    try {
+      res = await fetch(target, options);
+    } catch (primaryErr) {
+      // If localhost failed (e.g. Windows IPv6 ::1 vs IPv4 127.0.0.1 mismatch), retry with 127.0.0.1
+      if (target.includes('localhost')) {
+        const ipv4Target = target.replace('localhost', '127.0.0.1');
+        res = await fetch(ipv4Target, options);
+      } else {
+        throw primaryErr;
+      }
+    }
 
-    // Get response body as ArrayBuffer to handle all formats (JSON, text, binary)
+    // Read response body as ArrayBuffer to handle all content types
     const data = await res.arrayBuffer();
 
     const responseHeaders = new Headers();
     res.headers.forEach((value, key) => {
       const lowerKey = key.toLowerCase();
-      if (
-        lowerKey !== 'transfer-encoding' &&
-        lowerKey !== 'content-encoding' &&
-        lowerKey !== 'content-length'
-      ) {
+      if (!HOP_BY_HOP_HEADERS.has(lowerKey) && lowerKey !== 'content-encoding') {
         responseHeaders.set(key, value);
       }
     });
@@ -78,7 +98,7 @@ async function handleProxy(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Proxy error connecting to backend API',
-        error: error.message,
+        error: error.message || 'fetch failed',
       },
       { status: 502 }
     );

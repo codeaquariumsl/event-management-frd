@@ -26,6 +26,10 @@ import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
 import { Quotation, QuotationLineItem, QuotationStatus, Customer, InventoryItem, EventTypeItem } from '@/lib/types';
+import { quotationService } from '@/lib/api/quotationService';
+import { customerService } from '@/lib/api/customerService';
+import { eventTypeService } from '@/lib/api/eventTypeService';
+import { inventoryService } from '@/lib/api/inventoryService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
 import { CustomerModal } from '@/features/customers/CustomerModal';
@@ -86,26 +90,30 @@ export default function NewQuotationPage() {
   );
 
   useEffect(() => {
-    const custs = mockStore.getCustomers();
-    const types = mockStore.getEventTypes();
-    const inv = mockStore.getInventoryItems();
+    customerService.getCustomers().then((custs) => {
+      if (Array.isArray(custs)) {
+        setCustomers(custs);
+        if (custs.length > 0) {
+          const first = custs[0];
+          setCustomerId(first.id);
+          setCustomerName(first.name);
+          setCustomerEmail(first.email);
+          setCustomerPhone(first.phone);
+          setCustomerCompany(first.company || '');
+        }
+      }
+    });
 
-    setCustomers(custs);
-    setEventTypes(types);
-    setInventoryItems(inv);
+    eventTypeService.getEventTypes().then((types) => {
+      if (Array.isArray(types)) {
+        setEventTypes(types);
+        if (types.length > 0) setEventType(types[0].name);
+      }
+    });
 
-    if (custs.length > 0) {
-      const first = custs[0];
-      setCustomerId(first.id);
-      setCustomerName(first.name);
-      setCustomerEmail(first.email);
-      setCustomerPhone(first.phone);
-      setCustomerCompany(first.company || '');
-    }
-
-    if (types.length > 0) {
-      setEventType(types[0].name);
-    }
+    inventoryService.getItems().then((inv) => {
+      if (Array.isArray(inv)) setInventoryItems(inv);
+    });
   }, []);
 
   const handleCustomerSelect = (id: string) => {
@@ -186,7 +194,7 @@ export default function NewQuotationPage() {
     setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSave = (targetStatus?: QuotationStatus) => {
+  const handleSave = async (targetStatus?: QuotationStatus) => {
     if (!customerName.trim()) {
       showToast('Please select or specify a customer name', 'error');
       return;
@@ -202,7 +210,7 @@ export default function NewQuotationPage() {
 
     const finalStatus = targetStatus || status;
 
-    const newQuote = mockStore.saveQuotation({
+    const newQuote = await quotationService.create({
       quotationNumber: quotationNumber.trim(),
       title: title.trim(),
       customerId,

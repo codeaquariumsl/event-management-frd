@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { settingsService } from '@/lib/api/reportService';
 import { mockStore } from '@/lib/mock/store';
 import { CompanyProfile } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
@@ -28,9 +29,18 @@ export default function SettingsPage() {
   const [newServiceCat, setNewServiceCat] = useState<any>('Production');
   const [newServicePrice, setNewServicePrice] = useState(50000);
 
-  const handleSaveCompany = (e: React.FormEvent) => {
+  useEffect(() => {
+    settingsService.getCompanyProfile().then((p) => {
+      if (p && p.name) setProfile(p);
+    });
+    settingsService.getServicesCatalog().then((s) => {
+      if (Array.isArray(s) && s.length > 0) setServices(s);
+    });
+  }, []);
+
+  const handleSaveCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    mockStore.saveCompanyProfile(profile);
+    await settingsService.updateCompanyProfile(profile);
     showToast('✓ Company profile settings saved');
   };
 

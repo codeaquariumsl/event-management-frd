@@ -2,13 +2,37 @@
 // This enables seamless communication with the live Node.js + MongoDB REST backend.
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
+
+// In-flight promise cache to deduplicate simultaneous identical GET requests
+const inFlightRequests = new Map<string, Promise<any>>();
 
 export const apiClient = {
-  isMock: USE_MOCK,
+  isMock: false,
   baseUrl: API_BASE_URL,
 
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const method = (options.method || 'GET').toUpperCase();
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+    // Deduplicate simultaneous GET requests
+    if (method === 'GET') {
+      const cacheKey = normalizedEndpoint;
+      if (inFlightRequests.has(cacheKey)) {
+        return inFlightRequests.get(cacheKey) as Promise<T>;
+      }
+
+      const promise = this._executeRequest<T>(normalizedEndpoint, options).finally(() => {
+        inFlightRequests.delete(cacheKey);
+      });
+
+      inFlightRequests.set(cacheKey, promise);
+      return promise;
+    }
+
+    return this._executeRequest<T>(normalizedEndpoint, options);
+  },
+
+  async _executeRequest<T>(normalizedEndpoint: string, options: RequestInit): Promise<T> {
     const token = typeof window !== 'undefined' ? localStorage.getItem('seekers_auth_token') : null;
     const headers = new Headers(options.headers || {});
     headers.set('Content-Type', 'application/json');
@@ -16,7 +40,6 @@ export const apiClient = {
       headers.set('Authorization', `Bearer ${token}`);
     }
 
-    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const response = await fetch(`${this.baseUrl}${normalizedEndpoint}`, {
       ...options,
       headers,

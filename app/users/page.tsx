@@ -21,6 +21,7 @@ import { DataTable, Column } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
 import { UserModal } from '@/features/users/UserModal';
+import { userService } from '@/lib/api/userService';
 import { mockStore, ROLE_PERMISSIONS_MATRIX } from '@/lib/mock/store';
 import { UserAccount, UserRole } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
@@ -33,8 +34,13 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const loadData = () => {
-    setUsers(mockStore.getUsers());
+  const loadData = async () => {
+    try {
+      const data = await userService.getUsers();
+      if (Array.isArray(data)) setUsers(data);
+    } catch {
+      setUsers(mockStore.getUsers());
+    }
   };
 
   useEffect(() => {
@@ -43,9 +49,9 @@ export default function UsersPage() {
     return () => window.removeEventListener('seekers_store_updated', loadData);
   }, []);
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to revoke access and delete account for "${name}"?`)) {
-      mockStore.deleteUser(id);
+      await userService.deleteUser(id);
       showToast(`✓ User ${name} removed`);
       loadData();
     }

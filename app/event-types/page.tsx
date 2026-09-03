@@ -26,6 +26,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
+import { eventTypeService } from '@/lib/api/eventTypeService';
 import { EventTypeItem } from '@/lib/types';
 import { mockStore } from '@/lib/mock/store';
 
@@ -35,8 +36,7 @@ const COLOR_PALETTES = [
   '#8b5cf6', // Purple
   '#f59e0b', // Amber
   '#10b981', // Emerald
-  '#00e5c9', // Teal / Brand
-  '#06b6d4', // Cyan
+  '#00e5c9', // Teal
   '#ef4444', // Red
   '#6366f1', // Indigo
 ];
@@ -62,8 +62,13 @@ export default function EventTypesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<EventTypeItem | null>(null);
 
-  const loadData = () => {
-    setEventTypes(mockStore.getEventTypes());
+  const loadData = async () => {
+    try {
+      const data = await eventTypeService.getEventTypes();
+      if (Array.isArray(data)) setEventTypes(data);
+    } catch {
+      setEventTypes(mockStore.getEventTypes());
+    }
   };
 
   useEffect(() => {
@@ -118,7 +123,7 @@ export default function EventTypesPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name?.trim()) {
       showToast('Event type name is required', 'error');
@@ -129,36 +134,45 @@ export default function EventTypesPage() {
       formData.code?.trim() ||
       formData.name.toUpperCase().replace(/[^A-Z0-9]/g, '_').slice(0, 10);
 
-    mockStore.saveEventType({
+    const typePayload = {
       ...formData,
       id: editingItem ? editingItem.id : undefined,
       name: formData.name.trim(),
       code,
       color: formData.color || '#00e5c9',
       isActive: formData.isActive ?? true,
-    });
+    };
+
+    if (editingItem) {
+      await eventTypeService.updateEventType(editingItem.id, typePayload);
+    } else {
+      await eventTypeService.createEventType(typePayload);
+    }
 
     showToast(
       editingItem ? 'Event type updated successfully' : 'New event type created successfully',
       'success'
     );
     setIsModalOpen(false);
+    loadData();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!itemToDelete) return;
-    mockStore.deleteEventType(itemToDelete.id);
+    await eventTypeService.deleteEventType(itemToDelete.id);
     showToast(`Event type "${itemToDelete.name}" deleted`, 'success');
     setIsDeleteDialogOpen(false);
     setItemToDelete(null);
+    loadData();
   };
 
-  const toggleStatus = (item: EventTypeItem) => {
-    mockStore.saveEventType({
+  const toggleStatus = async (item: EventTypeItem) => {
+    await eventTypeService.updateEventType(item.id, {
       ...item,
       isActive: !item.isActive,
     });
     showToast(`"${item.name}" set to ${!item.isActive ? 'Active' : 'Inactive'}`, 'info');
+    loadData();
   };
 
   return (

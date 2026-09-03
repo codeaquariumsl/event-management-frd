@@ -20,9 +20,10 @@ import { DataTable, Column } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StaffModal } from '@/features/staff/StaffModal';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
+import { staffService } from '@/lib/api/staffService';
 import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Staff, StaffRole } from '@/lib/types';
+import { Staff, StaffRole, EmploymentType } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
 export default function StaffPage() {
@@ -35,8 +36,13 @@ export default function StaffPage() {
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [paymentTargetStaff, setPaymentTargetStaff] = useState<Staff | null>(null);
 
-  const loadData = () => {
-    setStaffList(mockStore.getStaff());
+  const loadData = async () => {
+    try {
+      const data = await staffService.getStaff();
+      if (Array.isArray(data)) setStaffList(data);
+    } catch {
+      setStaffList(mockStore.getStaff());
+    }
   };
 
   useEffect(() => {

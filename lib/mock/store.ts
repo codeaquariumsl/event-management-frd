@@ -365,6 +365,18 @@ class MockStore {
     }
 
     setStorageItem(STORAGE_KEYS.CUSTOMERS, customers);
+
+    // Asynchronously synchronize with live backend
+    if (typeof window !== 'undefined') {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+      const isNew = existingIndex < 0;
+      fetch(`${API_URL}/customers${isNew ? '' : `/${saved.id}`}`, {
+        method: isNew ? 'POST' : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(saved),
+      }).catch((err) => console.warn('Background sync failed for customer:', err));
+    }
+
     return saved;
   }
 
@@ -372,6 +384,15 @@ class MockStore {
     const customers = this.getCustomers();
     const filtered = customers.filter((c) => c.id !== id);
     setStorageItem(STORAGE_KEYS.CUSTOMERS, filtered);
+
+    // Asynchronously delete from backend
+    if (typeof window !== 'undefined') {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+      fetch(`${API_URL}/customers/${id}`, {
+        method: 'DELETE',
+      }).catch((err) => console.warn('Background delete failed for customer:', err));
+    }
+
     return true;
   }
 

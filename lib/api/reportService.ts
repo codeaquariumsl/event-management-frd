@@ -1,4 +1,3 @@
-import { mockStore } from '../mock/store';
 import { CompanyProfile } from '../types';
 import { apiClient } from './client';
 
@@ -11,32 +10,15 @@ export const reportService = {
       // Fallback
     }
 
-    const events = mockStore.getEvents();
-    const staff = mockStore.getStaff();
-    const customers = mockStore.getCustomers();
-    const customerPayments = mockStore.getCustomerPayments();
-    const staffPayments = mockStore.getStaffPayments();
-
-    const totalEvents = events.length;
-    const upcomingEvents = events.filter((e) => e.status === 'Confirmed' || e.status === 'Pending').length;
-    const completedEvents = events.filter((e) => e.status === 'Completed').length;
-    const activeStaff = staff.filter((s) => s.status === 'Active').length;
-    const totalCustomers = customers.length;
-    const pendingCustomerPayments = events.reduce((sum, e) => sum + e.balance, 0);
-    const staffPaymentsDue = staffPayments
-      .filter((sp) => sp.status === 'Pending')
-      .reduce((sum, sp) => sum + sp.balance, 0);
-    const monthlyRevenue = customerPayments.reduce((sum, cp) => sum + cp.amount, 0);
-
     return {
-      totalEvents,
-      upcomingEvents,
-      completedEvents,
-      activeStaff,
-      totalCustomers,
-      pendingCustomerPayments,
-      staffPaymentsDue,
-      monthlyRevenue,
+      totalEvents: 0,
+      upcomingEvents: 0,
+      completedEvents: 0,
+      activeStaff: 0,
+      totalCustomers: 0,
+      pendingCustomerPayments: 0,
+      staffPaymentsDue: 0,
+      monthlyRevenue: 0,
     };
   },
 };
@@ -45,49 +27,82 @@ export const settingsService = {
   async getCompanyProfile(): Promise<CompanyProfile> {
     try {
       const profile = await apiClient.request<CompanyProfile>('/settings/profile');
-      if (profile && profile.name) return profile;
+      if (profile && profile.name) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('seekers_company_profile', JSON.stringify(profile));
+        }
+        return profile;
+      }
     } catch (err) {
       console.warn('Backend API /settings/profile unreachable:', err);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('seekers_company_profile');
+        if (cached) return JSON.parse(cached);
+      }
     }
-    return mockStore.getCompanyProfile();
+
+    return {
+      name: 'Seekers Entertainment (Pvt) Ltd',
+      tagline: 'Premier Audio-Visual Production, DJ & Event Technology',
+      email: 'ops@seekersentertainment.lk',
+      phone: '+94 11 258 4930',
+      address: 'No. 42, Independence Avenue, Colombo 07, Sri Lanka',
+      taxNumber: 'TIN-109482710-8000',
+      businessRegistration: 'PV-0028941',
+      currency: 'LKR',
+      bankName: 'Commercial Bank of Ceylon',
+      bankAccount: '1000 4829 5501',
+      bankBranch: 'Colombo 07 Premier Branch',
+      logoUrl: '/seekers-logo.svg',
+      invoiceTerms: '50% advance upon confirmation. Remaining balance due within 24 hours of event completion.',
+    };
   },
 
   async updateCompanyProfile(data: Partial<CompanyProfile>): Promise<CompanyProfile> {
-    try {
-      const updated = await apiClient.request<CompanyProfile>('/settings/profile', {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-      if (updated && updated.name) {
-        mockStore.saveCompanyProfile(updated);
-        return updated;
-      }
-    } catch (err) {
-      console.warn('Backend PUT /settings/profile failed:', err);
+    const updated = await apiClient.request<CompanyProfile>('/settings/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('seekers_company_profile', JSON.stringify(updated));
+      window.dispatchEvent(new Event('seekers_profile_updated'));
     }
-    return mockStore.saveCompanyProfile(data);
+
+    return updated;
   },
 
   async getServicesCatalog() {
     try {
       const catalog = await apiClient.request<any[]>('/settings/services');
-      if (Array.isArray(catalog) && catalog.length > 0) return catalog;
-    } catch {
-      // Fallback
+      if (Array.isArray(catalog) && catalog.length > 0) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('seekers_services_list', JSON.stringify(catalog));
+        }
+        return catalog;
+      }
+    } catch (err) {
+      console.warn('Backend API /settings/services unreachable:', err);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('seekers_services_list');
+        if (cached) return JSON.parse(cached);
+      }
     }
-    return mockStore.getServicesCatalog();
+    return [];
   },
 
   async saveService(service: { name: string; category: any; description: string; unitPrice: number; id?: string }) {
-    try {
-      const saved = await apiClient.request<any>('/settings/services', {
-        method: 'POST',
-        body: JSON.stringify(service),
-      });
-      if (saved) return saved;
-    } catch {
-      // Fallback
+    const method = service.id ? 'PUT' : 'POST';
+    const endpoint = service.id ? `/settings/services/${service.id}` : '/settings/services';
+    const saved = await apiClient.request<any>(endpoint, {
+      method,
+      body: JSON.stringify(service),
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('seekers_services_updated'));
     }
-    return mockStore.saveService(service);
+
+    return saved;
   },
 };

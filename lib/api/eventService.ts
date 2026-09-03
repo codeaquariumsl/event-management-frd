@@ -1,4 +1,3 @@
-import { mockStore } from '../mock/store';
 import { EventItem } from '../types';
 import { apiClient } from './client';
 
@@ -7,12 +6,19 @@ export const eventService = {
     try {
       const events = await apiClient.request<EventItem[]>('/events');
       if (Array.isArray(events)) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('seekers_events', JSON.stringify(events));
+        }
         return events;
       }
     } catch (err) {
-      console.warn('Backend API /events unreachable, using local cache:', err);
+      console.warn('Backend API /events unreachable:', err);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('seekers_events');
+        if (cached) return JSON.parse(cached);
+      }
     }
-    return mockStore.getEvents();
+    return [];
   },
 
   async getEventById(id: string): Promise<EventItem | undefined> {
@@ -22,52 +28,71 @@ export const eventService = {
         return event;
       }
     } catch (err) {
-      console.warn(`Backend API /events/${id} unreachable, using local cache:`, err);
+      console.warn(`Backend API /events/${id} failed:`, err);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('seekers_events');
+        if (cached) {
+          const list: EventItem[] = JSON.parse(cached);
+          return list.find((e) => e.id === id);
+        }
+      }
     }
-    return mockStore.getEventById(id);
+    return undefined;
   },
 
   async createEvent(data: Partial<EventItem> & { name: string; customerId: string }): Promise<EventItem> {
-    try {
-      const saved = await apiClient.request<EventItem>('/events', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      if (saved && saved.id) {
-        mockStore.saveEvent(saved);
-        return saved;
-      }
-    } catch (err) {
-      console.warn('Backend POST /events failed, saving to local store:', err);
+    const saved = await apiClient.request<EventItem>('/events', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('seekers_events');
+      const list: EventItem[] = cached ? JSON.parse(cached) : [];
+      list.unshift(saved);
+      localStorage.setItem('seekers_events', JSON.stringify(list));
+      window.dispatchEvent(new Event('seekers_events_updated'));
     }
-    return mockStore.saveEvent(data);
+
+    return saved;
   },
 
   async updateEvent(id: string, data: Partial<EventItem>): Promise<EventItem> {
-    try {
-      const updated = await apiClient.request<EventItem>(`/events/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-      if (updated && updated.id) {
-        mockStore.saveEvent(updated);
-        return updated;
+    const updated = await apiClient.request<EventItem>(`/events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('seekers_events');
+      if (cached) {
+        const list: EventItem[] = JSON.parse(cached);
+        const idx = list.findIndex((e) => e.id === id);
+        if (idx >= 0) list[idx] = updated;
+        localStorage.setItem('seekers_events', JSON.stringify(list));
       }
-    } catch (err) {
-      console.warn(`Backend PUT /events/${id} failed, saving locally:`, err);
+      window.dispatchEvent(new Event('seekers_events_updated'));
     }
-    return mockStore.saveEvent({ ...data, id, name: data.name || '', customerId: data.customerId || '' });
+
+    return updated;
   },
 
   async deleteEvent(id: string): Promise<boolean> {
-    try {
-      await apiClient.request<{ success: boolean }>(`/events/${id}`, {
-        method: 'DELETE',
-      });
-    } catch (err) {
-      console.warn(`Backend DELETE /events/${id} failed:`, err);
+    await apiClient.request<{ success: boolean }>(`/events/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('seekers_events');
+      if (cached) {
+        const list: EventItem[] = JSON.parse(cached);
+        const filtered = list.filter((e) => e.id !== id);
+        localStorage.setItem('seekers_events', JSON.stringify(filtered));
+      }
+      window.dispatchEvent(new Event('seekers_events_updated'));
     }
-    return mockStore.deleteEvent(id);
+
+    return true;
   },
 
   async checkStaffConflict(staffId: string, date: string, startTime: string, endTime: string, excludeEventId?: string) {
@@ -78,7 +103,7 @@ export const eventService = {
         }`
       );
     } catch {
-      return mockStore.checkStaffConflict(staffId, date, startTime, endTime, excludeEventId);
+      return { hasConflict: false };
     }
   },
 };

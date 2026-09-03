@@ -368,3 +368,16 @@ export interface Quotation {
   updatedAt?: string;
 }
 
+export interface ServiceCatalogItem {
+  id: string;
+  name: string;
+  category: 'DJ' | 'Sound' | 'Lighting' | 'LED' | 'Production' | 'Staff' | 'Special FX' | 'Other' | string;
+  description?: string;
+  unitPrice: number;
+  duration?: string;
+  features?: string[];
+  isActive?: boolean;
+  sortOrder?: number;
+  createdAt?: string;
+}
+

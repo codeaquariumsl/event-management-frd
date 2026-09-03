@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Printer, Download, CreditCard } from 'lucide-react';
-import { EventItem } from '@/lib/types';
+import { EventItem, CompanyProfile } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Modal } from './Modal';
-import { mockStore } from '@/lib/mock/store';
+import { settingsService } from '@/lib/api/reportService';
 
 interface InvoiceModalProps {
   isOpen: boolean;
@@ -15,7 +15,28 @@ interface InvoiceModalProps {
 }
 
 export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceModalProps) {
-  const company = mockStore.getCompanyProfile();
+  const [company, setCompany] = useState<CompanyProfile>({
+    name: 'Seekers Entertainment (Pvt) Ltd',
+    tagline: 'Premier Audio-Visual Production, DJ & Event Technology',
+    email: 'ops@seekersentertainment.lk',
+    phone: '+94 11 258 4930',
+    address: 'No. 42, Independence Avenue, Colombo 07, Sri Lanka',
+    taxNumber: 'TIN-109482710-8000',
+    businessRegistration: 'PV-0028941',
+    currency: 'LKR',
+    bankName: 'Commercial Bank of Ceylon',
+    bankAccount: '1000 4829 5501',
+    bankBranch: 'Colombo 07 Premier Branch',
+    logoUrl: '/seekers-logo.svg',
+    invoiceTerms: '50% advance upon confirmation. Remaining balance due within 24 hours of event completion.',
+  });
+
+  useEffect(() => {
+    settingsService.getCompanyProfile().then((p) => {
+      if (p) setCompany(p);
+    });
+  }, []);
+
   const invoiceNumber = `INV-${event.id.replace('EVT-', '')}`;
 
   const handlePrint = () => {

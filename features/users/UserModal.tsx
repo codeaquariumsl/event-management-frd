@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { UserAccount, UserRole } from '@/lib/types';
 import { Modal } from '@/components/ui/Modal';
 import { userService } from '@/lib/api/userService';
-import { mockStore, ROLE_PERMISSIONS_MATRIX } from '@/lib/mock/store';
+import { ROLE_PERMISSIONS_MATRIX } from '@/lib/auth/permissions';
 import { useToast } from '@/components/ui/Toast';
 import { ShieldCheck, Lock, UserCheck, KeyRound } from 'lucide-react';
 

@@ -21,7 +21,6 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StaffModal } from '@/features/staff/StaffModal';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
 import { staffService } from '@/lib/api/staffService';
-import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Staff, StaffRole, EmploymentType } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
@@ -40,9 +39,7 @@ export default function StaffPage() {
     try {
       const data = await staffService.getStaff();
       if (Array.isArray(data)) setStaffList(data);
-    } catch {
-      setStaffList(mockStore.getStaff());
-    }
+    } catch {}
   };
 
   useEffect(() => {

@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { EventItem, PaymentMethod } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
+import { paymentService } from '@/lib/api/paymentService';
+import { eventService } from '@/lib/api/eventService';
 import { formatCurrency } from '@/lib/utils';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -26,34 +27,50 @@ export function RecordPaymentModal({
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || amount <= 0) {
-      alert('Please enter a valid payment amount');
+      showToast('Please enter a valid payment amount', 'error');
       return;
     }
 
-    mockStore.saveCustomerPayment({
-      invoiceNumber: `INV-${event.id.replace('EVT-', '')}`,
-      eventId: event.id,
-      eventName: event.name,
-      customerId: event.customerId,
-      customerName: event.customerName,
-      date,
-      amount: Number(amount),
-      paymentMethod,
-      referenceNumber,
-      notes,
-      status: 'Paid',
-      eventTotal: event.totalAmount,
-      eventPaid: event.paidAmount + Number(amount),
-      eventBalance: Math.max(0, event.balance - Number(amount)),
-    });
+    setIsSubmitting(true);
+    try {
+      await paymentService.recordCustomerPayment({
+        invoiceNumber: `INV-${event.id.replace('EVT-', '')}`,
+        eventId: event.id,
+        eventName: event.name,
+        customerId: event.customerId,
+        customerName: event.customerName,
+        date,
+        amount: Number(amount),
+        paymentMethod,
+        referenceNumber,
+        notes,
+        status: 'Paid',
+        eventTotal: event.totalAmount,
+        eventPaid: event.paidAmount + Number(amount),
+        eventBalance: Math.max(0, event.balance - Number(amount)),
+      });
 
-    showToast(`✓ Payment of ${formatCurrency(Number(amount))} recorded successfully`);
-    if (onPaymentRecorded) onPaymentRecorded();
-    onClose();
+      // Update event paidAmount and balance
+      const newPaid = event.paidAmount + Number(amount);
+      const newBalance = Math.max(0, event.totalAmount - newPaid);
+      await eventService.updateEvent(event.id, {
+        paidAmount: newPaid,
+        balance: newBalance,
+      });
+
+      showToast(`✓ Payment of ${formatCurrency(Number(amount))} recorded successfully`);
+      if (onPaymentRecorded) onPaymentRecorded();
+      onClose();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to record payment', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const remainingAfterPayment = Math.max(0, event.balance - Number(amount || 0));

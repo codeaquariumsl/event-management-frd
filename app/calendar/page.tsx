@@ -16,7 +16,7 @@ import {
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { mockStore } from '@/lib/mock/store';
+import { eventService } from '@/lib/api/eventService';
 import { formatDate } from '@/lib/utils';
 import { EventItem } from '@/lib/types';
 
@@ -29,12 +29,14 @@ export default function CalendarPage() {
 
   useEffect(() => {
     const load = () => {
-      setEvents(mockStore.getEvents());
+      eventService.getEvents().then((evts) => {
+        if (Array.isArray(evts)) setEvents(evts);
+      });
     };
     load();
 
-    window.addEventListener('seekers_store_updated', load);
-    return () => window.removeEventListener('seekers_store_updated', load);
+    window.addEventListener('seekers_events_updated', load);
+    return () => window.removeEventListener('seekers_events_updated', load);
   }, []);
 
   const daysInMonth = Array.from({ length: 30 }, (_, i) => i + 1);

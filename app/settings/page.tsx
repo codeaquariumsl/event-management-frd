@@ -14,58 +14,86 @@ import {
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { settingsService } from '@/lib/api/reportService';
-import { mockStore } from '@/lib/mock/store';
-import { CompanyProfile } from '@/lib/types';
+import { serviceService } from '@/lib/api/serviceService';
+import { CompanyProfile, ServiceCatalogItem } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 import { formatCurrency } from '@/lib/utils';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
-  const [profile, setProfile] = useState<CompanyProfile>(mockStore.getCompanyProfile());
-  const [services, setServices] = useState(mockStore.getServicesCatalog());
+  const [profile, setProfile] = useState<CompanyProfile>({
+    name: 'Seekers Entertainment (Pvt) Ltd',
+    tagline: 'Premier Audio-Visual Production, DJ & Event Technology',
+    email: 'ops@seekersentertainment.lk',
+    phone: '+94 11 258 4930',
+    address: 'No. 42, Independence Avenue, Colombo 07, Sri Lanka',
+    taxNumber: 'TIN-109482710-8000',
+    businessRegistration: 'PV-0028941',
+    currency: 'LKR',
+    bankName: 'Commercial Bank of Ceylon',
+    bankAccount: '1000 4829 5501',
+    bankBranch: 'Colombo 07 Premier Branch',
+    logoUrl: '/seekers-logo.svg',
+    invoiceTerms: '50% advance upon confirmation. Remaining balance due within 24 hours of event completion.',
+  });
+  const [services, setServices] = useState<ServiceCatalogItem[]>([]);
 
   // New service quick add form
   const [newServiceName, setNewServiceName] = useState('');
   const [newServiceCat, setNewServiceCat] = useState<any>('Production');
   const [newServicePrice, setNewServicePrice] = useState(50000);
 
-  useEffect(() => {
+  const loadData = () => {
     settingsService.getCompanyProfile().then((p) => {
       if (p && p.name) setProfile(p);
     });
-    settingsService.getServicesCatalog().then((s) => {
+    serviceService.getServices().then((s) => {
       if (Array.isArray(s) && s.length > 0) setServices(s);
     });
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   const handleSaveCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    await settingsService.updateCompanyProfile(profile);
-    showToast('✓ Company profile settings saved');
+    try {
+      await settingsService.updateCompanyProfile(profile);
+      showToast('✓ Company profile settings saved');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save settings', 'error');
+    }
   };
 
-  const handleAddService = (e: React.FormEvent) => {
+  const handleAddService = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newServiceName.trim()) return;
 
-    const updated = mockStore.saveService({
-      name: newServiceName,
-      category: newServiceCat,
-      description: 'Custom configured production package',
-      unitPrice: Number(newServicePrice),
-    });
+    try {
+      await serviceService.createService({
+        name: newServiceName,
+        category: newServiceCat,
+        description: 'Custom configured production package',
+        unitPrice: Number(newServicePrice),
+      });
 
-    setServices(updated);
-    setNewServiceName('');
-    showToast('✓ New service added to catalog');
+      setNewServiceName('');
+      loadData();
+      showToast('✓ New service added to catalog');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to add service', 'error');
+    }
   };
 
   const handleResetDefaults = () => {
-    if (confirm('Reset entire system to initial demo state? All custom added events and payments will be refreshed.')) {
-      mockStore.resetStoreToDefaults();
-      setProfile(mockStore.getCompanyProfile());
-      setServices(mockStore.getServicesCatalog());
-      showToast('✓ Workspace reset to initial demo state');
+    if (confirm('Clear local cache and refresh settings from backend?')) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('seekers_company_profile');
+        localStorage.removeItem('seekers_services_list');
+      }
+      loadData();
+      showToast('✓ Settings refreshed from live backend');
     }
   };
 

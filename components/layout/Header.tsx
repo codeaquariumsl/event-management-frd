@@ -14,9 +14,18 @@ import {
   User,
   Settings,
 } from 'lucide-react';
-import { mockStore } from '@/lib/mock/store';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { GlobalSearchModal } from '../ui/GlobalSearchModal';
+
+interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'success';
+  timestamp: string;
+  read: boolean;
+  link?: string;
+}
 
 interface HeaderProps {
   onOpenMobile: () => void;
@@ -29,8 +38,25 @@ export function Header({ onOpenMobile }: HeaderProps) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const notifications = mockStore.getNotifications();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([
+    {
+      id: 'n-1',
+      title: 'Real Backend Connected',
+      message: 'MongoDB Atlas live database operational.',
+      type: 'success',
+      timestamp: 'Just now',
+      read: false,
+      link: '/events',
+    },
+  ]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const markRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
 
   const handleLogout = () => {
     logout();
@@ -95,7 +121,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
                     <div
                       key={n.id}
                       onClick={() => {
-                        mockStore.markNotificationRead(n.id);
+                        markRead(n.id);
                         if (n.link) router.push(n.link);
                         setIsNotifOpen(false);
                       }}

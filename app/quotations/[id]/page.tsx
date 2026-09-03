@@ -29,7 +29,6 @@ import { AppShell } from '@/components/layout/AppShell';
 import { quotationService } from '@/lib/api/quotationService';
 import { settingsService } from '@/lib/api/reportService';
 import { Quotation, QuotationLineItem, QuotationStatus, CompanyProfile } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
 
 export default function QuotationDetailPage() {
@@ -50,29 +49,24 @@ export default function QuotationDetailPage() {
 
   const loadData = async () => {
     try {
-      const q = await quotationService.getById(id);
+      const [q, p] = await Promise.all([
+        quotationService.getById(id),
+        settingsService.getCompanyProfile(),
+      ]);
       if (q) {
         setQuotation(q);
         setEditData({ ...q });
       }
-    } catch {
-      const q = mockStore.getQuotationById(id);
-      if (q) {
-        setQuotation(q);
-        setEditData({ ...q });
-      }
-    }
-    settingsService.getCompanyProfile().then((p) => {
       if (p) setProfile(p);
-    }).catch(() => {
-      setProfile(mockStore.getCompanyProfile());
-    });
+    } catch (err) {
+      console.warn('Error loading quotation:', err);
+    }
   };
 
   useEffect(() => {
     loadData();
-    window.addEventListener('seekers_store_updated', loadData);
-    return () => window.removeEventListener('seekers_store_updated', loadData);
+    window.addEventListener('seekers_quotations_updated', loadData);
+    return () => window.removeEventListener('seekers_quotations_updated', loadData);
   }, [id]);
 
   // Edit handlers

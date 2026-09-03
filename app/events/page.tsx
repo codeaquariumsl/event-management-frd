@@ -24,7 +24,6 @@ import { InvoiceModal } from '@/components/ui/InvoiceModal';
 import { RecordPaymentModal } from '@/features/events/RecordPaymentModal';
 import { StaffAssignmentModal } from '@/features/events/StaffAssignmentModal';
 import { eventService } from '@/lib/api/eventService';
-import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { EventItem, EventStatus, EventType } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
@@ -47,15 +46,13 @@ export default function EventsPage() {
     try {
       const data = await eventService.getEvents();
       if (Array.isArray(data)) setEvents(data);
-    } catch {
-      setEvents(mockStore.getEvents());
-    }
+    } catch {}
   };
 
   useEffect(() => {
     loadData();
-    window.addEventListener('seekers_store_updated', loadData);
-    return () => window.removeEventListener('seekers_store_updated', loadData);
+    window.addEventListener('seekers_events_updated', loadData);
+    return () => window.removeEventListener('seekers_events_updated', loadData);
   }, []);
 
   const filteredEvents = useMemo(() => {
@@ -344,10 +341,9 @@ export default function EventsPage() {
           endTime={assignStaffEvent.endTime}
           currentEventId={assignStaffEvent.id}
           existingAssignments={assignStaffEvent.assignedStaff}
-          onAssign={(as) => {
+          onAssign={async (as) => {
             const updatedStaff = [...assignStaffEvent.assignedStaff, as];
-            mockStore.saveEvent({
-              ...assignStaffEvent,
+            await eventService.updateEvent(assignStaffEvent.id, {
               assignedStaff: updatedStaff,
             });
             loadData();

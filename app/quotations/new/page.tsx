@@ -30,7 +30,6 @@ import { quotationService } from '@/lib/api/quotationService';
 import { customerService } from '@/lib/api/customerService';
 import { eventTypeService } from '@/lib/api/eventTypeService';
 import { inventoryService } from '@/lib/api/inventoryService';
-import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
 import { CustomerModal } from '@/features/customers/CustomerModal';
 
@@ -746,7 +745,9 @@ export default function NewQuotationPage() {
           isOpen={isCustomerModalOpen}
           onClose={() => setIsCustomerModalOpen(false)}
           onSuccess={(newCust: Customer) => {
-            setCustomers(mockStore.getCustomers());
+            customerService.getCustomers().then((c) => {
+              if (Array.isArray(c)) setCustomers(c);
+            });
             handleCustomerSelect(newCust.id);
             setIsCustomerModalOpen(false);
             showToast(`Client ${newCust.name} added!`, 'success');

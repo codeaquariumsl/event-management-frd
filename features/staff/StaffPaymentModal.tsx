@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { PaymentType, PaymentMethod, Staff } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
+import React, { useState, useEffect } from 'react';
+import { PaymentType, PaymentMethod, Staff, EventItem } from '@/lib/types';
+import { staffService } from '@/lib/api/staffService';
+import { eventService } from '@/lib/api/eventService';
+import { paymentService } from '@/lib/api/paymentService';
 import { formatCurrency } from '@/lib/utils';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -27,10 +29,10 @@ export function StaffPaymentModal({
   onSuccess,
 }: StaffPaymentModalProps) {
   const { showToast } = useToast();
-  const staffList = mockStore.getStaff();
-  const events = mockStore.getEvents();
+  const [staffList, setStaffList] = useState<Staff[]>(staff ? [staff] : []);
+  const [events, setEvents] = useState<EventItem[]>([]);
 
-  const [selectedStaffId, setSelectedStaffId] = useState(staff?.id || staffList[0]?.id || '');
+  const [selectedStaffId, setSelectedStaffId] = useState(staff?.id || '');
   const [selectedEventId, setSelectedEventId] = useState(eventId || '');
   const [paymentType, setPaymentType] = useState<PaymentType>(eventId ? 'Event Payment' : 'Salary');
   const [amount, setAmount] = useState<number>(defaultAmount || 25000);
@@ -38,37 +40,57 @@ export function StaffPaymentModal({
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    staffService.getStaff().then((stf) => {
+      if (Array.isArray(stf) && stf.length > 0) {
+        setStaffList(stf);
+        if (!selectedStaffId) setSelectedStaffId(staff?.id || stf[0].id);
+      }
+    });
+    eventService.getEvents().then((evts) => {
+      if (Array.isArray(evts)) setEvents(evts);
+    });
+  }, []);
 
   const currentStaff = staffList.find((s) => s.id === selectedStaffId);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || amount <= 0) {
-      alert('Please enter a valid payment amount');
+      showToast('Please enter a valid payment amount', 'error');
       return;
     }
 
-    const targetEvent = events.find((ev) => ev.id === selectedEventId);
+    setIsSubmitting(true);
+    try {
+      const targetEvent = events.find((ev) => ev.id === selectedEventId);
 
-    mockStore.saveStaffPayment({
-      staffId: selectedStaffId,
-      staffName: currentStaff?.name || 'Staff Member',
-      eventId: selectedEventId || undefined,
-      eventName: targetEvent?.name || eventName || undefined,
-      paymentType,
-      date,
-      amount: Number(amount),
-      paidAmount: Number(amount),
-      balance: 0,
-      status: 'Paid',
-      paymentMethod,
-      referenceNumber,
-      notes,
-    });
+      await paymentService.recordStaffPayment({
+        staffId: selectedStaffId,
+        staffName: currentStaff?.name || 'Staff Member',
+        eventId: selectedEventId || undefined,
+        eventName: targetEvent?.name || eventName || undefined,
+        paymentType,
+        date,
+        amount: Number(amount),
+        paidAmount: Number(amount),
+        balance: 0,
+        status: 'Paid',
+        paymentMethod,
+        referenceNumber,
+        notes,
+      });
 
-    showToast(`✓ Payment of ${formatCurrency(Number(amount))} to ${currentStaff?.name} recorded`);
-    if (onSuccess) onSuccess();
-    onClose();
+      showToast(`✓ Payment of ${formatCurrency(Number(amount))} to ${currentStaff?.name} recorded`);
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to record staff payment', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

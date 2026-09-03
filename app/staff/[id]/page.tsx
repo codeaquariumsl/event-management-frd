@@ -19,7 +19,8 @@ import { AppShell } from '@/components/layout/AppShell';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
 import { staffService } from '@/lib/api/staffService';
-import { mockStore } from '@/lib/mock/store';
+import { eventService } from '@/lib/api/eventService';
+import { paymentService } from '@/lib/api/paymentService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Staff, EventItem, StaffPayment } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
@@ -38,21 +39,29 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
 
   const loadData = async () => {
     try {
-      const foundStaff = await staffService.getStaffById(resolvedParams.id);
-      if (foundStaff) {
-        setStaff({ ...foundStaff });
-      }
-    } catch {}
-    const fallback = mockStore.getStaffById(resolvedParams.id);
-    if (fallback) {
-      setStaff({ ...fallback });
-      const events = mockStore.getEvents().filter((e) =>
-        e.assignedStaff.some((as) => as.staffId === fallback.id)
-      );
-      setAssignedEvents(events);
+      const [foundStaff, allEvents, allPayments] = await Promise.all([
+        staffService.getStaffById(resolvedParams.id),
+        eventService.getEvents(),
+        paymentService.getStaffPayments(),
+      ]);
 
-      const payments = mockStore.getStaffPayments().filter((p) => p.staffId === fallback.id);
-      setPaymentHistory(payments);
+      if (foundStaff) {
+        setStaff(foundStaff);
+      }
+
+      if (Array.isArray(allEvents)) {
+        const events = allEvents.filter((e) =>
+          e.assignedStaff && e.assignedStaff.some((as) => as.staffId === resolvedParams.id)
+        );
+        setAssignedEvents(events);
+      }
+
+      if (Array.isArray(allPayments)) {
+        const payments = allPayments.filter((p) => p.staffId === resolvedParams.id);
+        setPaymentHistory(payments);
+      }
+    } catch (err) {
+      console.warn('Error loading staff details:', err);
     }
   };
 

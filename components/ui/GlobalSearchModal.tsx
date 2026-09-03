@@ -3,7 +3,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, CalendarDays, Users, ClipboardList, FileText, ArrowRight, X } from 'lucide-react';
-import { mockStore } from '@/lib/mock/store';
+import { eventService } from '@/lib/api/eventService';
+import { customerService } from '@/lib/api/customerService';
+import { staffService } from '@/lib/api/staffService';
+import { paymentService } from '@/lib/api/paymentService';
+import { EventItem, Customer, Staff, CustomerPayment } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 interface GlobalSearchModalProps {
@@ -14,6 +18,19 @@ interface GlobalSearchModalProps {
 export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
+  const [eventsList, setEventsList] = useState<EventItem[]>([]);
+  const [customersList, setCustomersList] = useState<Customer[]>([]);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [paymentsList, setPaymentsList] = useState<CustomerPayment[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      eventService.getEvents().then((e) => { if (Array.isArray(e)) setEventsList(e); });
+      customerService.getCustomers().then((c) => { if (Array.isArray(c)) setCustomersList(c); });
+      staffService.getStaff().then((s) => { if (Array.isArray(s)) setStaffList(s); });
+      paymentService.getCustomerPayments().then((p) => { if (Array.isArray(p)) setPaymentsList(p); });
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -36,28 +53,24 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
     }
 
     const q = query.toLowerCase();
-    const events = mockStore
-      .getEvents()
+    const events = eventsList
       .filter((e) => e.name.toLowerCase().includes(q) || e.location.toLowerCase().includes(q) || e.customerName.toLowerCase().includes(q))
       .slice(0, 4);
 
-    const customers = mockStore
-      .getCustomers()
+    const customers = customersList
       .filter((c) => c.name.toLowerCase().includes(q) || (c.company && c.company.toLowerCase().includes(q)) || c.phone.includes(q))
       .slice(0, 4);
 
-    const staff = mockStore
-      .getStaff()
-      .filter((s) => s.name.toLowerCase().includes(q) || s.role.toLowerCase().includes(q) || s.skills.some((sk) => sk.toLowerCase().includes(q)))
+    const staff = staffList
+      .filter((s) => s.name.toLowerCase().includes(q) || s.role.toLowerCase().includes(q) || (s.skills && s.skills.some((sk) => sk.toLowerCase().includes(q))))
       .slice(0, 4);
 
-    const payments = mockStore
-      .getCustomerPayments()
+    const payments = paymentsList
       .filter((p) => p.invoiceNumber.toLowerCase().includes(q) || p.customerName.toLowerCase().includes(q) || p.eventName.toLowerCase().includes(q))
       .slice(0, 4);
 
     return { events, customers, staff, payments };
-  }, [query]);
+  }, [query, eventsList, customersList, staffList, paymentsList]);
 
   const hasResults =
     results.events.length > 0 ||

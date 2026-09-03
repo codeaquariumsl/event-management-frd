@@ -27,7 +27,6 @@ import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
 import { inventoryService } from '@/lib/api/inventoryService';
 import { InventoryItem, InventoryCategory } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
 
 export default function InventoryPage() {
@@ -85,16 +84,17 @@ export default function InventoryPage() {
       ]);
       if (Array.isArray(itms)) setItems(itms);
       if (Array.isArray(cats)) setCategories(cats);
-    } catch {
-      setItems(mockStore.getInventoryItems());
-      setCategories(mockStore.getInventoryCategories());
-    }
+    } catch {}
   };
 
   useEffect(() => {
     loadData();
-    window.addEventListener('seekers_store_updated', loadData);
-    return () => window.removeEventListener('seekers_store_updated', loadData);
+    window.addEventListener('seekers_inventory_items_updated', loadData);
+    window.addEventListener('seekers_inventory_categories_updated', loadData);
+    return () => {
+      window.removeEventListener('seekers_inventory_items_updated', loadData);
+      window.removeEventListener('seekers_inventory_categories_updated', loadData);
+    };
   }, []);
 
   // KPIs

@@ -27,8 +27,8 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
 import { eventTypeService } from '@/lib/api/eventTypeService';
-import { EventTypeItem } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
+import { eventService } from '@/lib/api/eventService';
+import { EventTypeItem, EventItem } from '@/lib/types';
 
 const COLOR_PALETTES = [
   '#ec4899', // Pink
@@ -44,6 +44,7 @@ const COLOR_PALETTES = [
 export default function EventTypesPage() {
   const { showToast } = useToast();
   const [eventTypes, setEventTypes] = useState<EventTypeItem[]>([]);
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
 
@@ -64,20 +65,24 @@ export default function EventTypesPage() {
 
   const loadData = async () => {
     try {
-      const data = await eventTypeService.getEventTypes();
-      if (Array.isArray(data)) setEventTypes(data);
-    } catch {
-      setEventTypes(mockStore.getEventTypes());
-    }
+      const [types, evts] = await Promise.all([
+        eventTypeService.getEventTypes(),
+        eventService.getEvents(),
+      ]);
+      if (Array.isArray(types)) setEventTypes(types);
+      if (Array.isArray(evts)) setEvents(evts);
+    } catch {}
   };
 
   useEffect(() => {
     loadData();
-    window.addEventListener('seekers_store_updated', loadData);
-    return () => window.removeEventListener('seekers_store_updated', loadData);
+    window.addEventListener('seekers_event_types_updated', loadData);
+    window.addEventListener('seekers_events_updated', loadData);
+    return () => {
+      window.removeEventListener('seekers_event_types_updated', loadData);
+      window.removeEventListener('seekers_events_updated', loadData);
+    };
   }, []);
-
-  const events = mockStore.getEvents();
 
   // Event counts by type
   const eventCounts = useMemo(() => {

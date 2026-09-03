@@ -22,7 +22,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
 import { UserModal } from '@/features/users/UserModal';
 import { userService } from '@/lib/api/userService';
-import { mockStore, ROLE_PERMISSIONS_MATRIX } from '@/lib/mock/store';
+import { ROLE_PERMISSIONS_MATRIX } from '@/lib/auth/permissions';
 import { UserAccount, UserRole } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
@@ -38,9 +38,7 @@ export default function UsersPage() {
     try {
       const data = await userService.getUsers();
       if (Array.isArray(data)) setUsers(data);
-    } catch {
-      setUsers(mockStore.getUsers());
-    }
+    } catch {}
   };
 
   useEffect(() => {

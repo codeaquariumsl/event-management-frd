@@ -27,7 +27,6 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { CustomerModal } from '@/features/customers/CustomerModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { customerService } from '@/lib/api/customerService';
-import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Customer, CustomerType } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
@@ -48,9 +47,9 @@ export default function CustomersPage() {
     setIsLoading(true);
     try {
       const data = await customerService.getCustomers();
-      setCustomers(data);
+      if (Array.isArray(data)) setCustomers(data);
     } catch {
-      setCustomers(mockStore.getCustomers());
+      // Handled
     } finally {
       setIsLoading(false);
     }
@@ -58,11 +57,8 @@ export default function CustomersPage() {
 
   useEffect(() => {
     loadData();
-    const handleStoreUpdate = () => {
-      setCustomers(mockStore.getCustomers());
-    };
-    window.addEventListener('seekers_store_updated', handleStoreUpdate);
-    return () => window.removeEventListener('seekers_store_updated', handleStoreUpdate);
+    window.addEventListener('seekers_customers_updated', loadData);
+    return () => window.removeEventListener('seekers_customers_updated', loadData);
   }, []);
 
   // Top KPIs

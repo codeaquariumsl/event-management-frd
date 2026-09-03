@@ -74,6 +74,7 @@ export function Sidebar({
     { label: 'Customers', href: '/customers', icon: ClipboardList },
     { label: 'Customer Payments', href: '/customer-payments', icon: CreditCard },
     { label: 'Event Types', href: '/event-types', icon: Layers },
+    { label: 'Services Catalog', href: '/services', icon: Sparkles },
     { label: 'Inventory Gear', href: '/inventory', icon: Boxes },
     { label: 'Staff Management', href: '/staff', icon: Users },
     { label: 'Staff Payments', href: '/staff-payments', icon: WalletCards },

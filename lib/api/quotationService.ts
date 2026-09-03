@@ -1,94 +1,118 @@
 import { apiClient } from './client';
 import { Quotation, EventItem } from '../types';
-import { mockStore } from '../mock/store';
 
 export const quotationService = {
   async getAll(filters?: { status?: string; customerId?: string }): Promise<Quotation[]> {
-    if (apiClient.isMock) {
-      let quotations = mockStore.getQuotations();
-      if (filters?.status && filters.status !== 'All') {
-        quotations = quotations.filter((q) => q.status === filters.status);
-      }
-      if (filters?.customerId) {
-        quotations = quotations.filter((q) => q.customerId === filters.customerId);
-      }
-      return quotations;
-    }
     try {
       const query = new URLSearchParams();
       if (filters?.status && filters.status !== 'All') query.append('status', filters.status);
       if (filters?.customerId) query.append('customerId', filters.customerId);
       const qs = query.toString() ? `?${query.toString()}` : '';
-      return await apiClient.request<Quotation[]>(`/quotations${qs}`);
-    } catch {
-      let quotations = mockStore.getQuotations();
-      if (filters?.status && filters.status !== 'All') {
-        quotations = quotations.filter((q) => q.status === filters.status);
+      const quotations = await apiClient.request<Quotation[]>(`/quotations${qs}`);
+      if (Array.isArray(quotations)) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('seekers_quotations', JSON.stringify(quotations));
+        }
+        return quotations;
       }
-      if (filters?.customerId) {
-        quotations = quotations.filter((q) => q.customerId === filters.customerId);
+    } catch (err) {
+      console.warn('Backend API /quotations unreachable:', err);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('seekers_quotations');
+        if (cached) {
+          let list: Quotation[] = JSON.parse(cached);
+          if (filters?.status && filters.status !== 'All') {
+            list = list.filter((q) => q.status === filters.status);
+          }
+          if (filters?.customerId) {
+            list = list.filter((q) => q.customerId === filters.customerId);
+          }
+          return list;
+        }
       }
-      return quotations;
     }
+    return [];
   },
 
   async getById(id: string): Promise<Quotation | undefined> {
-    if (apiClient.isMock) {
-      return mockStore.getQuotationById(id);
-    }
     try {
-      return await apiClient.request<Quotation>(`/quotations/${id}`);
-    } catch {
-      return mockStore.getQuotationById(id);
+      const quotation = await apiClient.request<Quotation>(`/quotations/${id}`);
+      if (quotation && quotation.id) return quotation;
+    } catch (err) {
+      console.warn(`Backend API /quotations/${id} failed:`, err);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('seekers_quotations');
+        if (cached) {
+          const list: Quotation[] = JSON.parse(cached);
+          return list.find((q) => q.id === id);
+        }
+      }
     }
+    return undefined;
   },
 
   async create(data: Partial<Quotation> & { customerName: string; title: string }): Promise<Quotation> {
-    const saved = mockStore.saveQuotation(data);
-    if (!apiClient.isMock) {
-      try {
-        return await apiClient.request<Quotation>('/quotations', {
-          method: 'POST',
-          body: JSON.stringify(data),
-        });
-      } catch {}
+    const saved = await apiClient.request<Quotation>('/quotations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('seekers_quotations');
+      const list: Quotation[] = cached ? JSON.parse(cached) : [];
+      list.unshift(saved);
+      localStorage.setItem('seekers_quotations', JSON.stringify(list));
+      window.dispatchEvent(new Event('seekers_quotations_updated'));
     }
+
     return saved;
   },
 
   async update(id: string, data: Partial<Quotation>): Promise<Quotation> {
-    const saved = mockStore.saveQuotation({ ...data, id, customerName: data.customerName || '', title: data.title || '' });
-    if (!apiClient.isMock) {
-      try {
-        return await apiClient.request<Quotation>(`/quotations/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        });
-      } catch {}
+    const updated = await apiClient.request<Quotation>(`/quotations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('seekers_quotations');
+      if (cached) {
+        const list: Quotation[] = JSON.parse(cached);
+        const idx = list.findIndex((q) => q.id === id);
+        if (idx >= 0) list[idx] = updated;
+        localStorage.setItem('seekers_quotations', JSON.stringify(list));
+      }
+      window.dispatchEvent(new Event('seekers_quotations_updated'));
     }
-    return saved;
+
+    return updated;
   },
 
   async delete(id: string): Promise<boolean> {
-    const result = mockStore.deleteQuotation(id);
-    if (!apiClient.isMock) {
-      try {
-        await apiClient.request(`/quotations/${id}`, { method: 'DELETE' });
-      } catch {}
+    await apiClient.request(`/quotations/${id}`, { method: 'DELETE' });
+
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('seekers_quotations');
+      if (cached) {
+        const list: Quotation[] = JSON.parse(cached);
+        const filtered = list.filter((q) => q.id !== id);
+        localStorage.setItem('seekers_quotations', JSON.stringify(filtered));
+      }
+      window.dispatchEvent(new Event('seekers_quotations_updated'));
     }
-    return result;
+
+    return true;
   },
 
   async convertToEvent(id: string): Promise<EventItem | null> {
-    const event = mockStore.convertQuotationToEvent(id);
-    if (!apiClient.isMock) {
-      try {
-        const res = await apiClient.request<{ message: string; event: EventItem }>(`/quotations/${id}/convert`, {
-          method: 'POST',
-        });
-        if (res?.event) return res.event;
-      } catch {}
+    const res = await apiClient.request<{ message: string; event: EventItem }>(`/quotations/${id}/convert`, {
+      method: 'POST',
+    });
+    if (res?.event) {
+      window.dispatchEvent(new Event('seekers_events_updated'));
+      window.dispatchEvent(new Event('seekers_quotations_updated'));
+      return res.event;
     }
-    return event;
+    return null;
   },
 };

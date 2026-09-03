@@ -16,7 +16,7 @@ import {
 import { eventService } from '@/lib/api/eventService';
 import { customerService } from '@/lib/api/customerService';
 import { eventTypeService } from '@/lib/api/eventTypeService';
-import { mockStore } from '@/lib/mock/store';
+import { serviceService } from '@/lib/api/serviceService';
 import { formatCurrency } from '@/lib/utils';
 import {
   Customer,
@@ -40,19 +40,19 @@ export function EventForm({ initialData }: EventFormProps) {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [dynamicEventTypes, setDynamicEventTypes] = useState<EventTypeItem[]>([]);
-  const servicesCatalog = mockStore.getServicesCatalog();
+  const [servicesCatalog, setServicesCatalog] = useState<any[]>([]);
 
   useEffect(() => {
     customerService.getCustomers().then((c) => {
       if (Array.isArray(c)) setCustomers(c);
-    }).catch(() => {
-      setCustomers(mockStore.getCustomers());
     });
 
     eventTypeService.getEventTypes().then((t) => {
       if (Array.isArray(t)) setDynamicEventTypes(t);
-    }).catch(() => {
-      setDynamicEventTypes(mockStore.getEventTypes());
+    });
+
+    serviceService.getServices().then((s) => {
+      if (Array.isArray(s)) setServicesCatalog(s);
     });
   }, []);
 

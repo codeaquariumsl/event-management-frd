@@ -28,7 +28,6 @@ import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
 import { quotationService } from '@/lib/api/quotationService';
 import { Quotation, QuotationStatus } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
 
 export default function QuotationsPage() {
@@ -44,15 +43,13 @@ export default function QuotationsPage() {
     try {
       const data = await quotationService.getAll();
       if (Array.isArray(data)) setQuotations(data);
-    } catch {
-      setQuotations(mockStore.getQuotations());
-    }
+    } catch {}
   };
 
   useEffect(() => {
     loadData();
-    window.addEventListener('seekers_store_updated', loadData);
-    return () => window.removeEventListener('seekers_store_updated', loadData);
+    window.addEventListener('seekers_quotations_updated', loadData);
+    return () => window.removeEventListener('seekers_quotations_updated', loadData);
   }, []);
 
   // KPIs

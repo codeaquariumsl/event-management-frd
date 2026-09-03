@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { RecurringEvent, RecurringFrequency, EventType } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
+import React, { useState, useEffect } from 'react';
+import { RecurringEvent, RecurringFrequency, EventType, Customer, Staff } from '@/lib/types';
+import { customerService } from '@/lib/api/customerService';
+import { staffService } from '@/lib/api/staffService';
+import { recurringService } from '@/lib/api/recurringService';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 
@@ -20,12 +22,11 @@ export function RecurringEventModal({
   initialData,
 }: RecurringEventModalProps) {
   const { showToast } = useToast();
-  const customers = mockStore.getCustomers();
-  const staffList = mockStore.getStaff();
-  const servicesCatalog = mockStore.getServicesCatalog();
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
 
   const [seriesName, setSeriesName] = useState(initialData?.seriesName || '');
-  const [customerId, setCustomerId] = useState(initialData?.customerId || customers[0]?.id || '');
+  const [customerId, setCustomerId] = useState(initialData?.customerId || '');
   const [eventType, setEventType] = useState<EventType>(initialData?.eventType || 'Club / Concert');
   const [frequency, setFrequency] = useState<RecurringFrequency>(initialData?.frequency || 'Weekly');
   const [startDate, setStartDate] = useState(initialData?.startDate || new Date().toISOString().split('T')[0]);
@@ -37,6 +38,19 @@ export function RecurringEventModal({
   const [defaultPrice, setDefaultPrice] = useState(initialData?.defaultPrice || 140000);
   const [paymentTerms, setPaymentTerms] = useState(initialData?.paymentTerms || 'Weekly settlement');
   const [assignedStaffIds, setAssignedStaffIds] = useState<string[]>(initialData?.assignedStaffIds || []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    customerService.getCustomers().then((c) => {
+      if (Array.isArray(c) && c.length > 0) {
+        setCustomers(c);
+        if (!customerId) setCustomerId(initialData?.customerId || c[0].id);
+      }
+    });
+    staffService.getStaff().then((s) => {
+      if (Array.isArray(s)) setStaffList(s);
+    });
+  }, []);
 
   const handleToggleStaff = (staffId: string) => {
     setAssignedStaffIds((prev) =>
@@ -44,46 +58,53 @@ export function RecurringEventModal({
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!seriesName.trim() || !customerId) {
-      alert('Please fill in required fields');
+      showToast('Please fill in required fields', 'error');
       return;
     }
 
-    const customer = customers.find((c) => c.id === customerId);
+    setIsSubmitting(true);
+    try {
+      const customer = customers.find((c) => c.id === customerId);
 
-    mockStore.saveRecurringEvent({
-      id: initialData?.id,
-      seriesName,
-      customerId,
-      customerName: customer?.name || 'Customer',
-      eventType,
-      frequency,
-      startDate,
-      endDate,
-      eventDay,
-      startTime,
-      endTime,
-      location,
-      defaultPrice: Number(defaultPrice),
-      paymentTerms,
-      assignedStaffIds,
-      services: [
-        {
-          id: 's-def-1',
-          name: 'DJ & MC Performance Package',
-          category: 'DJ',
-          quantity: 1,
-          unitPrice: 65000,
-          totalPrice: 65000,
-        },
-      ],
-    });
+      await recurringService.createRecurringEvent({
+        id: initialData?.id,
+        seriesName,
+        customerId,
+        customerName: customer?.name || 'Customer',
+        eventType,
+        frequency,
+        startDate,
+        endDate,
+        eventDay,
+        startTime,
+        endTime,
+        location,
+        defaultPrice: Number(defaultPrice),
+        paymentTerms,
+        assignedStaffIds,
+        services: [
+          {
+            id: 's-def-1',
+            name: 'DJ & MC Performance Package',
+            category: 'DJ',
+            quantity: 1,
+            unitPrice: 65000,
+            totalPrice: 65000,
+          },
+        ],
+      });
 
-    showToast(initialData ? '✓ Recurring series updated' : '✓ Recurring series created successfully');
-    if (onSuccess) onSuccess();
-    onClose();
+      showToast(initialData ? '✓ Recurring series updated' : '✓ Recurring series created successfully');
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save recurring series', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

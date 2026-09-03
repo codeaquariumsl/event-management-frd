@@ -1,4 +1,3 @@
-import { mockStore } from '../mock/store';
 import { Staff, StaffPayrollSummary } from '../types';
 import { apiClient } from './client';
 
@@ -7,12 +6,19 @@ export const staffService = {
     try {
       const staff = await apiClient.request<Staff[]>('/staff');
       if (Array.isArray(staff)) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('seekers_staff', JSON.stringify(staff));
+        }
         return staff;
       }
     } catch (err) {
-      console.warn('Backend API /staff unreachable, using local cache:', err);
+      console.warn('Backend API /staff unreachable:', err);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('seekers_staff');
+        if (cached) return JSON.parse(cached);
+      }
     }
-    return mockStore.getStaff();
+    return [];
   },
 
   async getStaffById(id: string): Promise<Staff | undefined> {
@@ -23,60 +29,79 @@ export const staffService = {
       }
     } catch (err) {
       console.warn(`Backend API /staff/${id} unreachable:`, err);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('seekers_staff');
+        if (cached) {
+          const list: Staff[] = JSON.parse(cached);
+          return list.find((s) => s.id === id);
+        }
+      }
     }
-    return mockStore.getStaffById(id);
+    return undefined;
   },
 
   async createStaff(data: Partial<Staff> & { name: string; role: any }): Promise<Staff> {
-    try {
-      const saved = await apiClient.request<Staff>('/staff', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      if (saved && saved.id) {
-        mockStore.saveStaff(saved);
-        return saved;
-      }
-    } catch (err) {
-      console.warn('Backend POST /staff failed:', err);
+    const saved = await apiClient.request<Staff>('/staff', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('seekers_staff');
+      const list: Staff[] = cached ? JSON.parse(cached) : [];
+      list.unshift(saved);
+      localStorage.setItem('seekers_staff', JSON.stringify(list));
+      window.dispatchEvent(new Event('seekers_staff_updated'));
     }
-    return mockStore.saveStaff(data);
+
+    return saved;
   },
 
   async updateStaff(id: string, data: Partial<Staff>): Promise<Staff> {
-    try {
-      const updated = await apiClient.request<Staff>(`/staff/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-      if (updated && updated.id) {
-        mockStore.saveStaff(updated);
-        return updated;
+    const updated = await apiClient.request<Staff>(`/staff/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('seekers_staff');
+      if (cached) {
+        const list: Staff[] = JSON.parse(cached);
+        const idx = list.findIndex((s) => s.id === id);
+        if (idx >= 0) list[idx] = updated;
+        localStorage.setItem('seekers_staff', JSON.stringify(list));
       }
-    } catch (err) {
-      console.warn(`Backend PUT /staff/${id} failed:`, err);
+      window.dispatchEvent(new Event('seekers_staff_updated'));
     }
-    return mockStore.saveStaff({ ...data, id, name: data.name || '', role: data.role });
+
+    return updated;
   },
 
   async deleteStaff(id: string): Promise<boolean> {
-    try {
-      await apiClient.request<{ success: boolean }>(`/staff/${id}`, {
-        method: 'DELETE',
-      });
-    } catch (err) {
-      console.warn(`Backend DELETE /staff/${id} failed:`, err);
+    await apiClient.request<{ success: boolean }>(`/staff/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('seekers_staff');
+      if (cached) {
+        const list: Staff[] = JSON.parse(cached);
+        const filtered = list.filter((s) => s.id !== id);
+        localStorage.setItem('seekers_staff', JSON.stringify(filtered));
+      }
+      window.dispatchEvent(new Event('seekers_staff_updated'));
     }
-    return mockStore.deleteStaff(id);
+
+    return true;
   },
 
   async getPayrollSummary(monthYear: string): Promise<StaffPayrollSummary[]> {
     try {
       const summary = await apiClient.request<StaffPayrollSummary[]>(`/staff/payroll?month=${monthYear}`);
       if (Array.isArray(summary)) return summary;
-    } catch {
-      // Fallback
+    } catch (err) {
+      console.warn('Backend API /staff/payroll failed:', err);
     }
-    return mockStore.getPayrollSummary(monthYear);
+    return [];
   },
 };

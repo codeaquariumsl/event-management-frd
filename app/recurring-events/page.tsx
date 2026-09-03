@@ -22,7 +22,6 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { RecurringEventModal } from '@/features/recurring-events/RecurringEventModal';
 import { Modal } from '@/components/ui/Modal';
 import { recurringService } from '@/lib/api/recurringService';
-import { mockStore } from '@/lib/mock/store';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { RecurringEvent } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
@@ -40,15 +39,13 @@ export default function RecurringEventsPage() {
     try {
       const data = await recurringService.getRecurringEvents();
       if (Array.isArray(data)) setRecurringList(data);
-    } catch {
-      setRecurringList(mockStore.getRecurringEvents());
-    }
+    } catch {}
   };
 
   useEffect(() => {
     loadData();
-    window.addEventListener('seekers_store_updated', loadData);
-    return () => window.removeEventListener('seekers_store_updated', loadData);
+    window.addEventListener('seekers_recurring_updated', loadData);
+    return () => window.removeEventListener('seekers_recurring_updated', loadData);
   }, []);
 
   const handleExecuteGeneration = async () => {

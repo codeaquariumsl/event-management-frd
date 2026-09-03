@@ -22,7 +22,8 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { CustomerModal } from '@/features/customers/CustomerModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { customerService } from '@/lib/api/customerService';
-import { mockStore } from '@/lib/mock/store';
+import { eventService } from '@/lib/api/eventService';
+import { paymentService } from '@/lib/api/paymentService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Customer, EventItem, CustomerPayment } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
@@ -40,36 +41,34 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
   const loadData = async () => {
     try {
-      const found = await customerService.getCustomerById(resolvedParams.id);
+      const [found, allEvents, allPayments] = await Promise.all([
+        customerService.getCustomerById(resolvedParams.id),
+        eventService.getEvents(),
+        paymentService.getCustomerPayments(),
+      ]);
+
       if (found) {
-        setCustomer({ ...found });
-        const clientEvents = mockStore.getEvents().filter((e) => e.customerId === found.id);
-        setEvents(clientEvents);
-
-        const clientPayments = mockStore.getCustomerPayments().filter((p) => p.customerId === found.id);
-        setPayments(clientPayments);
-        return;
+        setCustomer(found);
       }
-    } catch {
-      // Fallback
-    }
 
-    const fallback = mockStore.getCustomerById(resolvedParams.id);
-    if (fallback) {
-      setCustomer({ ...fallback });
-      const clientEvents = mockStore.getEvents().filter((e) => e.customerId === fallback.id);
-      setEvents(clientEvents);
+      if (Array.isArray(allEvents)) {
+        const clientEvents = allEvents.filter((e) => e.customerId === resolvedParams.id);
+        setEvents(clientEvents);
+      }
 
-      const clientPayments = mockStore.getCustomerPayments().filter((p) => p.customerId === fallback.id);
-      setPayments(clientPayments);
+      if (Array.isArray(allPayments)) {
+        const clientPayments = allPayments.filter((p) => p.customerId === resolvedParams.id);
+        setPayments(clientPayments);
+      }
+    } catch (err) {
+      console.warn('Error loading customer profile data:', err);
     }
   };
 
   useEffect(() => {
     loadData();
-    const handleUpdate = () => loadData();
-    window.addEventListener('seekers_store_updated', handleUpdate);
-    return () => window.removeEventListener('seekers_store_updated', handleUpdate);
+    window.addEventListener('seekers_customers_updated', loadData);
+    return () => window.removeEventListener('seekers_customers_updated', loadData);
   }, [resolvedParams.id]);
 
   const handleDelete = async () => {

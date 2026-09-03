@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
-import { StaffAssignment, StaffRole, EventItem } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
+import { StaffAssignment, StaffRole, EventItem, Staff } from '@/lib/types';
+import { staffService } from '@/lib/api/staffService';
+import { eventService } from '@/lib/api/eventService';
 import { Modal } from '@/components/ui/Modal';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
@@ -30,9 +31,9 @@ export function StaffAssignmentModal({
   existingAssignments = [],
 }: StaffAssignmentModalProps) {
   const { showToast } = useToast();
-  const staffList = mockStore.getStaff().filter((s) => s.status === 'Active');
+  const [staffList, setStaffList] = useState<Staff[]>([]);
 
-  const [selectedStaffId, setSelectedStaffId] = useState(staffList[0]?.id || '');
+  const [selectedStaffId, setSelectedStaffId] = useState('');
   const [role, setRole] = useState<StaffRole>('DJ');
   const [paymentAmount, setPaymentAmount] = useState<number>(20000);
   const [conflictWarning, setConflictWarning] = useState<{
@@ -41,8 +42,22 @@ export function StaffAssignmentModal({
     staffName?: string;
   } | null>(null);
 
+  useEffect(() => {
+    staffService.getStaff().then((s) => {
+      if (Array.isArray(s)) {
+        const active = s.filter((item) => item.status === 'Active');
+        setStaffList(active);
+        if (active.length > 0 && !selectedStaffId) {
+          setSelectedStaffId(active[0].id);
+          setRole(active[0].role);
+          setPaymentAmount(active[0].defaultRatePerEvent || 20000);
+        }
+      }
+    });
+  }, []);
+
   // When staff changes, update default role and rate
-  const handleStaffChange = (staffId: string) => {
+  const handleStaffChange = async (staffId: string) => {
     setSelectedStaffId(staffId);
     const staff = staffList.find((s) => s.id === staffId);
     if (staff) {
@@ -51,7 +66,7 @@ export function StaffAssignmentModal({
     }
 
     // Proactively check conflict
-    const conflict = mockStore.checkStaffConflict(
+    const conflict = await eventService.checkStaffConflict(
       staffId,
       eventDate,
       startTime,
@@ -61,19 +76,19 @@ export function StaffAssignmentModal({
     setConflictWarning(conflict.hasConflict ? conflict : null);
   };
 
-  const handleValidateAndAssign = (forceAssign: boolean = false) => {
+  const handleValidateAndAssign = async (forceAssign: boolean = false) => {
     const staff = staffList.find((s) => s.id === selectedStaffId);
     if (!staff) return;
 
     // Prevent duplicate assignment in same event
     const alreadyAssigned = existingAssignments.some((as) => as.staffId === selectedStaffId);
     if (alreadyAssigned) {
-      alert(`${staff.name} is already assigned to this event!`);
+      showToast(`${staff.name} is already assigned to this event!`, 'error');
       return;
     }
 
     // Check conflict
-    const conflict = mockStore.checkStaffConflict(
+    const conflict = await eventService.checkStaffConflict(
       selectedStaffId,
       eventDate,
       startTime,

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Staff, StaffRole, EmploymentType, StaffStatus } from '@/lib/types';
-import { mockStore } from '@/lib/mock/store';
+import { staffService } from '@/lib/api/staffService';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 
@@ -32,35 +32,46 @@ export function StaffModal({
   const [bankName, setBankName] = useState(initialData?.bankDetails?.bankName || 'Commercial Bank');
   const [accountNumber, setAccountNumber] = useState(initialData?.bankDetails?.accountNumber || '');
   const [branch, setBranch] = useState(initialData?.bankDetails?.branch || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) {
-      alert('Please fill in required fields');
+      showToast('Please fill in required fields', 'error');
       return;
     }
 
-    const saved = mockStore.saveStaff({
-      id: initialData?.id,
-      name,
-      phone,
-      email,
-      role,
-      employmentType,
-      status,
-      skills: skills.split(',').map((s) => s.trim()).filter(Boolean),
-      basicSalary: Number(basicSalary),
-      defaultRatePerEvent: Number(defaultRate),
-      bankDetails: {
-        bankName,
-        accountNumber,
-        branch,
-      },
-    });
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        name,
+        phone,
+        email,
+        role,
+        employmentType,
+        status,
+        skills: skills.split(',').map((s) => s.trim()).filter(Boolean),
+        basicSalary: Number(basicSalary),
+        defaultRatePerEvent: Number(defaultRate),
+        bankDetails: {
+          bankName,
+          accountNumber,
+          branch,
+        },
+      };
 
-    showToast(initialData ? '✓ Staff profile updated' : '✓ Staff member added successfully');
-    if (onSuccess) onSuccess(saved);
-    onClose();
+      const saved = initialData?.id
+        ? await staffService.updateStaff(initialData.id, payload)
+        : await staffService.createStaff(payload);
+
+      showToast(initialData ? '✓ Staff profile updated' : '✓ Staff member added successfully');
+      if (onSuccess) onSuccess(saved);
+      onClose();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save staff member', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

@@ -20,7 +20,6 @@ import { eventService } from '@/lib/api/eventService';
 import { staffService } from '@/lib/api/staffService';
 import { customerService } from '@/lib/api/customerService';
 import { paymentService } from '@/lib/api/paymentService';
-import { mockStore } from '@/lib/mock/store';
 import { formatCurrency } from '@/lib/utils';
 import { EventItem, Staff, Customer, CustomerPayment, StaffPayment } from '@/lib/types';
 
@@ -47,12 +46,8 @@ export default function ReportsPage() {
       if (Array.isArray(custs)) setCustomers(custs);
       if (Array.isArray(cpays)) setCustomerPayments(cpays);
       if (Array.isArray(spays)) setStaffPayments(spays);
-    }).catch(() => {
-      setEvents(mockStore.getEvents());
-      setStaff(mockStore.getStaff());
-      setCustomers(mockStore.getCustomers());
-      setCustomerPayments(mockStore.getCustomerPayments());
-      setStaffPayments(mockStore.getStaffPayments());
+    }).catch((err) => {
+      console.warn('Error loading reports data:', err);
     });
   }, []);
 

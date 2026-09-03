@@ -30,9 +30,11 @@ import { StaffAssignmentModal } from '@/features/events/StaffAssignmentModal';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { eventService } from '@/lib/api/eventService';
-import { mockStore } from '@/lib/mock/store';
+import { customerService } from '@/lib/api/customerService';
+import { paymentService } from '@/lib/api/paymentService';
+import { staffService } from '@/lib/api/staffService';
 import { formatCurrency, formatDate, calculateProfit } from '@/lib/utils';
-import { EventItem, EventExpense, StaffAssignment } from '@/lib/types';
+import { EventItem, EventExpense, StaffAssignment, Customer, CustomerPayment, Staff } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
 export default function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -41,6 +43,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   const { showToast } = useToast();
 
   const [event, setEvent] = useState<EventItem | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [payments, setPayments] = useState<CustomerPayment[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'customer' | 'services' | 'staff' | 'payments' | 'expenses' | 'timeline'>('overview');
 
   // Modals
@@ -48,6 +52,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [staffPaymentTarget, setStaffPaymentTarget] = useState<StaffAssignment | null>(null);
+  const [staffTargetProfile, setStaffTargetProfile] = useState<Staff | undefined>(undefined);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
 
   // Expense form inline modal
@@ -60,18 +65,27 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     try {
       const found = await eventService.getEventById(resolvedParams.id);
       if (found) {
-        setEvent({ ...found });
-        return;
+        setEvent(found);
+        if (found.customerId) {
+          customerService.getCustomerById(found.customerId).then((c) => {
+            if (c) setCustomer(c);
+          });
+        }
       }
-    } catch {}
-    const fallback = mockStore.getEventById(resolvedParams.id);
-    if (fallback) setEvent({ ...fallback });
+      paymentService.getCustomerPayments().then((allPays) => {
+        if (Array.isArray(allPays)) {
+          setPayments(allPays.filter((p) => p.eventId === resolvedParams.id));
+        }
+      });
+    } catch (err) {
+      console.warn('Error loading event data:', err);
+    }
   };
 
   useEffect(() => {
     loadData();
-    window.addEventListener('seekers_store_updated', loadData);
-    return () => window.removeEventListener('seekers_store_updated', loadData);
+    window.addEventListener('seekers_events_updated', loadData);
+    return () => window.removeEventListener('seekers_events_updated', loadData);
   }, [resolvedParams.id]);
 
   if (!event) {
@@ -100,10 +114,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     totalExpenses
   );
 
-  const customer = mockStore.getCustomerById(event.customerId);
-  const payments = mockStore.getCustomerPayments().filter((p) => p.eventId === event.id);
-
-  const handleAddExpense = (e: React.FormEvent) => {
+  const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!expenseTitle.trim() || !expenseAmount) return;
 
@@ -116,8 +127,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     };
 
     const updatedExpenses = [...event.expenses, newExpense];
-    mockStore.saveEvent({
-      ...event,
+    await eventService.updateEvent(event.id, {
       expenses: updatedExpenses,
     });
 
@@ -128,9 +138,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     loadData();
   };
 
-  const handleCancelEvent = () => {
-    mockStore.saveEvent({
-      ...event,
+  const handleCancelEvent = async () => {
+    await eventService.updateEvent(event.id, {
       status: 'Cancelled',
     });
     showToast('✓ Event status changed to Cancelled');
@@ -758,10 +767,9 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         endTime={event.endTime}
         currentEventId={event.id}
         existingAssignments={event.assignedStaff}
-        onAssign={(as) => {
+        onAssign={async (as) => {
           const updatedStaff = [...event.assignedStaff, as];
-          mockStore.saveEvent({
-            ...event,
+          await eventService.updateEvent(event.id, {
             assignedStaff: updatedStaff,
           });
           loadData();
@@ -773,7 +781,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         <StaffPaymentModal
           isOpen={!!staffPaymentTarget}
           onClose={() => setStaffPaymentTarget(null)}
-          staff={mockStore.getStaffById(staffPaymentTarget.staffId)}
+          staff={{ id: staffPaymentTarget.staffId, name: staffPaymentTarget.staffName, role: staffPaymentTarget.role } as any}
           eventId={event.id}
           eventName={event.name}
           defaultAmount={Math.max(0, staffPaymentTarget.paymentAmount - staffPaymentTarget.paidAmount)}

@@ -55,8 +55,8 @@ export function EventForm({ initialData }: EventFormProps) {
     customerService.getCustomers().then((c) => {
       if (Array.isArray(c)) {
         setCustomers(c);
-        if (!initialData?.customerId && c.length > 0) {
-          setCustomerId(c[0].id);
+        if (initialData?.customerId) {
+          setCustomerId(initialData.customerId);
         }
       }
     });
@@ -83,7 +83,10 @@ export function EventForm({ initialData }: EventFormProps) {
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
 
-  // 1. Event Information
+  // 1. Customer Selection (Selected first)
+  const [customerId, setCustomerId] = useState(initialData?.customerId || '');
+
+  // 2. Event Information
   const [name, setName] = useState(initialData?.name || '');
   const [eventType, setEventType] = useState<string>(initialData?.eventType || '');
   const [eventDate, setEventDate] = useState(initialData?.eventDate || new Date().toISOString().split('T')[0]);
@@ -95,8 +98,28 @@ export function EventForm({ initialData }: EventFormProps) {
   const [notes, setNotes] = useState(initialData?.notes || '');
   const [status, setStatus] = useState<any>(initialData?.status || 'Confirmed');
 
-  // 2. Customer
-  const [customerId, setCustomerId] = useState(initialData?.customerId || '');
+  // Selected customer memo
+  const selectedCustomer = useMemo(() => {
+    return customers.find((c) => c.id === customerId);
+  }, [customers, customerId]);
+
+  // Handle customer selection and auto-load address into Venue / Location
+  const handleCustomerChange = (newCustomerId: string, customerObj?: Customer) => {
+    setCustomerId(newCustomerId);
+    const selected = customerObj || customers.find((c) => c.id === newCustomerId);
+    if (selected) {
+      // Auto-load customer address to Venue / Location and Street Address
+      const venueStr = selected.company && selected.address
+        ? `${selected.company}, ${selected.address}`
+        : (selected.address || selected.company || '');
+
+      setLocation(venueStr);
+      if (selected.address) {
+        setAddress(selected.address);
+      }
+      showToast(`✓ Loaded venue address from ${selected.name}`);
+    }
+  };
 
   // 3. Services & Production Equipment
   const [services, setServices] = useState<ServiceItem[]>(initialData?.services || []);
@@ -256,12 +279,82 @@ export function EventForm({ initialData }: EventFormProps) {
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* SECTION 1: Event Information */}
+        {/* SECTION 1: Customer Selection (Firstly Select Customer) */}
+        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#1a2738]">
+            <div className="flex items-center gap-2.5">
+              <Users className="h-5 w-5 text-[#00e5c9]" />
+              <div>
+                <h2 className="text-base font-bold text-white">1. Select Customer *</h2>
+                <p className="text-xs text-slate-400">First select the client to automatically load their address into the venue location</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsCustomerModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#00e5c9]/40 bg-[#00e5c9]/10 px-3 py-1.5 text-xs font-semibold text-[#00e5c9] hover:bg-[#00e5c9]/20 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>+ Create New Customer</span>
+            </button>
+          </div>
+
+          <div className="text-xs space-y-3">
+            <div>
+              <label className="block font-medium text-slate-300 mb-1">Customer / Client *</label>
+              <select
+                value={customerId}
+                onChange={(e) => handleCustomerChange(e.target.value)}
+                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-medium focus:border-[#00e5c9] focus:outline-none"
+                required
+              >
+                <option value="">-- Choose a Customer ({customers.length} available) * --</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.company ? `(${c.company})` : ''} • {c.phone} {c.address ? `• ${c.address}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedCustomer && (
+              <div className="rounded-lg border border-[#1e2f42] bg-[#101926] p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-[#00e5c9]/15 border border-[#00e5c9]/30 flex items-center justify-center text-[#00e5c9] font-bold text-sm">
+                    {selectedCustomer.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-white block">
+                      {selectedCustomer.name} {selectedCustomer.company ? `(${selectedCustomer.company})` : ''}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block">
+                      Phone: {selectedCustomer.phone} • Email: {selectedCustomer.email || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                {selectedCustomer.address && (
+                  <div className="text-left sm:text-right">
+                    <span className="text-[10px] text-[#00e5c9] uppercase tracking-wider block font-semibold">
+                      Venue Location
+                    </span>
+                    <span className="text-slate-300 text-xs font-medium block">
+                      {selectedCustomer.address}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SECTION 2: Event Details & Timing */}
         <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-2.5 pb-3 border-b border-[#1a2738]">
             <CalendarDays className="h-5 w-5 text-[#00e5c9]" />
             <div>
-              <h2 className="text-base font-bold text-white">1. Event Details & Timing</h2>
+              <h2 className="text-base font-bold text-white">2. Event Details & Timing</h2>
               <p className="text-xs text-slate-400">Core booking information, event category, and venue coordinates</p>
             </div>
           </div>
@@ -346,7 +439,9 @@ export function EventForm({ initialData }: EventFormProps) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-medium text-slate-300 mb-1">Venue / Location *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-medium text-slate-300">Venue / Location *</label>
+              </div>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
@@ -394,43 +489,6 @@ export function EventForm({ initialData }: EventFormProps) {
                 className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
               />
             </div>
-          </div>
-        </div>
-
-        {/* SECTION 2: Customer Selection */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#1a2738]">
-            <div className="flex items-center gap-2.5">
-              <Users className="h-5 w-5 text-[#00e5c9]" />
-              <div>
-                <h2 className="text-base font-bold text-white">2. Customer Assignment</h2>
-                <p className="text-xs text-slate-400">Select an existing client or quickly register a new customer</p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsCustomerModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#00e5c9]/40 bg-[#00e5c9]/10 px-3 py-1.5 text-xs font-semibold text-[#00e5c9] hover:bg-[#00e5c9]/20 transition-colors"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>+ Create New Customer</span>
-            </button>
-          </div>
-
-          <div className="text-xs">
-            <label className="block font-medium text-slate-300 mb-1">Select Customer *</label>
-            <select
-              value={customerId}
-              onChange={(e) => setCustomerId(e.target.value)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-            >
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} {c.company ? `(${c.company})` : ''} • {c.phone}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
 
@@ -784,7 +842,10 @@ export function EventForm({ initialData }: EventFormProps) {
       <CustomerModal
         isOpen={isCustomerModalOpen}
         onClose={() => setIsCustomerModalOpen(false)}
-        onSuccess={(created) => setCustomerId(created.id)}
+        onSuccess={(created) => {
+          setCustomers((prev) => [created, ...prev]);
+          handleCustomerChange(created.id, created);
+        }}
       />
 
       {/* Staff Assignment Modal with Conflict Check */}

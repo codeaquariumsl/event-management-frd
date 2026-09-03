@@ -20,18 +20,20 @@ import { eventService } from '@/lib/api/eventService';
 import { staffService } from '@/lib/api/staffService';
 import { customerService } from '@/lib/api/customerService';
 import { paymentService } from '@/lib/api/paymentService';
+import { eventTypeService } from '@/lib/api/eventTypeService';
 import { formatCurrency } from '@/lib/utils';
-import { EventItem, Staff, Customer, CustomerPayment, StaffPayment } from '@/lib/types';
+import { EventItem, Staff, Customer, CustomerPayment, StaffPayment, EventTypeItem } from '@/lib/types';
 
 export default function ReportsPage() {
   const [reportCategory, setReportCategory] = useState<'financial' | 'events' | 'staff' | 'customers'>('financial');
-  const [dateRange, setDateRange] = useState('This Quarter');
+  const [dateRange, setDateRange] = useState('All Time');
 
   const [events, setEvents] = useState<EventItem[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerPayments, setCustomerPayments] = useState<CustomerPayment[]>([]);
   const [staffPayments, setStaffPayments] = useState<StaffPayment[]>([]);
+  const [eventTypes, setEventTypes] = useState<EventTypeItem[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -40,22 +42,80 @@ export default function ReportsPage() {
       customerService.getCustomers(),
       paymentService.getCustomerPayments(),
       paymentService.getStaffPayments(),
-    ]).then(([evts, stf, custs, cpays, spays]) => {
+      eventTypeService.getEventTypes(),
+    ]).then(([evts, stf, custs, cpays, spays, types]) => {
       if (Array.isArray(evts)) setEvents(evts);
       if (Array.isArray(stf)) setStaff(stf);
       if (Array.isArray(custs)) setCustomers(custs);
       if (Array.isArray(cpays)) setCustomerPayments(cpays);
       if (Array.isArray(spays)) setStaffPayments(spays);
+      if (Array.isArray(types)) setEventTypes(types);
     }).catch((err) => {
       console.warn('Error loading reports data:', err);
     });
   }, []);
 
-  const totalRevenue = events.reduce((sum, e) => sum + e.totalAmount, 0);
-  const totalCollections = customerPayments.reduce((sum, p) => sum + p.amount, 0);
-  const totalStaffPaid = staffPayments.reduce((sum, sp) => sum + sp.amount, 0);
-  const totalOutstandingClients = events.reduce((sum, e) => sum + e.balance, 0);
+  // Filter records by selected date range
+  const isWithinRange = (dateStr?: string) => {
+    if (!dateStr || dateRange === 'All Time') return true;
+    const d = new Date(dateStr);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    if (dateRange === 'This Month') {
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    }
+    if (dateRange === 'Last Month') {
+      const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      return d.getFullYear() === lastMonthYear && d.getMonth() === lastMonth;
+    }
+    if (dateRange === 'This Quarter') {
+      const currentQuarter = Math.floor(currentMonth / 3);
+      const dateQuarter = Math.floor(d.getMonth() / 3);
+      return d.getFullYear() === currentYear && dateQuarter === currentQuarter;
+    }
+    if (dateRange === 'Year to Date') {
+      return d.getFullYear() === currentYear;
+    }
+    return true;
+  };
+
+  const filteredEvents = React.useMemo(() => events.filter((e) => isWithinRange(e.eventDate)), [events, dateRange]);
+  const filteredCustomerPayments = React.useMemo(() => customerPayments.filter((p) => isWithinRange(p.date)), [customerPayments, dateRange]);
+  const filteredStaffPayments = React.useMemo(() => staffPayments.filter((sp) => isWithinRange(sp.date)), [staffPayments, dateRange]);
+
+  const totalRevenue = filteredEvents.reduce((sum, e) => sum + (e.totalAmount || 0), 0);
+  const totalCollections = filteredCustomerPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalStaffPaid = filteredStaffPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0);
+  const totalOutstandingClients = filteredEvents.reduce((sum, e) => sum + (e.balance || 0), 0);
   const estimatedGrossProfit = totalRevenue - totalStaffPaid;
+  const completedEventsCount = filteredEvents.filter((e) => e.status === 'Completed').length;
+  const completionRate = filteredEvents.length > 0 ? Math.round((completedEventsCount / filteredEvents.length) * 100) : 0;
+
+  // Real Service Category Breakdown from actual database events
+  const serviceCategoryBreakdown = React.useMemo(() => {
+    const categoryMap: Record<string, number> = {};
+    filteredEvents.forEach((evt) => {
+      (evt.services || []).forEach((srv) => {
+        const cat = srv.category || srv.name || 'General Production';
+        categoryMap[cat] = (categoryMap[cat] || 0) + (srv.totalPrice || ((srv.unitPrice || 0) * (srv.quantity || 1)) || 0);
+      });
+    });
+
+    return Object.entries(categoryMap)
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [filteredEvents]);
+
+  // Real Active Event Types from database
+  const activeEventTypes = React.useMemo(() => {
+    const typesFromDB = eventTypes.map((t) => t.name);
+    const typesFromEvents = events.map((e) => e.eventType).filter(Boolean);
+    const unique = Array.from(new Set([...typesFromDB, ...typesFromEvents]));
+    return unique.length > 0 ? unique : ['Club / Concert', 'Corporate', 'Wedding & Reception'];
+  }, [eventTypes, events]);
 
   const handlePrint = () => {
     window.print();
@@ -77,7 +137,7 @@ export default function ReportsPage() {
     } else if (reportCategory === 'events') {
       rows = [
         ['Event ID', 'Event Name', 'Customer', 'Date', 'Type', 'Total Amount', 'Status'],
-        ...events.map((e) => [e.id, e.name, e.customerName, e.eventDate, e.eventType, e.totalAmount.toString(), e.status]),
+        ...filteredEvents.map((e) => [e.id, e.name, e.customerName, e.eventDate, e.eventType, e.totalAmount.toString(), e.status]),
       ];
     } else if (reportCategory === 'staff') {
       rows = [
@@ -115,10 +175,11 @@ export default function ReportsPage() {
                 onChange={(e) => setDateRange(e.target.value)}
                 className="rounded-lg border border-[#233549] bg-[#111c29] px-3 py-2 text-xs text-white focus:outline-none"
               >
-                <option value="This Month">This Month (Sep 2026)</option>
-                <option value="Last Month">Last Month (Aug 2026)</option>
-                <option value="This Quarter">This Quarter (Q3 2026)</option>
-                <option value="Year to Date">Year to Date (2026)</option>
+                <option value="All Time">All Time</option>
+                <option value="This Month">This Month ({new Date().toLocaleString('default', { month: 'short', year: 'numeric' })})</option>
+                <option value="Last Month">Last Month</option>
+                <option value="This Quarter">This Quarter (Q{Math.floor(new Date().getMonth() / 3) + 1})</option>
+                <option value="Year to Date">Year to Date ({new Date().getFullYear()})</option>
               </select>
 
               <button
@@ -210,22 +271,19 @@ export default function ReportsPage() {
                   <span className="font-semibold text-white">Event Production Gross Revenue</span>
                   <span className="font-mono font-bold text-white">{formatCurrency(totalRevenue)}</span>
                 </div>
-                <div className="py-3 flex justify-between text-slate-400 pl-4">
-                  <span>- DJ & MC Performance Allocations</span>
-                  <span className="font-mono">LKR 480,000</span>
-                </div>
-                <div className="py-3 flex justify-between text-slate-400 pl-4">
-                  <span>- Concert Sound System Rentals</span>
-                  <span className="font-mono">LKR 840,000</span>
-                </div>
-                <div className="py-3 flex justify-between text-slate-400 pl-4">
-                  <span>- Intelligent Lighting Rigs</span>
-                  <span className="font-mono">LKR 595,000</span>
-                </div>
-                <div className="py-3 flex justify-between text-slate-400 pl-4">
-                  <span>- P2.6 High Definition LED Walls</span>
-                  <span className="font-mono">LKR 560,000</span>
-                </div>
+                {serviceCategoryBreakdown.length > 0 ? (
+                  serviceCategoryBreakdown.map((item) => (
+                    <div key={item.category} className="py-3 flex justify-between text-slate-400 pl-4">
+                      <span>- {item.category} Production</span>
+                      <span className="font-mono font-medium text-slate-200">{formatCurrency(item.amount)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-3 flex justify-between text-slate-500 pl-4 italic">
+                    <span>- Production Services</span>
+                    <span className="font-mono">LKR 0</span>
+                  </div>
+                )}
                 <div className="py-3 flex justify-between text-rose-400">
                   <span className="font-semibold">Cost of Production (Crew & Logistics)</span>
                   <span className="font-mono font-bold">- {formatCurrency(totalStaffPaid)}</span>
@@ -244,18 +302,21 @@ export default function ReportsPage() {
           <div className="space-y-6 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4">
-                <span className="text-slate-400 block text-[11px]">Total Events</span>
-                <strong className="text-2xl font-bold text-white block mt-1">{events.length}</strong>
+                <span className="text-slate-400 block text-[11px]">Total Events ({dateRange})</span>
+                <strong className="text-2xl font-bold text-white block mt-1">{filteredEvents.length}</strong>
               </div>
               <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4">
                 <span className="text-slate-400 block text-[11px]">Average Contract Value</span>
                 <strong className="text-2xl font-bold text-[#00e5c9] font-mono block mt-1">
-                  {formatCurrency(Math.round(totalRevenue / (events.length || 1)))}
+                  {formatCurrency(Math.round(totalRevenue / (filteredEvents.length || 1)))}
                 </strong>
               </div>
               <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4">
                 <span className="text-slate-400 block text-[11px]">Completion Rate</span>
-                <strong className="text-2xl font-bold text-emerald-400 block mt-1">92.8%</strong>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <strong className="text-2xl font-bold text-emerald-400">{completionRate}%</strong>
+                  <span className="text-slate-500 text-[11px]">({completedEventsCount} completed)</span>
+                </div>
               </div>
             </div>
 
@@ -272,9 +333,9 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#182535]">
-                    {['Wedding', 'Corporate', 'Club / Concert', 'Festival'].map((type) => {
-                      const typeEvts = events.filter((e) => e.eventType === type);
-                      const typeRev = typeEvts.reduce((sum, e) => sum + e.totalAmount, 0);
+                    {activeEventTypes.map((type) => {
+                      const typeEvts = filteredEvents.filter((e) => e.eventType === type);
+                      const typeRev = typeEvts.reduce((sum, e) => sum + (e.totalAmount || 0), 0);
                       const share = totalRevenue > 0 ? Math.round((typeRev / totalRevenue) * 100) : 0;
                       return (
                         <tr key={type} className="hover:bg-[#101824]">

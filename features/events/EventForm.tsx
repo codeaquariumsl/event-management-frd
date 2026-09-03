@@ -35,6 +35,7 @@ export function EventForm({ initialData }: EventFormProps) {
 
   const customers = mockStore.getCustomers();
   const servicesCatalog = mockStore.getServicesCatalog();
+  const dynamicEventTypes = mockStore.getEventTypes();
 
   // Modals state
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
@@ -42,7 +43,7 @@ export function EventForm({ initialData }: EventFormProps) {
 
   // 1. Event Information
   const [name, setName] = useState(initialData?.name || '');
-  const [eventType, setEventType] = useState<EventType>(initialData?.eventType || 'Wedding');
+  const [eventType, setEventType] = useState<any>(initialData?.eventType || dynamicEventTypes[0]?.name || 'Wedding');
   const [eventDate, setEventDate] = useState(initialData?.eventDate || new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState(initialData?.startTime || '18:00');
   const [endTime, setEndTime] = useState(initialData?.endTime || '23:30');
@@ -216,15 +217,20 @@ export function EventForm({ initialData }: EventFormProps) {
               <label className="block font-medium text-slate-300 mb-1">Event Type</label>
               <select
                 value={eventType}
-                onChange={(e) => setEventType(e.target.value as EventType)}
+                onChange={(e) => setEventType(e.target.value)}
                 className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
               >
-                <option value="Wedding">Wedding Reception / Ceremony</option>
-                <option value="Corporate">Corporate Launch / Gala / Conference</option>
-                <option value="Club / Concert">Club Night / Music Concert</option>
-                <option value="Private Party">Private Birthday / Anniversary</option>
-                <option value="Festival">Outdoor Festival / Street Fair</option>
-                <option value="Hotel Event">Hotel Banquet / Dining Event</option>
+                {dynamicEventTypes.map((t) => (
+                  <option key={t.id} value={t.name}>
+                    {t.name}
+                  </option>
+                ))}
+                <option value="Wedding">Wedding</option>
+                <option value="Corporate">Corporate</option>
+                <option value="Club / Concert">Club / Concert</option>
+                <option value="Private Party">Private Party</option>
+                <option value="Festival">Festival</option>
+                <option value="Hotel Event">Hotel Event</option>
                 <option value="Other">Other</option>
               </select>
             </div>

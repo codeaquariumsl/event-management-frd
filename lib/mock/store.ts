@@ -3,6 +3,10 @@ import {
   Customer,
   CustomerPayment,
   EventItem,
+  EventTypeItem,
+  InventoryCategory,
+  InventoryItem,
+  Quotation,
   RecurringEvent,
   Staff,
   StaffPayment,
@@ -17,7 +21,11 @@ import {
   initialCustomerPayments,
   initialCustomers,
   initialEvents,
+  initialEventTypes,
+  initialInventoryCategories,
+  initialInventoryItems,
   initialNotifications,
+  initialQuotations,
   initialRecurringEvents,
   initialStaff,
   initialStaffPayments,
@@ -34,6 +42,10 @@ const STORAGE_KEYS = {
   PROFILE: 'seekers_company_profile',
   SERVICES: 'seekers_services_list',
   USERS: 'seekers_users',
+  EVENT_TYPES: 'seekers_event_types',
+  INVENTORY_CATEGORIES: 'seekers_inventory_categories',
+  INVENTORY_ITEMS: 'seekers_inventory_items',
+  QUOTATIONS: 'seekers_quotations',
 };
 
 export const ROLE_PERMISSIONS_MATRIX: Record<UserRole, string[]> = {
@@ -787,6 +799,327 @@ class MockStore {
     return false;
   }
 
+  // EVENT TYPES MANAGEMENT
+  getEventTypes(): EventTypeItem[] {
+    return getStorageItem(STORAGE_KEYS.EVENT_TYPES, initialEventTypes);
+  }
+
+  saveEventType(data: Partial<EventTypeItem> & { name: string }): EventTypeItem {
+    const list = this.getEventTypes();
+    const existingIndex = data.id ? list.findIndex((e) => e.id === data.id) : -1;
+    let saved: EventTypeItem;
+
+    if (existingIndex >= 0) {
+      saved = { ...list[existingIndex], ...data };
+      list[existingIndex] = saved;
+    } else {
+      saved = {
+        id: data.id || `et-${Date.now()}`,
+        name: data.name,
+        code: data.code || data.name.toUpperCase().replace(/[^A-Z0-9]/g, '_').slice(0, 10),
+        description: data.description || '',
+        color: data.color || '#00e5c9',
+        icon: data.icon || 'Sparkles',
+        isActive: data.isActive ?? true,
+        sortOrder: data.sortOrder || list.length + 1,
+        defaultServices: data.defaultServices || [],
+        createdAt: new Date().toISOString().split('T')[0],
+      };
+      list.push(saved);
+    }
+
+    setStorageItem(STORAGE_KEYS.EVENT_TYPES, list);
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+    fetch(`${API_URL}/event-types${existingIndex >= 0 ? `/${saved.id}` : ''}`, {
+      method: existingIndex >= 0 ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(saved),
+    }).catch(() => {});
+
+    return saved;
+  }
+
+  deleteEventType(id: string): boolean {
+    const list = this.getEventTypes();
+    const filtered = list.filter((e) => e.id !== id);
+    if (filtered.length !== list.length) {
+      setStorageItem(STORAGE_KEYS.EVENT_TYPES, filtered);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+      fetch(`${API_URL}/event-types/${id}`, { method: 'DELETE' }).catch(() => {});
+      return true;
+    }
+    return false;
+  }
+
+  // INVENTORY CATEGORIES
+  getInventoryCategories(): InventoryCategory[] {
+    return getStorageItem(STORAGE_KEYS.INVENTORY_CATEGORIES, initialInventoryCategories);
+  }
+
+  saveInventoryCategory(data: Partial<InventoryCategory> & { name: string }): InventoryCategory {
+    const list = this.getInventoryCategories();
+    const existingIndex = data.id ? list.findIndex((c) => c.id === data.id) : -1;
+    let saved: InventoryCategory;
+
+    if (existingIndex >= 0) {
+      saved = { ...list[existingIndex], ...data };
+      list[existingIndex] = saved;
+    } else {
+      saved = {
+        id: data.id || `cat-${Date.now()}`,
+        name: data.name,
+        code: data.code || data.name.toUpperCase().replace(/[^A-Z0-9]/g, '_').slice(0, 10),
+        description: data.description || '',
+        color: data.color || '#00e5c9',
+        icon: data.icon || 'Boxes',
+        status: data.status || 'Active',
+      };
+      list.push(saved);
+    }
+
+    setStorageItem(STORAGE_KEYS.INVENTORY_CATEGORIES, list);
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+    fetch(`${API_URL}/inventory/categories${existingIndex >= 0 ? `/${saved.id}` : ''}`, {
+      method: existingIndex >= 0 ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(saved),
+    }).catch(() => {});
+
+    return saved;
+  }
+
+  deleteInventoryCategory(id: string): boolean {
+    const list = this.getInventoryCategories();
+    const filtered = list.filter((c) => c.id !== id);
+    if (filtered.length !== list.length) {
+      setStorageItem(STORAGE_KEYS.INVENTORY_CATEGORIES, filtered);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+      fetch(`${API_URL}/inventory/categories/${id}`, { method: 'DELETE' }).catch(() => {});
+      return true;
+    }
+    return false;
+  }
+
+  // INVENTORY ITEMS (EQUIPMENT & SERVICES)
+  getInventoryItems(): InventoryItem[] {
+    return getStorageItem(STORAGE_KEYS.INVENTORY_ITEMS, initialInventoryItems);
+  }
+
+  saveInventoryItem(data: Partial<InventoryItem> & { name: string; category: string }): InventoryItem {
+    const list = this.getInventoryItems();
+    const existingIndex = data.id ? list.findIndex((i) => i.id === data.id) : -1;
+    let saved: InventoryItem;
+
+    const available = Number(data.availableQuantity ?? (existingIndex >= 0 ? list[existingIndex].availableQuantity : 1));
+    let status: InventoryItem['status'] = data.status || 'In Stock';
+    if (available <= 0) status = 'Out of Stock';
+    else if (available <= 2 && status !== 'Maintenance') status = 'Low Stock';
+
+    if (existingIndex >= 0) {
+      saved = { ...list[existingIndex], ...data, availableQuantity: available, status };
+      list[existingIndex] = saved;
+    } else {
+      saved = {
+        id: data.id || `inv-${Date.now()}`,
+        sku: data.sku || `SKU-${Date.now().toString().slice(-6)}`,
+        name: data.name,
+        category: data.category,
+        description: data.description || '',
+        unitPrice: Number(data.unitPrice || 0),
+        rentalRate: Number(data.rentalRate || 0),
+        totalStock: Number(data.totalStock || 1),
+        availableQuantity: available,
+        damagedQuantity: Number(data.damagedQuantity || 0),
+        status,
+        unit: data.unit || 'Unit',
+        specifications: data.specifications || '',
+      };
+      list.push(saved);
+    }
+
+    setStorageItem(STORAGE_KEYS.INVENTORY_ITEMS, list);
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+    fetch(`${API_URL}/inventory/items${existingIndex >= 0 ? `/${saved.id}` : ''}`, {
+      method: existingIndex >= 0 ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(saved),
+    }).catch(() => {});
+
+    return saved;
+  }
+
+  deleteInventoryItem(id: string): boolean {
+    const list = this.getInventoryItems();
+    const filtered = list.filter((i) => i.id !== id);
+    if (filtered.length !== list.length) {
+      setStorageItem(STORAGE_KEYS.INVENTORY_ITEMS, filtered);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+      fetch(`${API_URL}/inventory/items/${id}`, { method: 'DELETE' }).catch(() => {});
+      return true;
+    }
+    return false;
+  }
+
+  // QUOTATION MANAGEMENT
+  getQuotations(): Quotation[] {
+    return getStorageItem(STORAGE_KEYS.QUOTATIONS, initialQuotations);
+  }
+
+  getQuotationById(id: string): Quotation | undefined {
+    return this.getQuotations().find((q) => q.id === id);
+  }
+
+  saveQuotation(data: Partial<Quotation> & { customerName: string; title: string }): Quotation {
+    const list = this.getQuotations();
+    const existingIndex = data.id ? list.findIndex((q) => q.id === data.id) : -1;
+    let saved: Quotation;
+
+    const subtotal = data.items?.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0) ?? (existingIndex >= 0 ? list[existingIndex].subtotal : 0);
+    const discount = Number(data.discount ?? (existingIndex >= 0 ? list[existingIndex].discount : 0));
+    const taxAmount = Number(data.taxAmount ?? (existingIndex >= 0 ? list[existingIndex].taxAmount : 0));
+    const additionalCharges = Number(data.additionalCharges ?? (existingIndex >= 0 ? list[existingIndex].additionalCharges : 0));
+    const totalAmount = Math.max(0, subtotal - discount + taxAmount + additionalCharges);
+
+    if (existingIndex >= 0) {
+      saved = {
+        ...list[existingIndex],
+        ...data,
+        subtotal,
+        discount,
+        taxAmount,
+        additionalCharges,
+        totalAmount,
+        updatedAt: new Date().toISOString().split('T')[0],
+      };
+      list[existingIndex] = saved;
+    } else {
+      const year = new Date().getFullYear();
+      const count = list.length + 1;
+      saved = {
+        id: data.id || `quot-${Date.now()}`,
+        quotationNumber: data.quotationNumber || `QT-${year}-${String(count).padStart(3, '0')}`,
+        title: data.title,
+        customerId: data.customerId || '',
+        customerName: data.customerName,
+        customerEmail: data.customerEmail || '',
+        customerPhone: data.customerPhone || '',
+        customerCompany: data.customerCompany || '',
+        eventType: data.eventType || 'Wedding & Reception',
+        eventDate: data.eventDate || new Date().toISOString().split('T')[0],
+        validUntil: data.validUntil || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+        venue: data.venue || '',
+        items: data.items || [],
+        subtotal,
+        discount,
+        taxRate: Number(data.taxRate || 0),
+        taxAmount,
+        additionalCharges,
+        totalAmount,
+        status: data.status || 'Draft',
+        notes: data.notes || '',
+        termsAndConditions: data.termsAndConditions || '50% advance upon confirmation. Remaining balance due within 24 hours of event completion.',
+        convertedEventId: null,
+        createdAt: new Date().toISOString().split('T')[0],
+        updatedAt: new Date().toISOString().split('T')[0],
+      };
+      list.unshift(saved);
+    }
+
+    setStorageItem(STORAGE_KEYS.QUOTATIONS, list);
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+    fetch(`${API_URL}/quotations${existingIndex >= 0 ? `/${saved.id}` : ''}`, {
+      method: existingIndex >= 0 ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(saved),
+    }).catch(() => {});
+
+    return saved;
+  }
+
+  deleteQuotation(id: string): boolean {
+    const list = this.getQuotations();
+    const filtered = list.filter((q) => q.id !== id);
+    if (filtered.length !== list.length) {
+      setStorageItem(STORAGE_KEYS.QUOTATIONS, filtered);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
+      fetch(`${API_URL}/quotations/${id}`, { method: 'DELETE' }).catch(() => {});
+      return true;
+    }
+    return false;
+  }
+
+  convertQuotationToEvent(quotationId: string): EventItem | null {
+    const quotation = this.getQuotationById(quotationId);
+    if (!quotation) return null;
+
+    const eventServices = quotation.items.map((item, idx) => ({
+      id: item.id || `srv-conv-${idx + 1}`,
+      name: item.name,
+      category: (item.category as any) || 'Production',
+      description: item.description || '',
+      quantity: item.quantity || 1,
+      unitPrice: item.unitPrice || 0,
+      totalPrice: item.totalPrice || (item.quantity * item.unitPrice),
+    }));
+
+    const events = this.getEvents();
+    const eventId = `EVT-${Date.now()}`;
+
+    const newEvent: EventItem = {
+      id: eventId,
+      name: quotation.title || `Event for ${quotation.customerName}`,
+      customerId: quotation.customerId,
+      customerName: quotation.customerName,
+      customerCompany: quotation.customerCompany,
+      customerPhone: quotation.customerPhone,
+      customerEmail: quotation.customerEmail,
+      eventType: (quotation.eventType as any) || 'Other',
+      eventDate: quotation.eventDate,
+      startTime: '18:00',
+      endTime: '23:30',
+      location: quotation.venue || 'TBD',
+      address: quotation.venue || '',
+      status: 'Confirmed',
+      services: eventServices,
+      assignedStaff: [],
+      expenses: [],
+      timeline: [
+        {
+          id: `tl-${Date.now()}`,
+          title: 'Quotation Converted to Event',
+          description: `Generated from Quotation ${quotation.quotationNumber}`,
+          timestamp: new Date().toLocaleString(),
+          completed: true,
+          type: 'created',
+        },
+      ],
+      subtotal: quotation.subtotal || 0,
+      discount: quotation.discount || 0,
+      additionalCharges: quotation.additionalCharges || 0,
+      totalAmount: quotation.totalAmount || 0,
+      paidAmount: 0,
+      balance: quotation.totalAmount || 0,
+      notes: quotation.notes || '',
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+    };
+
+    this.saveEvent(newEvent);
+
+    // Update Quotation status to Accepted and convertedEventId
+    this.saveQuotation({
+      ...quotation,
+      status: 'Accepted',
+      convertedEventId: eventId,
+    });
+
+    return newEvent;
+  }
+
   getRolesMatrix(): Record<UserRole, string[]> {
     return ROLE_PERMISSIONS_MATRIX;
   }
@@ -803,6 +1136,10 @@ class MockStore {
     localStorage.removeItem(STORAGE_KEYS.PROFILE);
     localStorage.removeItem(STORAGE_KEYS.SERVICES);
     localStorage.removeItem(STORAGE_KEYS.USERS);
+    localStorage.removeItem(STORAGE_KEYS.EVENT_TYPES);
+    localStorage.removeItem(STORAGE_KEYS.INVENTORY_CATEGORIES);
+    localStorage.removeItem(STORAGE_KEYS.INVENTORY_ITEMS);
+    localStorage.removeItem(STORAGE_KEYS.QUOTATIONS);
     window.dispatchEvent(new Event('seekers_store_updated'));
   }
 
@@ -814,18 +1151,35 @@ class MockStore {
       const healthRes = await fetch(`${API_URL}/health`);
       if (!healthRes.ok) return;
 
-      const [eventsRes, customersRes, staffRes, recurringRes, custPayRes, staffPayRes, profileRes, servicesRes, usersRes] =
-        await Promise.all([
-          fetch(`${API_URL}/events`),
-          fetch(`${API_URL}/customers`),
-          fetch(`${API_URL}/staff`),
-          fetch(`${API_URL}/recurring-events`),
-          fetch(`${API_URL}/payments/customer`),
-          fetch(`${API_URL}/payments/staff`),
-          fetch(`${API_URL}/settings/profile`),
-          fetch(`${API_URL}/settings/services`),
-          fetch(`${API_URL}/users`),
-        ]);
+      const [
+        eventsRes,
+        customersRes,
+        staffRes,
+        recurringRes,
+        custPayRes,
+        staffPayRes,
+        profileRes,
+        servicesRes,
+        usersRes,
+        eventTypesRes,
+        invCategoriesRes,
+        invItemsRes,
+        quotationsRes,
+      ] = await Promise.all([
+        fetch(`${API_URL}/events`),
+        fetch(`${API_URL}/customers`),
+        fetch(`${API_URL}/staff`),
+        fetch(`${API_URL}/recurring-events`),
+        fetch(`${API_URL}/payments/customer`),
+        fetch(`${API_URL}/payments/staff`),
+        fetch(`${API_URL}/settings/profile`),
+        fetch(`${API_URL}/settings/services`),
+        fetch(`${API_URL}/users`),
+        fetch(`${API_URL}/event-types`),
+        fetch(`${API_URL}/inventory/categories`),
+        fetch(`${API_URL}/inventory/items`),
+        fetch(`${API_URL}/quotations`),
+      ]);
 
       if (eventsRes.ok) {
         const events = await eventsRes.json();
@@ -862,6 +1216,22 @@ class MockStore {
       if (usersRes.ok) {
         const users = await usersRes.json();
         if (Array.isArray(users)) localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+      }
+      if (eventTypesRes.ok) {
+        const et = await eventTypesRes.json();
+        if (Array.isArray(et)) localStorage.setItem(STORAGE_KEYS.EVENT_TYPES, JSON.stringify(et));
+      }
+      if (invCategoriesRes.ok) {
+        const cats = await invCategoriesRes.json();
+        if (Array.isArray(cats)) localStorage.setItem(STORAGE_KEYS.INVENTORY_CATEGORIES, JSON.stringify(cats));
+      }
+      if (invItemsRes.ok) {
+        const items = await invItemsRes.json();
+        if (Array.isArray(items)) localStorage.setItem(STORAGE_KEYS.INVENTORY_ITEMS, JSON.stringify(items));
+      }
+      if (quotationsRes.ok) {
+        const quots = await quotationsRes.json();
+        if (Array.isArray(quots)) localStorage.setItem(STORAGE_KEYS.QUOTATIONS, JSON.stringify(quots));
       }
 
       window.dispatchEvent(new Event('seekers_store_updated'));

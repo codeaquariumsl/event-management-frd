@@ -20,6 +20,9 @@ import {
   ShieldCheck,
   UserCheck,
   X,
+  FileSpreadsheet,
+  Boxes,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { mockStore } from '@/lib/mock/store';
@@ -54,9 +57,12 @@ export function Sidebar({
 
   const navItems = [
     { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { label: 'Quotations', href: '/quotations', icon: FileSpreadsheet },
     { label: 'Events', href: '/events', icon: CalendarDays, badge: mounted ? eventsCount : undefined },
+    { label: 'Event Types', href: '/event-types', icon: Layers },
     { label: 'Recurring Events', href: '/recurring-events', icon: Clock3 },
     { label: 'Calendar', href: '/calendar', icon: Calendar },
+    { label: 'Inventory Gear', href: '/inventory', icon: Boxes },
     { label: 'Staff Management', href: '/staff', icon: Users },
     { label: 'Staff Payments', href: '/staff-payments', icon: WalletCards },
     { label: 'Customers', href: '/customers', icon: ClipboardList },

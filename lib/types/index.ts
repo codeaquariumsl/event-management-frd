@@ -287,3 +287,84 @@ export interface UserAccount {
   createdAt: string;
 }
 
+export interface EventTypeItem {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  color: string;
+  icon?: string;
+  isActive: boolean;
+  sortOrder?: number;
+  defaultServices?: string[];
+  createdAt?: string;
+}
+
+export interface InventoryCategory {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  color: string;
+  icon?: string;
+  status: 'Active' | 'Inactive';
+}
+
+export interface InventoryItem {
+  id: string;
+  sku: string;
+  name: string;
+  category: string;
+  description?: string;
+  unitPrice: number;
+  rentalRate: number;
+  totalStock: number;
+  availableQuantity: number;
+  damagedQuantity: number;
+  status: 'In Stock' | 'Low Stock' | 'Out of Stock' | 'Maintenance';
+  unit: string;
+  specifications?: string;
+}
+
+export type QuotationStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired';
+
+export interface QuotationLineItem {
+  id: string;
+  itemId?: string;
+  name: string;
+  category: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  totalPrice: number;
+}
+
+export interface Quotation {
+  id: string;
+  quotationNumber: string;
+  title: string;
+  customerId: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  customerCompany?: string;
+  eventType: string;
+  eventDate: string;
+  validUntil: string;
+  venue?: string;
+  items: QuotationLineItem[];
+  subtotal: number;
+  discount: number;
+  taxRate: number;
+  taxAmount: number;
+  additionalCharges: number;
+  totalAmount: number;
+  status: QuotationStatus;
+  notes?: string;
+  termsAndConditions?: string;
+  convertedEventId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

@@ -12,11 +12,15 @@ import {
   AlertCircle,
   FileText,
   Percent,
+  Package,
+  Sparkles,
+  Boxes,
 } from 'lucide-react';
 import { eventService } from '@/lib/api/eventService';
 import { customerService } from '@/lib/api/customerService';
 import { eventTypeService } from '@/lib/api/eventTypeService';
 import { serviceService } from '@/lib/api/serviceService';
+import { inventoryService } from '@/lib/api/inventoryService';
 import { formatCurrency } from '@/lib/utils';
 import {
   Customer,
@@ -25,6 +29,8 @@ import {
   EventTypeItem,
   ServiceItem,
   StaffAssignment,
+  InventoryItem,
+  ServiceCatalogItem,
 } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 import { CustomerModal } from '../customers/CustomerModal';
@@ -40,21 +46,38 @@ export function EventForm({ initialData }: EventFormProps) {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [dynamicEventTypes, setDynamicEventTypes] = useState<EventTypeItem[]>([]);
-  const [servicesCatalog, setServicesCatalog] = useState<any[]>([]);
+  const [servicesCatalog, setServicesCatalog] = useState<ServiceCatalogItem[]>([]);
+  const [inventoryGear, setInventoryGear] = useState<InventoryItem[]>([]);
+  const [selectedCatalogId, setSelectedCatalogId] = useState<string>('');
+  const [selectedGearId, setSelectedGearId] = useState<string>('');
 
   useEffect(() => {
     customerService.getCustomers().then((c) => {
-      if (Array.isArray(c)) setCustomers(c);
+      if (Array.isArray(c)) {
+        setCustomers(c);
+        if (!initialData?.customerId && c.length > 0) {
+          setCustomerId(c[0].id);
+        }
+      }
     });
 
     eventTypeService.getEventTypes().then((t) => {
-      if (Array.isArray(t)) setDynamicEventTypes(t);
+      if (Array.isArray(t) && t.length > 0) {
+        setDynamicEventTypes(t);
+        if (!initialData?.eventType) {
+          setEventType(t[0].name);
+        }
+      }
     });
 
     serviceService.getServices().then((s) => {
       if (Array.isArray(s)) setServicesCatalog(s);
     });
-  }, []);
+
+    inventoryService.getItems().then((items) => {
+      if (Array.isArray(items)) setInventoryGear(items);
+    });
+  }, [initialData]);
 
   // Modals state
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
@@ -62,7 +85,7 @@ export function EventForm({ initialData }: EventFormProps) {
 
   // 1. Event Information
   const [name, setName] = useState(initialData?.name || '');
-  const [eventType, setEventType] = useState<any>(initialData?.eventType || 'Wedding');
+  const [eventType, setEventType] = useState<string>(initialData?.eventType || '');
   const [eventDate, setEventDate] = useState(initialData?.eventDate || new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState(initialData?.startTime || '18:00');
   const [endTime, setEndTime] = useState(initialData?.endTime || '23:30');
@@ -73,22 +96,10 @@ export function EventForm({ initialData }: EventFormProps) {
   const [status, setStatus] = useState<any>(initialData?.status || 'Confirmed');
 
   // 2. Customer
-  const [customerId, setCustomerId] = useState(initialData?.customerId || customers[0]?.id || '');
+  const [customerId, setCustomerId] = useState(initialData?.customerId || '');
 
-  // 3. Services
-  const [services, setServices] = useState<ServiceItem[]>(
-    initialData?.services || [
-      {
-        id: `es-${Date.now()}-1`,
-        name: servicesCatalog[0]?.name || 'DJ & MC Performance Package',
-        category: 'DJ',
-        quantity: 1,
-        unitPrice: servicesCatalog[0]?.unitPrice || 65000,
-        totalPrice: servicesCatalog[0]?.unitPrice || 65000,
-        description: 'Standard 4-hour performance',
-      },
-    ]
-  );
+  // 3. Services & Production Equipment
+  const [services, setServices] = useState<ServiceItem[]>(initialData?.services || []);
 
   // 4. Staff Assignment
   const [assignedStaff, setAssignedStaff] = useState<StaffAssignment[]>(initialData?.assignedStaff || []);
@@ -121,6 +132,35 @@ export function EventForm({ initialData }: EventFormProps) {
       unitPrice: templateService.unitPrice,
       totalPrice: templateService.unitPrice,
       description: templateService.description || '',
+    };
+    setServices((prev) => [...prev, newService]);
+    showToast(`✓ Added "${templateService.name}"`);
+  };
+
+  const handleAddInventoryGear = (item: InventoryItem) => {
+    const rate = item.rentalRate || item.unitPrice || 0;
+    const newService: ServiceItem = {
+      id: `es-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      category: item.category || 'Production',
+      quantity: 1,
+      unitPrice: rate,
+      totalPrice: rate,
+      description: `Gear Item (SKU: ${item.sku})`,
+    };
+    setServices((prev) => [...prev, newService]);
+    showToast(`✓ Added gear "${item.name}"`);
+  };
+
+  const handleAddCustomLine = () => {
+    const newService: ServiceItem = {
+      id: `es-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: '',
+      category: 'Production',
+      quantity: 1,
+      unitPrice: 0,
+      totalPrice: 0,
+      description: '',
     };
     setServices((prev) => [...prev, newService]);
   };
@@ -240,24 +280,31 @@ export function EventForm({ initialData }: EventFormProps) {
             </div>
 
             <div>
-              <label className="block font-medium text-slate-300 mb-1">Event Type</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-medium text-slate-300">Event Type *</label>
+                <button
+                  type="button"
+                  onClick={() => router.push('/event-types')}
+                  className="text-[10px] text-[#00e5c9] hover:underline"
+                >
+                  Manage
+                </button>
+              </div>
               <select
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}
                 className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                required
               >
-                {dynamicEventTypes.map((t) => (
-                  <option key={t.id} value={t.name}>
-                    {t.name}
-                  </option>
-                ))}
-                <option value="Wedding">Wedding</option>
-                <option value="Corporate">Corporate</option>
-                <option value="Club / Concert">Club / Concert</option>
-                <option value="Private Party">Private Party</option>
-                <option value="Festival">Festival</option>
-                <option value="Hotel Event">Hotel Event</option>
-                <option value="Other">Other</option>
+                {dynamicEventTypes.length === 0 ? (
+                  <option value="">No event types in database</option>
+                ) : (
+                  dynamicEventTypes.map((t) => (
+                    <option key={t.id} value={t.name}>
+                      {t.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           </div>
@@ -392,104 +439,175 @@ export function EventForm({ initialData }: EventFormProps) {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#1a2738]">
             <div>
               <h2 className="text-base font-bold text-white">3. Services & Production Equipment</h2>
-              <p className="text-xs text-slate-400">Itemize DJ, sound, intelligent lighting, and LED screen systems</p>
+              <p className="text-xs text-slate-400">Load real packages from service catalog or gear from inventory</p>
             </div>
 
-            {/* Quick Add Buttons from Catalog */}
-            <div className="flex flex-wrap gap-1.5">
-              {servicesCatalog.map((catItem) => (
-                <button
-                  key={catItem.id}
-                  type="button"
-                  onClick={() => handleAddService(catItem)}
-                  className="rounded-lg border border-[#233549] bg-[#121c2a] px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:border-[#00e5c9] hover:text-white transition-colors"
-                >
-                  + {catItem.name.split(' ')[0]} {catItem.name.split(' ')[1] || ''}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleAddCustomLine}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#233549] bg-[#142030] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-[#1c2c3e] hover:text-[#00e5c9] transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>+ Custom Item</span>
+              </button>
             </div>
           </div>
 
-          {/* Services Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-[#1f2e41] text-slate-400 text-[11px] uppercase">
-                  <th className="py-2.5 px-3">Service Name & Scope</th>
-                  <th className="py-2.5 px-3 text-center w-24">Qty</th>
-                  <th className="py-2.5 px-3 text-right w-36">Unit Price (LKR)</th>
-                  <th className="py-2.5 px-3 text-right w-36">Total (LKR)</th>
-                  <th className="py-2.5 px-3 text-right w-12" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#182535]">
-                {services.map((service) => (
-                  <tr key={service.id} className="hover:bg-[#101824]">
-                    <td className="py-3 px-3">
-                      <input
-                        type="text"
-                        value={service.name}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setServices((prev) =>
-                            prev.map((s) => (s.id === service.id ? { ...s, name: val } : s))
-                          );
-                        }}
-                        className="w-full rounded bg-transparent font-medium text-white focus:bg-[#131d2b] focus:outline-none p-1"
-                      />
-                      <input
-                        type="text"
-                        value={service.description || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setServices((prev) =>
-                            prev.map((s) => (s.id === service.id ? { ...s, description: val } : s))
-                          );
-                        }}
-                        placeholder="Add notes / specs..."
-                        className="w-full rounded bg-transparent text-[11px] text-slate-400 focus:bg-[#131d2b] focus:outline-none p-1 mt-0.5"
-                      />
-                    </td>
-
-                    <td className="py-3 px-3 text-center">
-                      <input
-                        type="number"
-                        min={1}
-                        value={service.quantity}
-                        onChange={(e) => handleUpdateServiceQuantity(service.id, Number(e.target.value))}
-                        className="w-16 rounded border border-[#233549] bg-[#111c29] p-1.5 text-center text-white focus:outline-none"
-                      />
-                    </td>
-
-                    <td className="py-3 px-3 text-right">
-                      <input
-                        type="number"
-                        min={0}
-                        value={service.unitPrice}
-                        onChange={(e) => handleUpdateServicePrice(service.id, Number(e.target.value))}
-                        className="w-28 rounded border border-[#233549] bg-[#111c29] p-1.5 text-right text-white focus:outline-none font-mono"
-                      />
-                    </td>
-
-                    <td className="py-3 px-3 text-right font-semibold text-white font-mono">
-                      {formatCurrency(service.totalPrice)}
-                    </td>
-
-                    <td className="py-3 px-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveService(service.id)}
-                        className="text-slate-500 hover:text-rose-400 transition-colors"
-                        title="Remove Service"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
+          {/* Real Backend Data Selectors */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-[#1b2a3d] bg-[#0f1826]">
+            {/* Service Catalog Selector */}
+            <div>
+              <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1">
+                <Sparkles className="h-3.5 w-3.5 text-[#00e5c9]" /> Add From Service Catalog ({servicesCatalog.length} packages)
+              </label>
+              <select
+                value={selectedCatalogId}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) {
+                    const catItem = servicesCatalog.find((s) => s.id === val);
+                    if (catItem) handleAddService(catItem);
+                    setSelectedCatalogId('');
+                  }
+                }}
+                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2 text-xs text-white focus:border-[#00e5c9] focus:outline-none"
+              >
+                <option value="">-- Choose package to add to event --</option>
+                {servicesCatalog.map((pkg) => (
+                  <option key={pkg.id} value={pkg.id}>
+                    [{pkg.category}] {pkg.name} — Rs. {pkg.unitPrice.toLocaleString()}
+                  </option>
                 ))}
-              </tbody>
-            </table>
+              </select>
+            </div>
+
+            {/* Inventory Gear Selector */}
+            <div>
+              <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1">
+                <Boxes className="h-3.5 w-3.5 text-amber-400" /> Add From Inventory Gear ({inventoryGear.length} units)
+              </label>
+              <select
+                value={selectedGearId}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) {
+                    const gearItem = inventoryGear.find((g) => g.id === val);
+                    if (gearItem) handleAddInventoryGear(gearItem);
+                    setSelectedGearId('');
+                  }
+                }}
+                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2 text-xs text-white focus:border-[#00e5c9] focus:outline-none"
+              >
+                <option value="">-- Choose gear to add to event --</option>
+                {inventoryGear.map((gear) => (
+                  <option key={gear.id} value={gear.id}>
+                    [{gear.category}] {gear.name} ({gear.sku}) — Rs. {(gear.rentalRate || gear.unitPrice || 0).toLocaleString()}/day
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          {/* Services Table or Empty State */}
+          {services.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[#233549] p-8 text-center bg-[#0d1622]">
+              <Package className="h-8 w-8 text-slate-500 mx-auto mb-2" />
+              <p className="font-semibold text-white text-xs">No services or equipment added yet</p>
+              <p className="text-[11px] text-slate-400 mt-1 max-w-md mx-auto">
+                Use the dropdowns above to select real packages from your service catalog, hardware from your inventory gear, or add a custom line item.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[#1f2e41] text-slate-400 text-[11px] uppercase">
+                    <th className="py-2.5 px-3">Service / Gear Name & Specs</th>
+                    <th className="py-2.5 px-3">Category</th>
+                    <th className="py-2.5 px-3 text-center w-24">Qty</th>
+                    <th className="py-2.5 px-3 text-right w-36">Unit Price (LKR)</th>
+                    <th className="py-2.5 px-3 text-right w-36">Total (LKR)</th>
+                    <th className="py-2.5 px-3 text-right w-12" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#182535]">
+                  {services.map((service) => (
+                    <tr key={service.id} className="hover:bg-[#101824]">
+                      <td className="py-3 px-3">
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Line Array System / Moving Heads"
+                          value={service.name}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setServices((prev) =>
+                              prev.map((s) => (s.id === service.id ? { ...s, name: val } : s))
+                            );
+                          }}
+                          className="w-full rounded bg-transparent font-medium text-white focus:bg-[#131d2b] focus:outline-none p-1"
+                        />
+                        <input
+                          type="text"
+                          value={service.description || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setServices((prev) =>
+                              prev.map((s) => (s.id === service.id ? { ...s, description: val } : s))
+                            );
+                          }}
+                          placeholder="Add notes / specs..."
+                          className="w-full rounded bg-transparent text-[11px] text-slate-400 focus:bg-[#131d2b] focus:outline-none p-1 mt-0.5"
+                        />
+                      </td>
+
+                      <td className="py-3 px-3">
+                        <span className="rounded bg-[#162232] border border-[#233549] px-2 py-0.5 text-[10px] font-semibold text-[#00e5c9]">
+                          {service.category || 'Production'}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-3 text-center">
+                        <input
+                          type="number"
+                          min={1}
+                          value={service.quantity}
+                          onChange={(e) => handleUpdateServiceQuantity(service.id, Number(e.target.value))}
+                          className="w-16 rounded border border-[#233549] bg-[#111c29] p-1.5 text-center text-white focus:outline-none"
+                        />
+                      </td>
+
+                      <td className="py-3 px-3 text-right">
+                        <input
+                          type="number"
+                          min={0}
+                          value={service.unitPrice}
+                          onChange={(e) => handleUpdateServicePrice(service.id, Number(e.target.value))}
+                          className="w-28 rounded border border-[#233549] bg-[#111c29] p-1.5 text-right text-white focus:outline-none font-mono"
+                        />
+                      </td>
+
+                      <td className="py-3 px-3 text-right font-semibold text-white font-mono">
+                        {formatCurrency(service.totalPrice)}
+                      </td>
+
+                      <td className="py-3 px-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveService(service.id)}
+                          className="text-slate-500 hover:text-rose-400 transition-colors"
+                          title="Remove Service"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* SECTION 4: Staff Assignment & Scheduling Conflict Detection */}

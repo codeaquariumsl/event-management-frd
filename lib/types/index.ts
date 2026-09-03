@@ -7,7 +7,8 @@ export type EventType =
   | 'Private Party'
   | 'Festival'
   | 'Hotel Event'
-  | 'Other';
+  | 'Other'
+  | string;
 
 export type StaffRole =
   | 'DJ'
@@ -51,7 +52,7 @@ export type RecurringFrequency = 'Daily' | 'Weekly' | 'Biweekly' | 'Monthly' | '
 export interface ServiceItem {
   id: string;
   name: string;
-  category: 'DJ' | 'Sound' | 'Lighting' | 'LED' | 'Production' | 'Staff' | 'Other';
+  category: 'DJ' | 'Sound' | 'Lighting' | 'LED' | 'Production' | 'Staff' | 'Special FX' | 'Other' | string;
   description?: string;
   quantity: number;
   unitPrice: number;

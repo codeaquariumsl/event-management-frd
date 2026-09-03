@@ -24,8 +24,9 @@ import { InvoiceModal } from '@/components/ui/InvoiceModal';
 import { RecordPaymentModal } from '@/features/events/RecordPaymentModal';
 import { StaffAssignmentModal } from '@/features/events/StaffAssignmentModal';
 import { eventService } from '@/lib/api/eventService';
+import { eventTypeService } from '@/lib/api/eventTypeService';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { EventItem, EventStatus, EventType } from '@/lib/types';
+import { EventItem, EventStatus, EventType, EventTypeItem } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
 export default function EventsPage() {
@@ -33,6 +34,7 @@ export default function EventsPage() {
   const { showToast } = useToast();
 
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [eventTypes, setEventTypes] = useState<EventTypeItem[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
@@ -44,8 +46,12 @@ export default function EventsPage() {
 
   const loadData = async () => {
     try {
-      const data = await eventService.getEvents();
+      const [data, types] = await Promise.all([
+        eventService.getEvents(),
+        eventTypeService.getEventTypes(),
+      ]);
       if (Array.isArray(data)) setEvents(data);
+      if (Array.isArray(types)) setEventTypes(types);
     } catch {}
   };
 
@@ -230,12 +236,11 @@ export default function EventsPage() {
                 className="rounded-lg border border-[#233549] bg-[#111c29] px-2.5 py-2 text-white focus:outline-none"
               >
                 <option value="ALL">All Event Types</option>
-                <option value="Wedding">Wedding</option>
-                <option value="Corporate">Corporate</option>
-                <option value="Club / Concert">Club / Concert</option>
-                <option value="Festival">Festival</option>
-                <option value="Private Party">Private Party</option>
-                <option value="Hotel Event">Hotel Event</option>
+                {eventTypes.map((t) => (
+                  <option key={t.id} value={t.name}>
+                    {t.name}
+                  </option>
+                ))}
               </select>
             </div>
           }

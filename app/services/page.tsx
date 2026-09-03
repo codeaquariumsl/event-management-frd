@@ -37,18 +37,6 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
   Other: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/30' },
 };
 
-const COMMON_FEATURE_TAGS = [
-  'Line Array Speakers x4',
-  'Wireless Microphones x2',
-  'Moving Heads x6',
-  'Stage Monitors x2',
-  'Sound Engineer Included',
-  'Lighting Operator Included',
-  '4K Video Scaler',
-  'Dry Ice Low Fog Machine',
-  'Cold Sparkular Units x4',
-  'Backup Generator Hookup',
-];
 
 export default function ServicesPage() {
   const { showToast } = useToast();
@@ -108,7 +96,7 @@ export default function ServicesPage() {
         setBackendPresets(presetsData);
       }
     } catch (err: any) {
-      showToast(err.message || 'Error loading services from database', 'error');
+      showToast(err.message || 'Error loading services', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -163,6 +151,19 @@ export default function ServicesPage() {
       counts[s.category] = (counts[s.category] || 0) + 1;
     });
     return counts;
+  }, [services]);
+
+  // Dynamically extract real equipment and feature tags from database services
+  const dynamicFeatureTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    services.forEach((s) => {
+      if (Array.isArray(s.features)) {
+        s.features.forEach((feat) => {
+          if (feat && feat.trim()) tagSet.add(feat.trim());
+        });
+      }
+    });
+    return Array.from(tagSet).slice(0, 15);
   }, [services]);
 
   const topCategory = useMemo(() => {
@@ -342,17 +343,15 @@ export default function ServicesPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                    isSelected
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${isSelected
                       ? 'bg-[#00e5c9] text-[#051319] shadow-md shadow-[#00e5c9]/20'
                       : 'bg-[#142030] text-slate-300 hover:bg-[#1a2c42] hover:text-white'
-                  }`}
+                    }`}
                 >
                   <span>{cat}</span>
                   <span
-                    className={`rounded-full px-1.5 py-0.2 text-[10px] ${
-                      isSelected ? 'bg-black/20 text-[#051319]' : 'bg-[#21344c] text-slate-400'
-                    }`}
+                    className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected ? 'bg-black/20 text-[#051319]' : 'bg-[#21344c] text-slate-400'
+                      }`}
                   >
                     {count}
                   </span>
@@ -376,18 +375,16 @@ export default function ServicesPage() {
             <div className="flex rounded-lg border border-[#233549] bg-[#111c29] p-0.5">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`rounded p-1.5 transition-colors ${
-                  viewMode === 'grid' ? 'bg-[#1e2f42] text-[#00e5c9]' : 'text-slate-400 hover:text-white'
-                }`}
+                className={`rounded p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-[#1e2f42] text-[#00e5c9]' : 'text-slate-400 hover:text-white'
+                  }`}
                 title="Grid Cards"
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`rounded p-1.5 transition-colors ${
-                  viewMode === 'table' ? 'bg-[#1e2f42] text-[#00e5c9]' : 'text-slate-400 hover:text-white'
-                }`}
+                className={`rounded p-1.5 transition-colors ${viewMode === 'table' ? 'bg-[#1e2f42] text-[#00e5c9]' : 'text-slate-400 hover:text-white'
+                  }`}
                 title="Table View"
               >
                 <List className="h-4 w-4" />
@@ -401,7 +398,7 @@ export default function ServicesPage() {
           <div className="flex h-64 items-center justify-center rounded-2xl border border-[#1b293a] bg-[#0c1420]">
             <div className="flex flex-col items-center gap-3">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#00e5c9] border-t-transparent" />
-              <p className="text-xs text-slate-400">Loading services catalog from database...</p>
+              <p className="text-xs text-slate-400">Loading services catalog...</p>
             </div>
           </div>
         ) : filteredServices.length === 0 ? (
@@ -629,7 +626,7 @@ export default function ServicesPage() {
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles className="h-3 w-3 text-[#00e5c9]" /> Live 1-Click Package Templates
                   </span>
-                  <span className="text-[10px] text-slate-500">Loaded from backend database</span>
+                  <span className="text-[10px] text-slate-500"></span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {backendPresets.map((preset) => (
@@ -761,28 +758,32 @@ export default function ServicesPage() {
                 <label className="block font-medium text-slate-300">
                   Included Features & Hardware (One item per line)
                 </label>
-                <span className="text-[10px] text-slate-500">Quick add tags below</span>
+                {dynamicFeatureTags.length > 0 && (
+                  <span className="text-[10px] text-slate-500">Quick add tags</span>
+                )}
               </div>
-              <div className="flex flex-wrap gap-1 mb-2">
-                {COMMON_FEATURE_TAGS.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => {
-                      const current = formData.features ? formData.features.trim().split('\n') : [];
-                      if (!current.includes(tag)) {
-                        setFormData({
-                          ...formData,
-                          features: [...current, tag].join('\n'),
-                        });
-                      }
-                    }}
-                    className="rounded bg-[#162332] border border-[#233549] px-2 py-0.5 text-[10px] text-slate-400 hover:text-[#00e5c9] hover:border-[#00e5c9]/50 transition-colors"
-                  >
-                    + {tag}
-                  </button>
-                ))}
-              </div>
+              {dynamicFeatureTags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {dynamicFeatureTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        const current = formData.features ? formData.features.trim().split('\n') : [];
+                        if (!current.includes(tag)) {
+                          setFormData({
+                            ...formData,
+                            features: [...current, tag].join('\n'),
+                          });
+                        }
+                      }}
+                      className="rounded bg-[#162332] border border-[#233549] px-2 py-0.5 text-[10px] text-slate-400 hover:text-[#00e5c9] hover:border-[#00e5c9]/50 transition-colors"
+                    >
+                      + {tag}
+                    </button>
+                  ))}
+                </div>
+              )}
               <textarea
                 rows={4}
                 placeholder="Line Array Speakers x4&#10;Wireless Microphones x2&#10;Moving Head Stage Spotlights x4&#10;Sound Tech Included"

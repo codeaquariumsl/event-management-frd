@@ -46,7 +46,7 @@ export const serviceService = {
         if (cached) return JSON.parse(cached);
       }
     }
-    return ['Sound', 'DJ', 'Lighting', 'LED', 'Production', 'Special FX'];
+    return [];
   },
 
   async getPresets(): Promise<ServicePresetItem[]> {

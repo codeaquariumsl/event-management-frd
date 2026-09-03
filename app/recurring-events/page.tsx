@@ -14,6 +14,8 @@ import {
   AlertCircle,
   Eye,
   Calendar,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -32,6 +34,7 @@ export default function RecurringEventsPage() {
 
   const [recurringList, setRecurringList] = useState<RecurringEvent[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSeries, setEditingSeries] = useState<RecurringEvent | null>(null);
   const [selectedSeriesForGeneration, setSelectedSeriesForGeneration] = useState<RecurringEvent | null>(null);
   const [generateCount, setGenerateCount] = useState<number>(4);
 
@@ -59,6 +62,14 @@ export default function RecurringEventsPage() {
     showToast(`✓ Successfully generated ${created.length} new events in the calendar!`);
     setSelectedSeriesForGeneration(null);
     loadData();
+  };
+
+  const handleDeleteSeries = async (id: string) => {
+    if (confirm('Are you sure you want to delete this recurring series?')) {
+      await recurringService.deleteRecurringEvent(id);
+      showToast('✓ Recurring series deleted');
+      loadData();
+    }
   };
 
   const columns: Column<RecurringEvent>[] = [
@@ -170,7 +181,7 @@ export default function RecurringEventsPage() {
           searchPlaceholder="Search recurring series by name, client, or venue..."
           exportFileName="seekers_recurring_events"
           actions={(r) => (
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-1.5">
               <button
                 onClick={() => setSelectedSeriesForGeneration(r)}
                 className="inline-flex items-center gap-1 rounded bg-[#00e5c9] px-2.5 py-1 text-[11px] font-bold text-black hover:bg-[#1affda]"
@@ -178,6 +189,20 @@ export default function RecurringEventsPage() {
               >
                 <Play className="h-3 w-3" />
                 <span>Generate</span>
+              </button>
+              <button
+                onClick={() => setEditingSeries(r)}
+                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-[#00e5c9]"
+                title="Edit Series"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => handleDeleteSeries(r.id)}
+                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-rose-400"
+                title="Delete Series"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           )}
@@ -190,6 +215,16 @@ export default function RecurringEventsPage() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={loadData}
       />
+
+      {/* Edit Series Modal */}
+      {editingSeries && (
+        <RecurringEventModal
+          isOpen={!!editingSeries}
+          initialData={editingSeries}
+          onClose={() => setEditingSeries(null)}
+          onSuccess={loadData}
+        />
+      )}
 
       {/* Generate Events Confirmation Modal */}
       {selectedSeriesForGeneration && (

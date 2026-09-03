@@ -1,12 +1,30 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RecurringEvent, RecurringFrequency, EventType, Customer, Staff } from '@/lib/types';
-import { customerService } from '@/lib/api/customerService';
-import { staffService } from '@/lib/api/staffService';
+import Link from 'next/link';
+import {
+  CalendarDays,
+  Clock,
+  MapPin,
+  Users,
+  Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  Package,
+  Layers,
+  ArrowRight,
+} from 'lucide-react';
+import {
+  RecurringEvent,
+  RecurringFrequency,
+  EventItem,
+  ServiceItem,
+} from '@/lib/types';
+import { eventService } from '@/lib/api/eventService';
 import { recurringService } from '@/lib/api/recurringService';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
+import { formatCurrency, formatDate } from '@/lib/utils';
 
 interface RecurringEventModalProps {
   isOpen: boolean;
@@ -15,6 +33,8 @@ interface RecurringEventModalProps {
   initialData?: RecurringEvent;
 }
 
+const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 export function RecurringEventModal({
   isOpen,
   onClose,
@@ -22,58 +42,126 @@ export function RecurringEventModal({
   initialData,
 }: RecurringEventModalProps) {
   const { showToast } = useToast();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [staffList, setStaffList] = useState<Staff[]>([]);
 
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
+
+  // Editable Event & Recurring Details
   const [seriesName, setSeriesName] = useState(initialData?.seriesName || '');
-  const [customerId, setCustomerId] = useState(initialData?.customerId || '');
-  const [eventType, setEventType] = useState<EventType>(initialData?.eventType || 'Club / Concert');
   const [frequency, setFrequency] = useState<RecurringFrequency>(initialData?.frequency || 'Weekly');
   const [startDate, setStartDate] = useState(initialData?.startDate || new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(initialData?.endDate || '2026-12-31');
-  const [eventDay, setEventDay] = useState(initialData?.eventDay || 'Friday');
+  const [endDate, setEndDate] = useState(initialData?.endDate || '');
+  const [eventDay, setEventDay] = useState(initialData?.eventDay || '');
   const [startTime, setStartTime] = useState(initialData?.startTime || '21:00');
   const [endTime, setEndTime] = useState(initialData?.endTime || '03:00');
-  const [location, setLocation] = useState(initialData?.location || 'Colombo');
-  const [defaultPrice, setDefaultPrice] = useState(initialData?.defaultPrice || 140000);
-  const [paymentTerms, setPaymentTerms] = useState(initialData?.paymentTerms || 'Weekly settlement');
-  const [assignedStaffIds, setAssignedStaffIds] = useState<string[]>(initialData?.assignedStaffIds || []);
+  const [location, setLocation] = useState(initialData?.location || '');
+  const [defaultPrice, setDefaultPrice] = useState<number>(initialData?.defaultPrice || 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Load real events from database
   useEffect(() => {
-    customerService.getCustomers().then((c) => {
-      if (Array.isArray(c) && c.length > 0) {
-        setCustomers(c);
-        if (!customerId) setCustomerId(initialData?.customerId || c[0].id);
-      }
-    });
-    staffService.getStaff().then((s) => {
-      if (Array.isArray(s)) setStaffList(s);
-    });
-  }, []);
+    if (!isOpen) return;
 
-  const handleToggleStaff = (staffId: string) => {
-    setAssignedStaffIds((prev) =>
-      prev.includes(staffId) ? prev.filter((id) => id !== staffId) : [...prev, staffId]
-    );
+    setIsLoadingEvents(true);
+    eventService
+      .getEvents()
+      .then((evtList) => {
+        if (Array.isArray(evtList)) {
+          setEvents(evtList);
+
+          if (initialData) {
+            // Edit mode: find existing event if any or initialize from initialData
+            const matched = evtList.find(
+              (e) => e.customerId === initialData.customerId && e.name === initialData.seriesName.replace(/ \(Residency\)$/, '')
+            );
+            if (matched) {
+              setSelectedEventId(matched.id);
+              setSelectedEvent(matched);
+            }
+          }
+        }
+      })
+      .finally(() => {
+        setIsLoadingEvents(false);
+      });
+  }, [isOpen, initialData]);
+
+  // Set default End Date (6 months later) if empty
+  useEffect(() => {
+    if (!endDate && startDate) {
+      try {
+        const d = new Date(startDate);
+        d.setMonth(d.getMonth() + 6);
+        setEndDate(d.toISOString().split('T')[0]);
+      } catch {}
+    }
+  }, [startDate, endDate]);
+
+  // Handle Event Selection
+  const handleSelectEvent = (eventId: string) => {
+    setSelectedEventId(eventId);
+    const evt = events.find((e) => e.id === eventId);
+    if (!evt) {
+      setSelectedEvent(null);
+      return;
+    }
+
+    setSelectedEvent(evt);
+
+    // Calculate Day of Week from event date
+    let dayName = 'Every Friday';
+    try {
+      const parsedDate = new Date(evt.eventDate);
+      if (!isNaN(parsedDate.getTime())) {
+        dayName = `Every ${DAYS_OF_WEEK[parsedDate.getDay()]}`;
+      }
+    } catch {}
+
+    // Prefill all editable event & residency fields from selected event
+    setSeriesName(`${evt.name} (Residency)`);
+    setStartDate(evt.eventDate || new Date().toISOString().split('T')[0]);
+    setEventDay(dayName);
+    setStartTime(evt.startTime || '21:00');
+    setEndTime(evt.endTime || '03:00');
+    setLocation(evt.location || '');
+    setDefaultPrice(evt.totalAmount || evt.subtotal || 0);
+
+    // Calculate default 6-month end date
+    try {
+      const endD = new Date(evt.eventDate || Date.now());
+      endD.setMonth(endD.getMonth() + 6);
+      setEndDate(endD.toISOString().split('T')[0]);
+    } catch {}
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!seriesName.trim() || !customerId) {
-      showToast('Please fill in required fields', 'error');
+
+    if (!initialData && !selectedEvent) {
+      showToast('Please select a base event first', 'error');
+      return;
+    }
+
+    if (!seriesName.trim()) {
+      showToast('Please enter a series name', 'error');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const customer = customers.find((c) => c.id === customerId);
+      const customerId = selectedEvent?.customerId || initialData?.customerId || '';
+      const customerName = selectedEvent?.customerName || initialData?.customerName || 'Customer';
+      const eventType = selectedEvent?.eventType || initialData?.eventType || 'Club / Concert';
+      const services = selectedEvent?.services || initialData?.services || [];
+      const assignedStaffIds =
+        selectedEvent?.assignedStaff?.map((s) => s.staffId) || initialData?.assignedStaffIds || [];
 
-      await recurringService.createRecurringEvent({
-        id: initialData?.id,
-        seriesName,
+      const payload = {
+        seriesName: seriesName.trim(),
         customerId,
-        customerName: customer?.name || 'Customer',
+        customerName,
         eventType,
         frequency,
         startDate,
@@ -82,22 +170,20 @@ export function RecurringEventModal({
         startTime,
         endTime,
         location,
-        defaultPrice: Number(defaultPrice),
-        paymentTerms,
+        defaultPrice: Number(defaultPrice) || 0,
+        services,
         assignedStaffIds,
-        services: [
-          {
-            id: 's-def-1',
-            name: 'DJ & MC Performance Package',
-            category: 'DJ',
-            quantity: 1,
-            unitPrice: 65000,
-            totalPrice: 65000,
-          },
-        ],
-      });
+        status: initialData?.status || 'Active',
+      };
 
-      showToast(initialData ? '✓ Recurring series updated' : '✓ Recurring series created successfully');
+      if (initialData?.id) {
+        await recurringService.updateRecurringEvent(initialData.id, payload);
+        showToast('✓ Recurring event series updated successfully');
+      } else {
+        await recurringService.createRecurringEvent(payload);
+        showToast('✓ Recurring event series created successfully');
+      }
+
       if (onSuccess) onSuccess();
       onClose();
     } catch (err: any) {
@@ -111,179 +197,247 @@ export function RecurringEventModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Edit Recurring Event Series' : 'New Recurring Event Series'}
-      subtitle="Define repeating club nights, hotel entertainment, or corporate townhalls"
+      title={initialData ? 'Edit Recurring Event Series' : 'Create Recurring Event Series'}
+      subtitle="Select a base event to automatically pull details, then edit recurring residency specs"
       maxWidth="lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-        <div>
-          <label className="block font-medium text-slate-300 mb-1">Series Name *</label>
-          <input
-            type="text"
-            value={seriesName}
-            onChange={(e) => setSeriesName(e.target.value)}
-            placeholder="e.g. Friday Night Club Resonance — Kama Colombo"
-            className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-5 text-xs">
+        {/* STEP 1: Select Event (Only required when creating new) */}
+        {!initialData && (
+          <div className="rounded-xl border border-[#1f2f42] bg-[#0c1420] p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block font-bold text-white text-xs flex items-center gap-1.5">
+                <CalendarDays className="h-4 w-4 text-[#00e5c9]" />
+                <span>1. Select Base Event *</span>
+              </label>
+              <span className="text-[11px] text-slate-400">
+                {events.length} event{events.length !== 1 ? 's' : ''} found in database
+              </span>
+            </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">Customer / Venue *</label>
-            <select
-              value={customerId}
-              onChange={(e) => setCustomerId(e.target.value)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-            >
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} {c.company ? `(${c.company})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">Event Type</label>
-            <select
-              value={eventType}
-              onChange={(e) => setEventType(e.target.value as EventType)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-            >
-              <option value="Club / Concert">Club / Concert</option>
-              <option value="Hotel Event">Hotel Event</option>
-              <option value="Corporate">Corporate</option>
-              <option value="Wedding">Wedding</option>
-              <option value="Festival">Festival</option>
-              <option value="Private Party">Private Party</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">Frequency</label>
-            <select
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-            >
-              <option value="Weekly">Weekly</option>
-              <option value="Biweekly">Biweekly</option>
-              <option value="Monthly">Monthly</option>
-              <option value="Daily">Daily</option>
-              <option value="Custom">Custom</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">Start Date</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">End Date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">Day of Week</label>
-            <input
-              type="text"
-              value={eventDay}
-              onChange={(e) => setEventDay(e.target.value)}
-              placeholder="e.g. Every Friday"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">Start Time</label>
-            <input
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">End Time</label>
-            <input
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">Location / Venue</label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. Kama Club Colombo 07"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium text-slate-300 mb-1">Default Price Per Session (LKR)</label>
-            <input
-              type="number"
-              value={defaultPrice}
-              onChange={(e) => setDefaultPrice(Number(e.target.value))}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-semibold focus:border-[#00e5c9] focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Assigned Staff Checkboxes */}
-        <div>
-          <label className="block font-medium text-slate-300 mb-2">Default Production Staff Crew</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto p-2 border border-[#233549] rounded-lg bg-[#0c141f]">
-            {staffList.map((s) => {
-              const checked = assignedStaffIds.includes(s.id);
-              return (
-                <label
-                  key={s.id}
-                  className={`flex items-center gap-2 p-1.5 rounded cursor-pointer transition-colors text-[11px] ${
-                    checked ? 'bg-[#00e5c9]/15 text-[#00e5c9]' : 'text-slate-400 hover:bg-[#15212f]'
-                  }`}
+            {isLoadingEvents ? (
+              <div className="p-3 text-center text-slate-400 text-xs">
+                Loading events from database...
+              </div>
+            ) : events.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-[#233549] p-4 text-center space-y-2">
+                <p className="text-slate-300 font-medium">No events available in database</p>
+                <p className="text-slate-500 text-[11px]">
+                  Recurring series require a base event blueprint with services and timing.
+                </p>
+                <Link
+                  href="/events/new"
+                  onClick={onClose}
+                  className="inline-flex items-center gap-1 text-[#00e5c9] hover:underline font-semibold text-xs"
                 >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => handleToggleStaff(s.id)}
-                    className="rounded border-[#2b3c4f] bg-[#101925] text-[#00e5c9] focus:ring-0"
-                  />
-                  <span className="truncate">{s.name} ({s.role})</span>
-                </label>
-              );
-            })}
+                  <span>+ Create an Event First</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+            ) : (
+              <select
+                value={selectedEventId}
+                onChange={(e) => handleSelectEvent(e.target.value)}
+                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-medium focus:border-[#00e5c9] focus:outline-none"
+                required
+              >
+                <option value="">-- Choose an event to make recurring --</option>
+                {events.map((evt) => (
+                  <option key={evt.id} value={evt.id}>
+                    {evt.name} • {evt.customerName} • {evt.eventDate} ({formatCurrency(evt.totalAmount)})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
-        </div>
+        )}
 
-        {/* Footer */}
+        {/* STEP 2: Selected Event Details Display */}
+        {(selectedEvent || initialData) && (
+          <div className="rounded-xl border border-[#00e5c9]/30 bg-[#00e5c9]/5 p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#00e5c9]/15">
+              <span className="text-[11px] font-bold text-[#00e5c9] uppercase tracking-wider flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Selected Event Blueprint
+              </span>
+              <span className="rounded bg-[#00e5c9]/15 border border-[#00e5c9]/30 px-2 py-0.5 text-[10px] font-mono font-semibold text-[#00e5c9]">
+                {selectedEvent?.id || initialData?.id}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <span className="text-slate-500 text-[10px] block uppercase">Customer</span>
+                <span className="text-white font-semibold block truncate">
+                  {selectedEvent?.customerName || initialData?.customerName}
+                </span>
+                {selectedEvent?.customerCompany && (
+                  <span className="text-slate-400 text-[10px] block truncate">
+                    {selectedEvent.customerCompany}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <span className="text-slate-500 text-[10px] block uppercase">Event Type</span>
+                <span className="text-[#00e5c9] font-medium block truncate">
+                  {selectedEvent?.eventType || initialData?.eventType}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-slate-500 text-[10px] block uppercase">Original Date</span>
+                <span className="text-white font-medium block">
+                  {selectedEvent?.eventDate || initialData?.startDate}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-slate-500 text-[10px] block uppercase">Base Price</span>
+                <span className="text-white font-mono font-bold block text-emerald-400">
+                  {formatCurrency(selectedEvent?.totalAmount || initialData?.defaultPrice || 0)}
+                </span>
+              </div>
+            </div>
+
+            {/* Included Services & Crew Badges */}
+            {selectedEvent && selectedEvent.services && selectedEvent.services.length > 0 && (
+              <div className="pt-2 border-t border-[#00e5c9]/15 flex items-center gap-2 flex-wrap text-[11px]">
+                <span className="text-slate-400 text-[10px]">Included Services:</span>
+                {selectedEvent.services.map((s, idx) => (
+                  <span
+                    key={s.id || idx}
+                    className="rounded bg-[#121f2d] border border-[#233549] px-2 py-0.5 text-[10px] text-slate-300"
+                  >
+                    {s.name} {s.quantity > 1 ? `(x${s.quantity})` : ''}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* STEP 3: Edit Event Details for the Recurring Series */}
+        {(selectedEvent || initialData) && (
+          <div className="space-y-4 pt-1">
+            <div>
+              <label className="block font-medium text-slate-300 mb-1">
+                Recurring Series Name *
+              </label>
+              <input
+                type="text"
+                value={seriesName}
+                onChange={(e) => setSeriesName(e.target.value)}
+                placeholder="e.g. Friday Night Residency — Colombo"
+                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-semibold focus:border-[#00e5c9] focus:outline-none"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label className="block font-medium text-slate-300 mb-1">Recurrence Frequency</label>
+                <select
+                  value={frequency}
+                  onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
+                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                >
+                  <option value="Weekly">Weekly</option>
+                  <option value="Biweekly">Biweekly</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="Daily">Daily</option>
+                  <option value="Custom">Custom</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-medium text-slate-300 mb-1">Schedule Day</label>
+                <input
+                  type="text"
+                  value={eventDay}
+                  onChange={(e) => setEventDay(e.target.value)}
+                  placeholder="e.g. Every Friday"
+                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-medium text-slate-300 mb-1">Start Date *</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block font-medium text-slate-300 mb-1">End Date *</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label className="block font-medium text-slate-300 mb-1">Session Start Time</label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-medium text-slate-300 mb-1">Session End Time</label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block font-medium text-slate-300 mb-1">Venue / Location</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="e.g. Kama Club, Colombo"
+                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] py-2.5 pl-9 pr-3 text-white focus:border-[#00e5c9] focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-slate-300 mb-1">
+                Rate Per Session (LKR)
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={defaultPrice}
+                onChange={(e) => setDefaultPrice(Number(e.target.value))}
+                placeholder="Rate per recurring session"
+                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 font-mono text-sm text-white font-bold focus:border-[#00e5c9] focus:outline-none"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Modal Footer */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#1c2a3a]">
           <button
             type="button"
@@ -294,9 +448,14 @@ export function RecurringEventModal({
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-[#041816] hover:bg-[#1affda]"
+            disabled={isSubmitting || (!initialData && !selectedEvent)}
+            className="rounded-lg bg-[#00e5c9] px-5 py-2 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/20 disabled:opacity-40 transition-all"
           >
-            {initialData ? 'Save Changes' : 'Create Series'}
+            {isSubmitting
+              ? 'Saving...'
+              : initialData
+              ? 'Save Changes'
+              : 'Create Recurring Series'}
           </button>
         </div>
       </form>

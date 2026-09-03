@@ -62,21 +62,21 @@ export function Sidebar({
         badgeFetchedAt = Date.now();
         setEventsCount(cachedEventsBadge);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const navItems = [
     { label: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { label: 'Quotations', href: '/quotations', icon: FileSpreadsheet },
-    { label: 'Events', href: '/events', icon: CalendarDays, badge: mounted ? eventsCount : undefined },
-    { label: 'Event Types', href: '/event-types', icon: Layers },
-    { label: 'Recurring Events', href: '/recurring-events', icon: Clock3 },
     { label: 'Calendar', href: '/calendar', icon: Calendar },
+    { label: 'Quotations', href: '/quotations', icon: FileSpreadsheet },
+    { label: 'Recurring Events', href: '/recurring-events', icon: Clock3 },
+    { label: 'Events', href: '/events', icon: CalendarDays, badge: mounted ? eventsCount : undefined },
+    { label: 'Customers', href: '/customers', icon: ClipboardList },
+    { label: 'Customer Payments', href: '/customer-payments', icon: CreditCard },
+    { label: 'Event Types', href: '/event-types', icon: Layers },
     { label: 'Inventory Gear', href: '/inventory', icon: Boxes },
     { label: 'Staff Management', href: '/staff', icon: Users },
     { label: 'Staff Payments', href: '/staff-payments', icon: WalletCards },
-    { label: 'Customers', href: '/customers', icon: ClipboardList },
-    { label: 'Customer Payments', href: '/customer-payments', icon: CreditCard },
     { label: 'Reports', href: '/reports', icon: FileBarChart },
     { label: 'User & Access', href: '/users', icon: UserCheck },
     { label: 'Settings', href: '/settings', icon: Settings },
@@ -137,7 +137,7 @@ export function Sidebar({
         </div>
 
         {/* Nav Links with Smooth Independent Scroll */}
-        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-2.5 py-3 scroll-smooth sidebar-scroll">
+        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-2.5 py-2 scroll-smooth sidebar-scroll">
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
@@ -149,7 +149,7 @@ export function Sidebar({
                 onClick={onCloseMobile}
                 title={isCollapsed ? item.label : undefined}
                 className={cn(
-                  'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium transition-all duration-150 relative',
+                  'group flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150 relative',
                   active
                     ? 'bg-[#00e5c9]/10 text-[#00e5c9] font-semibold border border-[#00e5c9]/30 shadow-sm'
                     : 'text-slate-400 hover:bg-[#121c2a] hover:text-slate-100',

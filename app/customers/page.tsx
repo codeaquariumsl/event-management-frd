@@ -119,7 +119,7 @@ export default function CustomersPage() {
       className: 'max-w-[260px]',
       render: (c) => (
         <div>
-          <span className="font-semibold text-white block truncate hover:text-[#00e5c9] transition-colors">
+          <span className="font-semibold text-slate-900 dark:text-white block truncate hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors">
             {c.name}
           </span>
           <span className="text-[11px] text-slate-400 block truncate">
@@ -134,7 +134,7 @@ export default function CustomersPage() {
       className: 'w-48',
       render: (c) => (
         <div>
-          <span className="text-white block font-mono text-[11px]">{c.phone}</span>
+          <span className="text-slate-800 dark:text-white block font-mono text-[11px]">{c.phone}</span>
           <span className="text-[11px] text-slate-400 block truncate">{c.email || '—'}</span>
         </div>
       ),
@@ -145,7 +145,7 @@ export default function CustomersPage() {
       sortable: true,
       className: 'w-28',
       render: (c) => (
-        <span className="rounded bg-[#162130] border border-[#223347] px-2.5 py-0.5 text-xs text-slate-300 font-medium">
+        <span className="rounded bg-slate-100 dark:bg-[#162130] border border-slate-200 dark:border-[#223347] px-2.5 py-0.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
           {c.customerType}
         </span>
       ),
@@ -154,21 +154,21 @@ export default function CustomersPage() {
       key: 'totalEvents',
       header: 'Events',
       sortable: true,
-      className: 'text-center w-20 font-mono text-white font-semibold',
+      className: 'text-center w-20 font-mono text-slate-900 dark:text-white font-semibold',
       render: (c) => c.totalEvents || 0,
     },
     {
       key: 'totalRevenue',
       header: 'Total Revenue',
       sortable: true,
-      className: 'text-right font-mono font-bold text-white w-32',
+      className: 'text-right font-mono font-bold text-slate-900 dark:text-white w-32',
       render: (c) => formatCurrency(c.totalRevenue || 0),
     },
     {
       key: 'outstandingBalance',
       header: 'Balance Due',
       sortable: true,
-      className: 'text-right font-mono font-bold text-amber-300 w-32',
+      className: 'text-right font-mono font-bold text-amber-600 dark:text-amber-300 w-32',
       render: (c) => formatCurrency(c.outstandingBalance || 0),
     },
     {
@@ -192,7 +192,7 @@ export default function CustomersPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={loadData}
-                className="p-2 rounded-lg bg-[#141e2b] border border-[#23354b] text-slate-400 hover:text-white transition-colors"
+                className="p-2 rounded-lg bg-slate-100 dark:bg-[#141e2b] border border-slate-300 dark:border-[#23354b] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 title="Refresh from backend"
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin text-[#00e5c9]' : ''}`} />
@@ -256,7 +256,7 @@ export default function CustomersPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="rounded-lg border border-[#233549] bg-[#111c29] px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00a894] dark:focus:ring-[#00e5c9]"
               >
                 <option value="ALL">All Client Types</option>
                 <option value="Individual">Individual</option>
@@ -270,7 +270,7 @@ export default function CustomersPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-[#233549] bg-[#111c29] px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00a894] dark:focus:ring-[#00e5c9]"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="Active">Active</option>
@@ -286,14 +286,14 @@ export default function CustomersPage() {
                   e.stopPropagation();
                   router.push(`/customers/${c.id}`);
                 }}
-                className="rounded p-1.5 text-slate-400 hover:bg-[#182637] hover:text-white transition-colors"
+                className="rounded p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-slate-900 dark:hover:text-white transition-colors"
                 title="View Profile"
               >
                 <Eye className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={(e) => handleEdit(c, e)}
-                className="rounded p-1.5 text-slate-400 hover:bg-[#182637] hover:text-white transition-colors"
+                className="rounded p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-slate-900 dark:hover:text-white transition-colors"
                 title="Edit Customer"
               >
                 <Edit2 className="h-3.5 w-3.5" />

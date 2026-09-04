@@ -173,7 +173,7 @@ export default function ReportsPage() {
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="rounded-lg border border-[#233549] bg-[#111c29] px-3 py-2 text-xs text-white focus:outline-none"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00a894] dark:focus:ring-[#00e5c9]"
               >
                 <option value="All Time">All Time</option>
                 <option value="This Month">This Month ({new Date().toLocaleString('default', { month: 'short', year: 'numeric' })})</option>
@@ -184,7 +184,7 @@ export default function ReportsPage() {
 
               <button
                 onClick={handlePrint}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#233549] bg-[#14202e] px-3 py-2 text-xs font-medium text-slate-300 hover:text-white"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#182637] transition-colors"
               >
                 <Printer className="h-3.5 w-3.5" />
                 <span>Print</span>
@@ -192,7 +192,7 @@ export default function ReportsPage() {
 
               <button
                 onClick={handleExportCSV}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00e5c9] px-3.5 py-2 text-xs font-bold text-black hover:bg-[#1affda]"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-2 text-xs font-bold text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
               >
                 <Download className="h-3.5 w-3.5" />
                 <span>Export CSV</span>
@@ -202,7 +202,7 @@ export default function ReportsPage() {
         />
 
         {/* Report Category Switcher */}
-        <div className="border-b border-[#1c2a3b] flex items-center gap-2 text-xs font-semibold">
+        <div className="border-b border-slate-200 dark:border-[#1c2a3b] flex items-center gap-2 text-xs font-semibold">
           {[
             { id: 'financial', label: 'Financial & Profitability' },
             { id: 'events', label: 'Event Operations & Types' },
@@ -214,8 +214,8 @@ export default function ReportsPage() {
               onClick={() => setReportCategory(tab.id as any)}
               className={`pb-3 px-3 border-b-2 transition-colors ${
                 reportCategory === tab.id
-                  ? 'border-[#00e5c9] text-[#00e5c9]'
-                  : 'border-transparent text-slate-400 hover:text-white'
+                  ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {tab.label}
@@ -262,14 +262,14 @@ export default function ReportsPage() {
             </div>
 
             {/* Income Statement Breakdown */}
-            <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-4">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+            <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-4">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                 Production Operating Income Summary ({dateRange})
               </h2>
               <div className="divide-y divide-[#182535]">
                 <div className="py-3 flex justify-between text-slate-200">
-                  <span className="font-semibold text-white">Event Production Gross Revenue</span>
-                  <span className="font-mono font-bold text-white">{formatCurrency(totalRevenue)}</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">Event Production Gross Revenue</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(totalRevenue)}</span>
                 </div>
                 {serviceCategoryBreakdown.length > 0 ? (
                   serviceCategoryBreakdown.map((item) => (
@@ -301,17 +301,17 @@ export default function ReportsPage() {
         {reportCategory === 'events' && (
           <div className="space-y-6 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4">
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4">
                 <span className="text-slate-400 block text-[11px]">Total Events ({dateRange})</span>
-                <strong className="text-2xl font-bold text-white block mt-1">{filteredEvents.length}</strong>
+                <strong className="text-2xl font-bold text-slate-900 dark:text-white block mt-1">{filteredEvents.length}</strong>
               </div>
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4">
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4">
                 <span className="text-slate-400 block text-[11px]">Average Contract Value</span>
                 <strong className="text-2xl font-bold text-[#00e5c9] font-mono block mt-1">
                   {formatCurrency(Math.round(totalRevenue / (filteredEvents.length || 1)))}
                 </strong>
               </div>
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4">
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4">
                 <span className="text-slate-400 block text-[11px]">Completion Rate</span>
                 <div className="flex items-baseline gap-2 mt-1">
                   <strong className="text-2xl font-bold text-emerald-400">{completionRate}%</strong>
@@ -320,8 +320,8 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 space-y-4">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Events Breakdown by Category</h2>
+            <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 space-y-4">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Events Breakdown by Category</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -338,10 +338,10 @@ export default function ReportsPage() {
                       const typeRev = typeEvts.reduce((sum, e) => sum + (e.totalAmount || 0), 0);
                       const share = totalRevenue > 0 ? Math.round((typeRev / totalRevenue) * 100) : 0;
                       return (
-                        <tr key={type} className="hover:bg-[#101824]">
-                          <td className="py-3 px-3 font-semibold text-white">{type}</td>
+                        <tr key={type} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
+                          <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">{type}</td>
                           <td className="py-3 px-3 text-center text-slate-300">{typeEvts.length}</td>
-                          <td className="py-3 px-3 text-right font-mono font-bold text-white">
+                          <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
                             {formatCurrency(typeRev)}
                           </td>
                           <td className="py-3 px-3 text-right font-mono text-[#00e5c9]">{share}%</td>
@@ -358,8 +358,8 @@ export default function ReportsPage() {
         {/* REPORT 3: STAFF */}
         {reportCategory === 'staff' && (
           <div className="space-y-6 text-xs">
-            <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 space-y-4">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Staff Utilization & Payout Audit</h2>
+            <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 space-y-4">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Staff Utilization & Payout Audit</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -373,10 +373,10 @@ export default function ReportsPage() {
                   </thead>
                   <tbody className="divide-y divide-[#182535]">
                     {staff.map((s) => (
-                      <tr key={s.id} className="hover:bg-[#101824]">
-                        <td className="py-3 px-3 font-semibold text-white">{s.name}</td>
+                      <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
+                        <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">{s.name}</td>
                         <td className="py-3 px-3 text-slate-300">{s.role}</td>
-                        <td className="py-3 px-3 text-center font-mono font-bold text-white">
+                        <td className="py-3 px-3 text-center font-mono font-bold text-slate-900 dark:text-white">
                           {s.totalEventsAssigned}
                         </td>
                         <td className="py-3 px-3 text-right font-mono font-bold text-emerald-400">
@@ -397,8 +397,8 @@ export default function ReportsPage() {
         {/* REPORT 4: CUSTOMERS */}
         {reportCategory === 'customers' && (
           <div className="space-y-6 text-xs">
-            <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 space-y-4">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Top Clients by Revenue</h2>
+            <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 space-y-4">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Top Clients by Revenue</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -412,13 +412,13 @@ export default function ReportsPage() {
                   </thead>
                   <tbody className="divide-y divide-[#182535]">
                     {customers.map((c) => (
-                      <tr key={c.id} className="hover:bg-[#101824]">
-                        <td className="py-3 px-3 font-semibold text-white">
+                      <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
+                        <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">
                           {c.name} {c.company ? `(${c.company})` : ''}
                         </td>
                         <td className="py-3 px-3 text-slate-300">{c.customerType}</td>
-                        <td className="py-3 px-3 text-center font-mono text-white">{c.totalEvents}</td>
-                        <td className="py-3 px-3 text-right font-mono font-bold text-white">
+                        <td className="py-3 px-3 text-center font-mono text-slate-800 dark:text-white">{c.totalEvents}</td>
+                        <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
                           {formatCurrency(c.totalRevenue)}
                         </td>
                         <td className="py-3 px-3 text-right font-mono font-bold text-amber-300">

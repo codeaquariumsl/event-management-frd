@@ -92,11 +92,11 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     return (
       <AppShell>
         <div className="flex flex-col items-center justify-center py-20 text-center text-xs text-slate-400">
-          <p className="text-base font-semibold text-white">Event Not Found</p>
+          <p className="text-base font-semibold text-slate-900 dark:text-white">Event Not Found</p>
           <p className="mt-1">The requested event {resolvedParams.id} does not exist in the database.</p>
           <Link
             href="/events"
-            className="mt-4 rounded-lg bg-[#00e5c9] px-4 py-2 font-bold text-black hover:bg-[#1affda]"
+            className="mt-4 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 font-bold text-slate-900 dark:text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
           >
             Back to Events
           </Link>
@@ -162,7 +162,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setIsInvoiceOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#233549] bg-[#121c29] px-3.5 py-2 text-xs font-medium text-slate-200 hover:bg-[#1b2b3d] transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#121c29] px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors"
             >
               <Printer className="h-3.5 w-3.5" />
               <span>Print Invoice</span>
@@ -170,7 +170,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
             <button
               onClick={() => setIsStaffModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#233549] bg-[#121c29] px-3.5 py-2 text-xs font-medium text-slate-200 hover:bg-[#1b2b3d] transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#121c29] px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors"
             >
               <Users className="h-3.5 w-3.5 text-[#00e5c9]" />
               <span>Assign Staff</span>
@@ -178,7 +178,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
             <button
               onClick={() => setIsPaymentOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#00e5c9] px-4 py-2 text-xs font-bold text-[#041816] hover:bg-[#1affda] transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-bold text-slate-900 dark:text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] transition-all shadow-sm"
             >
               <CreditCard className="h-3.5 w-3.5" />
               <span>Record Payment</span>
@@ -187,7 +187,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             {event.status !== 'Cancelled' && (
               <button
                 onClick={() => setIsCancelConfirmOpen(true)}
-                className="rounded-lg border border-rose-900/50 bg-rose-950/20 px-3 py-2 text-xs font-medium text-rose-400 hover:bg-rose-950/50 transition-colors"
+                className="rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-colors"
               >
                 Cancel Event
               </button>
@@ -196,30 +196,30 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Event Header Banner */}
-        <div className="rounded-2xl border border-[#1f2f42] bg-gradient-to-r from-[#0b1420] to-[#111c2a] p-6 sm:p-8 shadow-xl">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#1f2f42] bg-gradient-to-r from-teal-50 via-slate-50 to-white dark:from-[#0b1420] dark:to-[#111c2a] p-6 sm:p-8 shadow-xl">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <span className="font-mono text-xs text-[#00e5c9] font-semibold">{event.id}</span>
+                <span className="font-mono text-xs text-[#00897b] dark:text-[#00e5c9] font-semibold">{event.id}</span>
                 <StatusBadge status={event.status} size="md" />
-                <span className="rounded bg-[#172332] px-2.5 py-0.5 text-xs text-slate-300">
+                <span className="rounded bg-slate-100 dark:bg-[#172332] px-2.5 py-0.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
                   {event.eventType}
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {event.name}
               </h1>
-              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1">
-                <span className="inline-flex items-center gap-1 text-slate-200">
-                  <CalendarDays className="h-3.5 w-3.5 text-[#00e5c9]" />
+              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
+                <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200">
+                  <CalendarDays className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
                   {formatDate(event.eventDate)}
                 </span>
-                <span className="inline-flex items-center gap-1 text-slate-200">
-                  <Clock className="h-3.5 w-3.5 text-[#00e5c9]" />
+                <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200">
+                  <Clock className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
                   {event.startTime} - {event.endTime}
                 </span>
-                <span className="inline-flex items-center gap-1 text-slate-200">
-                  <MapPin className="h-3.5 w-3.5 text-[#00e5c9]" />
+                <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200">
+                  <MapPin className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
                   {event.location}
                 </span>
               </div>
@@ -227,29 +227,29 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
             {/* Financial Overview Cards in Header */}
             <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-xl border border-[#203144] bg-[#091019] p-3.5 text-right min-w-[120px]">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
+              <div className="rounded-xl border border-slate-200 dark:border-[#203144] bg-white dark:bg-[#091019] p-3.5 text-right min-w-[120px] shadow-sm">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                   Contract Total
                 </span>
-                <span className="text-base font-bold font-mono text-white">
+                <span className="text-base font-bold font-mono text-slate-900 dark:text-white">
                   {formatCurrency(event.totalAmount)}
                 </span>
               </div>
 
-              <div className="rounded-xl border border-emerald-900/40 bg-emerald-950/20 p-3.5 text-right min-w-[120px]">
-                <span className="text-[10px] text-emerald-400 uppercase tracking-wider block">
+              <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-950/20 p-3.5 text-right min-w-[120px] shadow-sm">
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
                   Paid to Date
                 </span>
-                <span className="text-base font-bold font-mono text-emerald-300">
+                <span className="text-base font-bold font-mono text-emerald-700 dark:text-emerald-300">
                   {formatCurrency(event.paidAmount)}
                 </span>
               </div>
 
-              <div className="rounded-xl border border-amber-900/40 bg-amber-950/20 p-3.5 text-right min-w-[120px]">
-                <span className="text-[10px] text-amber-400 uppercase tracking-wider block">
+              <div className="rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/20 p-3.5 text-right min-w-[120px] shadow-sm">
+                <span className="text-[10px] text-amber-700 dark:text-amber-400 uppercase tracking-wider block">
                   Balance Due
                 </span>
-                <span className="text-base font-bold font-mono text-amber-300">
+                <span className="text-base font-bold font-mono text-amber-700 dark:text-amber-300">
                   {formatCurrency(event.balance)}
                 </span>
               </div>
@@ -258,30 +258,30 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Financial Profitability Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-xl border border-[#1b2a3a] bg-[#0c1420] p-4 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-xl border border-slate-200 dark:border-[#1b2a3a] bg-slate-50/80 dark:bg-[#0c1420] p-4 text-xs">
           <div>
-            <span className="text-slate-400 block text-[11px]">Event Revenue</span>
-            <strong className="text-white font-mono text-sm">{formatCurrency(event.totalAmount)}</strong>
+            <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Event Revenue</span>
+            <strong className="text-slate-900 dark:text-white font-mono text-sm">{formatCurrency(event.totalAmount)}</strong>
           </div>
           <div>
-            <span className="text-slate-400 block text-[11px]">Crew Staff Costs ({event.assignedStaff.length})</span>
-            <strong className="text-slate-200 font-mono text-sm">{formatCurrency(totalStaffCost)}</strong>
+            <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Crew Staff Costs ({event.assignedStaff.length})</span>
+            <strong className="text-slate-700 dark:text-slate-200 font-mono text-sm">{formatCurrency(totalStaffCost)}</strong>
           </div>
           <div>
-            <span className="text-slate-400 block text-[11px]">Production Expenses ({event.expenses.length})</span>
-            <strong className="text-slate-200 font-mono text-sm">{formatCurrency(totalExpenses)}</strong>
+            <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Production Expenses ({event.expenses.length})</span>
+            <strong className="text-slate-700 dark:text-slate-200 font-mono text-sm">{formatCurrency(totalExpenses)}</strong>
           </div>
           <div className="text-right sm:text-left">
-            <span className="text-[#00e5c9] block text-[11px] font-semibold">Estimated Net Profit</span>
-            <strong className="text-[#00e5c9] font-mono text-sm">
+            <span className="text-[#00897b] dark:text-[#00e5c9] block text-[11px] font-semibold">Estimated Net Profit</span>
+            <strong className="text-[#00897b] dark:text-[#00e5c9] font-mono text-sm">
               {formatCurrency(estimatedProfit)}{' '}
-              <span className="text-xs text-slate-400 font-normal">({profitMargin}%)</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">({profitMargin}%)</span>
             </strong>
           </div>
         </div>
 
         {/* Tabs Navigation */}
-        <div className="border-b border-[#1c2a3b] flex items-center gap-2 overflow-x-auto text-xs font-semibold">
+        <div className="border-b border-slate-200 dark:border-[#1c2a3b] flex items-center gap-2 overflow-x-auto text-xs font-semibold">
           {[
             { id: 'overview', label: 'Overview' },
             { id: 'customer', label: 'Customer Details' },
@@ -296,8 +296,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
               onClick={() => setActiveTab(tab.id as any)}
               className={`pb-3 px-3 border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-[#00e5c9] text-[#00e5c9]'
-                  : 'border-transparent text-slate-400 hover:text-white'
+                  ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {tab.label}
@@ -310,13 +310,13 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs">
             <div className="lg:col-span-2 space-y-6">
               {/* Event Scope */}
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-5 space-y-3">
-                <h3 className="font-bold text-sm text-white">Event Scope & Venue Access</h3>
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-5 space-y-3">
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white">Event Scope & Venue Access</h3>
                 <p className="text-slate-300 leading-relaxed">
                   {event.description || 'No detailed scope provided.'}
                 </p>
                 {event.notes && (
-                  <div className="rounded-lg bg-[#121c29] border border-[#203042] p-3 text-slate-300">
+                  <div className="rounded-lg bg-slate-50 dark:bg-[#121c29] border border-slate-200 dark:border-[#203042] p-3 text-slate-700 dark:text-slate-300">
                     <strong className="text-[#00e5c9] block mb-1">Production Notes:</strong>
                     {event.notes}
                   </div>
@@ -324,9 +324,9 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
               </div>
 
               {/* Services Snapshot */}
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-5">
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-5">
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-bold text-sm text-white">Booked Services Snapshot</h3>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">Booked Services Snapshot</h3>
                   <button
                     onClick={() => setActiveTab('services')}
                     className="text-xs text-[#00e5c9] hover:underline"
@@ -338,13 +338,13 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   {event.services.map((s) => (
                     <div
                       key={s.id}
-                      className="flex justify-between items-center p-2.5 rounded-lg bg-[#0f1723] border border-[#1b2837]"
+                      className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-[#0f1723] border border-slate-200 dark:border-[#1b2837]"
                     >
                       <div>
-                        <span className="font-semibold text-white block">{s.name}</span>
+                        <span className="font-semibold text-slate-900 dark:text-white block">{s.name}</span>
                         <span className="text-[11px] text-slate-400">Qty: {s.quantity}</span>
                       </div>
-                      <span className="font-mono font-semibold text-white">
+                      <span className="font-mono font-semibold text-slate-900 dark:text-white">
                         {formatCurrency(s.totalPrice)}
                       </span>
                     </div>
@@ -356,10 +356,10 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             {/* Quick Customer & Crew Sidebar */}
             <div className="space-y-6">
               {/* Client Card */}
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-5 space-y-3">
-                <h3 className="font-bold text-sm text-white">Client Information</h3>
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-5 space-y-3">
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white">Client Information</h3>
                 <div>
-                  <span className="font-bold text-white text-sm block">{event.customerName}</span>
+                  <span className="font-bold text-slate-900 dark:text-white text-sm block">{event.customerName}</span>
                   {event.customerCompany && (
                     <span className="text-slate-400 block">{event.customerCompany}</span>
                   )}
@@ -372,16 +372,16 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 </div>
                 <button
                   onClick={() => setActiveTab('customer')}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] py-1.5 text-center text-slate-300 hover:text-white"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] py-1.5 text-center text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                 >
                   View Client Profile
                 </button>
               </div>
 
               {/* Crew Snapshot */}
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-5 space-y-3">
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-5 space-y-3">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-sm text-white">Assigned Crew</h3>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">Assigned Crew</h3>
                   <button
                     onClick={() => setActiveTab('staff')}
                     className="text-xs text-[#00e5c9] hover:underline"
@@ -393,10 +393,10 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   {event.assignedStaff.map((as) => (
                     <div
                       key={as.id}
-                      className="flex justify-between items-center p-2 rounded-lg bg-[#0e1622]"
+                      className="flex justify-between items-center p-2 rounded-lg bg-slate-50 dark:bg-[#0e1622]"
                     >
                       <div>
-                        <span className="font-semibold text-white block">{as.staffName}</span>
+                        <span className="font-semibold text-slate-900 dark:text-white block">{as.staffName}</span>
                         <span className="text-[10px] text-slate-400">{as.role}</span>
                       </div>
                       <span className="font-mono text-xs text-slate-300">
@@ -412,13 +412,13 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
         {/* TAB 2: CUSTOMER */}
         {activeTab === 'customer' && (
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-6">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Client Profile & Account</h3>
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-6">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Client Profile & Account</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div>
                   <span className="text-slate-400 block text-[11px]">Primary Contact</span>
-                  <span className="text-white font-bold text-sm">{event.customerName}</span>
+                  <span className="text-slate-900 dark:text-white font-bold text-sm">{event.customerName}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[11px]">Company</span>
@@ -457,7 +457,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             <div className="pt-4 border-t border-[#1c2a3a]">
               <Link
                 href={`/customers/${event.customerId}`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00e5c9] px-4 py-2 font-semibold text-black hover:bg-[#1affda]"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 font-semibold text-slate-900 dark:text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
               >
                 Open Full Customer CRM Page →
               </Link>
@@ -467,8 +467,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
         {/* TAB 3: SERVICES */}
         {activeTab === 'services' && (
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-4">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Itemized Services & Production Equipment</h3>
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Itemized Services & Production Equipment</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -482,23 +482,23 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 </thead>
                 <tbody className="divide-y divide-[#182535]">
                   {event.services.map((s) => (
-                    <tr key={s.id} className="hover:bg-[#101824]">
+                    <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
                       <td className="py-3 px-3">
-                        <span className="font-semibold text-white block">{s.name}</span>
+                        <span className="font-semibold text-slate-900 dark:text-white block">{s.name}</span>
                         {s.description && (
                           <span className="text-[11px] text-slate-400">{s.description}</span>
                         )}
                       </td>
                       <td className="py-3 px-3 text-slate-300">
-                        <span className="rounded bg-[#172332] px-2 py-0.5 text-[11px] font-medium text-[#00e5c9]">
+                        <span className="rounded bg-slate-100 dark:bg-[#172332] px-2 py-0.5 text-[11px] font-medium text-[#00897b] dark:text-[#00e5c9]">
                           {s.category}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-center font-bold text-white">{s.quantity}</td>
+                      <td className="py-3 px-3 text-center font-bold text-slate-900 dark:text-white">{s.quantity}</td>
                       <td className="py-3 px-3 text-right font-mono text-slate-300">
                         {formatCurrency(s.unitPrice)}
                       </td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-white">
+                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
                         {formatCurrency(s.totalPrice)}
                       </td>
                     </tr>
@@ -525,7 +525,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                     <span className="font-mono">+ {formatCurrency(event.additionalCharges)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-[#233549]">
+                <div className="flex justify-between text-sm font-bold text-slate-900 dark:text-white pt-2 border-t border-[#233549]">
                   <span>Total Amount:</span>
                   <span className="font-mono">{formatCurrency(event.totalAmount)}</span>
                 </div>
@@ -536,15 +536,15 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
         {/* TAB 4: STAFF */}
         {activeTab === 'staff' && (
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-4">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Assigned Production Crew</h3>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Assigned Production Crew</h3>
                 <p className="text-slate-400">Manage rates and record staff payouts upon event wrap</p>
               </div>
               <button
                 onClick={() => setIsStaffModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00e5c9] px-3.5 py-1.5 font-semibold text-black hover:bg-[#1affda]"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-1.5 font-semibold text-slate-900 dark:text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Assign Staff Member</span>
@@ -568,17 +568,17 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   {event.assignedStaff.map((as) => {
                     const balanceDue = Math.max(0, as.paymentAmount - as.paidAmount);
                     return (
-                      <tr key={as.id} className="hover:bg-[#101824]">
-                        <td className="py-3 px-3 font-semibold text-white">{as.staffName}</td>
+                      <tr key={as.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
+                        <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">{as.staffName}</td>
                         <td className="py-3 px-3">
-                          <span className="rounded bg-[#172332] px-2 py-0.5 text-[11px] font-medium text-[#00e5c9]">
+                          <span className="rounded bg-slate-100 dark:bg-[#172332] px-2 py-0.5 text-[11px] font-medium text-[#00897b] dark:text-[#00e5c9]">
                             {as.role}
                           </span>
                         </td>
                         <td className="py-3 px-3 text-slate-400 font-mono">
                           {as.startTime} - {as.endTime}
                         </td>
-                        <td className="py-3 px-3 text-right font-mono font-semibold text-white">
+                        <td className="py-3 px-3 text-right font-mono font-semibold text-slate-900 dark:text-white">
                           {formatCurrency(as.paymentAmount)}
                         </td>
                         <td className="py-3 px-3 text-right font-mono text-emerald-400">
@@ -590,7 +590,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                         <td className="py-3 px-3 text-right">
                           <button
                             onClick={() => setStaffPaymentTarget(as)}
-                            className="rounded bg-[#162232] border border-[#233549] px-2.5 py-1 text-[11px] font-medium text-[#00e5c9] hover:bg-[#1f3044]"
+                            className="rounded bg-slate-100 dark:bg-[#162232] border border-slate-200 dark:border-[#233549] px-2.5 py-1 text-[11px] font-medium text-[#00897b] dark:text-[#00e5c9] hover:bg-slate-200 dark:hover:bg-[#1f3044]"
                           >
                             Pay Staff
                           </button>
@@ -606,15 +606,15 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
         {/* TAB 5: PAYMENTS */}
         {activeTab === 'payments' && (
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-4">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Customer Invoices & Payments</h3>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Customer Invoices & Payments</h3>
                 <p className="text-slate-400">Recorded receipts and payment ledger for {event.name}</p>
               </div>
               <button
                 onClick={() => setIsPaymentOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00e5c9] px-3.5 py-1.5 font-semibold text-black hover:bg-[#1affda]"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-1.5 font-semibold text-slate-900 dark:text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>+ Record Payment</span>
@@ -640,8 +640,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   </thead>
                   <tbody className="divide-y divide-[#182535]">
                     {payments.map((p) => (
-                      <tr key={p.id} className="hover:bg-[#101824]">
-                        <td className="py-3 px-3 font-mono font-semibold text-white">{p.invoiceNumber}</td>
+                      <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
+                        <td className="py-3 px-3 font-mono font-semibold text-slate-900 dark:text-white">{p.invoiceNumber}</td>
                         <td className="py-3 px-3 text-slate-300">{formatDate(p.date)}</td>
                         <td className="py-3 px-3 text-slate-300">{p.paymentMethod}</td>
                         <td className="py-3 px-3 text-slate-400 font-mono text-[11px]">
@@ -664,15 +664,15 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
         {/* TAB 6: EXPENSES */}
         {activeTab === 'expenses' && (
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-4">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Direct Event Expenses</h3>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Direct Event Expenses</h3>
                 <p className="text-slate-400">Log transport, fuel, dry ice, sub-rentals, and catering</p>
               </div>
               <button
                 onClick={() => setIsExpenseModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00e5c9] px-3.5 py-1.5 font-semibold text-black hover:bg-[#1affda]"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-1.5 font-semibold text-slate-900 dark:text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>+ Add Expense</span>
@@ -696,8 +696,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   </thead>
                   <tbody className="divide-y divide-[#182535]">
                     {event.expenses.map((exp) => (
-                      <tr key={exp.id} className="hover:bg-[#101824]">
-                        <td className="py-3 px-3 font-semibold text-white">{exp.title}</td>
+                      <tr key={exp.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
+                        <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">{exp.title}</td>
                         <td className="py-3 px-3 text-slate-300">{exp.category}</td>
                         <td className="py-3 px-3 text-slate-400">{formatDate(exp.date)}</td>
                         <td className="py-3 px-3 text-right font-mono font-bold text-rose-400">
@@ -714,22 +714,22 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
         {/* TAB 7: TIMELINE */}
         {activeTab === 'timeline' && (
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-6">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Production Lifecycle Timeline</h3>
-            <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#203042]">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-6">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Production Lifecycle Timeline</h3>
+            <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-[#203042]">
               {event.timeline.map((item) => (
                 <div key={item.id} className="relative group">
                   <div
                     className={`absolute -left-[27px] top-0.5 flex h-5 w-5 items-center justify-center rounded-full border ${
                       item.completed
-                        ? 'bg-[#00e5c9] border-[#00e5c9] text-black'
-                        : 'bg-[#0b1420] border-slate-600 text-slate-500'
+                        ? 'bg-[#00a894] dark:bg-[#00e5c9] border-[#00a894] dark:border-[#00e5c9] text-white dark:text-black'
+                        : 'bg-slate-100 dark:bg-[#0b1420] border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500'
                     }`}
                   >
                     <CheckCircle2 className="h-3 w-3" />
                   </div>
                   <div>
-                    <span className="font-bold text-white text-sm block">{item.title}</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-sm block">{item.title}</span>
                     <p className="text-slate-300 mt-0.5">{item.description}</p>
                     <span className="text-[10px] text-slate-500 mt-1 block font-mono">
                       {item.timestamp}
@@ -802,29 +802,29 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
       {/* Expense Modal */}
       {isExpenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-xl border border-[#233549] bg-[#0c1420] p-6 shadow-2xl text-xs space-y-4">
-            <h3 className="text-base font-bold text-white">Add Direct Event Expense</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 dark:border-[#233549] bg-white dark:bg-[#0c1420] p-6 shadow-2xl text-xs space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Add Direct Event Expense</h3>
             <form onSubmit={handleAddExpense} className="space-y-4">
               <div>
-                <label className="block font-medium text-slate-300 mb-1">Expense Title *</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Expense Title *</label>
                 <input
                   type="text"
                   value={expenseTitle}
                   onChange={(e) => setExpenseTitle(e.target.value)}
                   placeholder="e.g. 20ft Truck Transport to Bentota"
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">Category</label>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
                   <select
                     value={expenseCategory}
                     onChange={(e) => setExpenseCategory(e.target.value)}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none"
                   >
                     <option value="Transport">Transport & Fuel</option>
                     <option value="Equipment Rental">Sub-Rental Equipment</option>
@@ -834,13 +834,13 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 </div>
 
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">Amount (LKR) *</label>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Amount (LKR) *</label>
                   <input
                     type="number"
                     value={expenseAmount}
                     onChange={(e) => setExpenseAmount(Number(e.target.value))}
                     min={1}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-mono font-semibold focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-mono font-semibold focus:outline-none"
                     required
                   />
                 </div>
@@ -850,13 +850,13 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 <button
                   type="button"
                   onClick={() => setIsExpenseModalOpen(false)}
-                  className="rounded-lg border border-[#233549] bg-[#14202e] px-4 py-2 font-medium text-slate-300"
+                  className="rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-4 py-2 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1a2b3d]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-[#00e5c9] px-4 py-2 font-bold text-black"
+                  className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 font-bold text-slate-900 dark:text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
                 >
                   Save Expense
                 </button>

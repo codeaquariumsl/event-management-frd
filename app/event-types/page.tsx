@@ -239,15 +239,15 @@ export default function EventTypesPage() {
       </div>
 
       {/* Filters & Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between rounded-xl bg-[#0e1622] border border-[#1d2b3c] p-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between rounded-xl bg-white dark:bg-[#0e1622] border border-slate-200 dark:border-[#1d2b3c] p-4 shadow-sm">
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder="Search by name, code or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-[#131d2a] border border-[#1f2f42] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00e5c9] focus:ring-1 focus:ring-[#00e5c9]"
+            className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9] focus:ring-1 focus:ring-[#00a894] dark:focus:ring-[#00e5c9]"
           />
         </div>
 
@@ -259,7 +259,7 @@ export default function EventTypesPage() {
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                 statusFilter === tab
                   ? 'bg-[#00e5c9] text-black shadow-sm'
-                  : 'bg-[#131d2a] text-slate-400 hover:text-white border border-[#1f2f42]'
+                  : 'bg-slate-100 dark:bg-[#131d2a] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-[#1f2f42]'
               }`}
             >
               {tab}
@@ -275,7 +275,7 @@ export default function EventTypesPage() {
           return (
             <div
               key={item.id}
-              className="group relative rounded-xl bg-[#0e1622] border border-[#1d2b3c] p-5 hover:border-[#2b3e55] transition-all duration-200 flex flex-col justify-between shadow-sm hover:shadow-md"
+              className="group relative rounded-xl bg-white dark:bg-[#0e1622] border border-slate-200 dark:border-[#1d2b3c] p-5 hover:border-slate-300 dark:hover:border-[#2b3e55] transition-all duration-200 flex flex-col justify-between shadow-sm hover:shadow-md"
             >
               <div>
                 {/* Card Top Row */}
@@ -292,11 +292,11 @@ export default function EventTypesPage() {
                       <Layers className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-base font-semibold text-white group-hover:text-[#00e5c9] transition-colors">
+                      <h3 className="text-base font-semibold text-slate-900 dark:text-white group-hover:text-[#00897b] dark:group-hover:text-[#00e5c9] transition-colors">
                         {item.name}
                       </h3>
-                      <span className="inline-flex items-center text-xs font-mono font-medium px-2 py-0.5 rounded bg-[#162232] text-slate-400 border border-[#213348] mt-0.5">
-                        <Hash className="h-3 w-3 mr-0.5 text-slate-500" />
+                      <span className="inline-flex items-center text-xs font-mono font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-[#162232] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#213348] mt-0.5">
+                        <Hash className="h-3 w-3 mr-0.5 text-slate-400 dark:text-slate-500" />
                         {item.code}
                       </span>
                     </div>
@@ -322,18 +322,18 @@ export default function EventTypesPage() {
               </div>
 
               {/* Card Bottom Row */}
-              <div className="mt-5 pt-3 border-t border-[#1a2636] flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                  <Calendar className="h-3.5 w-3.5 text-[#00e5c9]" />
+              <div className="mt-5 pt-3 border-t border-slate-100 dark:border-[#1a2636] flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  <Calendar className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
                   <span>
-                    <strong className="text-white">{count}</strong> booked {count === 1 ? 'event' : 'events'}
+                    <strong className="text-slate-900 dark:text-white">{count}</strong> booked {count === 1 ? 'event' : 'events'}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => openEditModal(item)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#182535] transition-colors"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#182535] transition-colors"
                     title="Edit Event Type"
                   >
                     <Edit2 className="h-4 w-4" />
@@ -356,17 +356,17 @@ export default function EventTypesPage() {
       </div>
 
       {filteredTypes.length === 0 && (
-        <div className="text-center py-16 rounded-xl bg-[#0e1622] border border-[#1d2b3c]">
-          <Layers className="mx-auto h-12 w-12 text-slate-600 mb-3" />
-          <h3 className="text-base font-semibold text-white">No Event Types Found</h3>
-          <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+        <div className="text-center py-16 rounded-xl bg-white dark:bg-[#0e1622] border border-slate-200 dark:border-[#1d2b3c] shadow-sm">
+          <Layers className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600 mb-3" />
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">No Event Types Found</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
             {searchQuery
               ? `No event types matched "${searchQuery}". Try a different search term.`
               : 'Create your first event type to start categorizing events and quotations.'}
           </p>
           <button
             onClick={openCreateModal}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-black hover:brightness-110"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-sm"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Event Type
@@ -382,8 +382,8 @@ export default function EventTypesPage() {
       >
         <form onSubmit={handleSave} className="space-y-4 text-sm">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
-              Event Type Name <span className="text-rose-400">*</span>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Event Type Name <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -391,13 +391,13 @@ export default function EventTypesPage() {
               placeholder="e.g. Wedding & Reception, Corporate Gala"
               value={formData.name || ''}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-[#131d2a] border border-[#1f2f42] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00e5c9]"
+              className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#00e5c9]"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Code / Identifier
               </label>
               <input
@@ -405,16 +405,16 @@ export default function EventTypesPage() {
                 placeholder="e.g. WEDDING, GALA"
                 value={formData.code || ''}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 font-mono uppercase bg-[#131d2a] border border-[#1f2f42] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00e5c9]"
+                className="w-full px-3 py-2 font-mono uppercase bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#00e5c9]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Status</label>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
               <select
                 value={formData.isActive ? 'Active' : 'Inactive'}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'Active' })}
-                className="w-full px-3 py-2 bg-[#131d2a] border border-[#1f2f42] rounded-lg text-white focus:outline-none focus:border-[#00e5c9]"
+                className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
               >
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
@@ -423,7 +423,7 @@ export default function EventTypesPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
               Theme Color Accent
             </label>
             <div className="flex flex-wrap items-center gap-2">
@@ -433,7 +433,7 @@ export default function EventTypesPage() {
                   key={color}
                   onClick={() => setFormData({ ...formData, color })}
                   className={`h-7 w-7 rounded-full transition-transform ${
-                    formData.color === color ? 'scale-125 ring-2 ring-white ring-offset-2 ring-offset-[#0e1622]' : 'hover:scale-110'
+                    formData.color === color ? 'scale-125 ring-2 ring-[#00a894] dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-[#0e1622]' : 'hover:scale-110'
                   }`}
                   style={{ backgroundColor: color }}
                 />
@@ -449,27 +449,27 @@ export default function EventTypesPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Description</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
             <textarea
               rows={3}
               placeholder="Brief description of the event type, scale, and audiovisual requirements..."
               value={formData.description || ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-[#131d2a] border border-[#1f2f42] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00e5c9]"
+              className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#00e5c9]"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#1d2b3c]">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#1d2b3c]">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-[#162232] text-slate-300 hover:bg-[#1d2d42] text-xs font-semibold"
+              className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#162232] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1d2d42] text-xs font-semibold transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00e5c9] to-[#00b8a2] text-black text-xs font-semibold hover:brightness-110 shadow-md shadow-[#00e5c9]/20"
+              className="px-4 py-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black text-xs font-semibold hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/20 transition-colors"
             >
               {editingItem ? 'Save Changes' : 'Create Event Type'}
             </button>

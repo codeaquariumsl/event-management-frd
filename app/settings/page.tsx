@@ -10,6 +10,11 @@ import {
   Layers,
   Users,
   CreditCard,
+  Sun,
+  Moon,
+  Laptop,
+  Palette,
+  CheckCircle2,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -17,10 +22,12 @@ import { settingsService } from '@/lib/api/reportService';
 import { serviceService } from '@/lib/api/serviceService';
 import { CompanyProfile, ServiceCatalogItem } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
+import { useTheme, Theme } from '@/lib/theme/ThemeContext';
 import { formatCurrency } from '@/lib/utils';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [profile, setProfile] = useState<CompanyProfile>({
     name: 'Seekers Entertainment (Pvt) Ltd',
     tagline: 'Premier Audio-Visual Production, DJ & Event Technology',
@@ -117,143 +124,143 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Company Profile Form (2 cols) */}
-          <div className="lg:col-span-2 rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-6">
-            <div className="flex items-center gap-2.5 pb-3 border-b border-[#1a2738]">
-              <Building className="h-5 w-5 text-[#00e5c9]" />
+          <div className="lg:col-span-2 rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 shadow-sm space-y-6">
+            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-[#1a2738]">
+              <Building className="h-5 w-5 text-[#00897b] dark:text-[#00e5c9]" />
               <div>
-                <h2 className="text-base font-bold text-white">Company Profile & Invoicing Details</h2>
-                <p className="text-xs text-slate-400">These details appear on customer invoices and official proposals</p>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">Company Profile & Invoicing Details</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">These details appear on customer invoices and official proposals</p>
               </div>
             </div>
 
             <form onSubmit={handleSaveCompany} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">Company Registered Name</label>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Company Registered Name</label>
                   <input
                     type="text"
                     value={profile.name}
                     onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none focus:border-[#00e5c9]"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">Brand Tagline</label>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Brand Tagline</label>
                   <input
                     type="text"
                     value={profile.tagline}
                     onChange={(e) => setProfile({ ...profile, tagline: e.target.value })}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none focus:border-[#00e5c9]"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">Email</label>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
                   <input
                     type="email"
                     value={profile.email}
                     onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">Phone</label>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
                   <input
                     type="text"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-medium text-slate-300 mb-1">Head Office Address</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Head Office Address</label>
                 <input
                   type="text"
                   value={profile.address}
                   onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">Tax Identification Number (TIN)</label>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Tax Identification Number (TIN)</label>
                   <input
                     type="text"
                     value={profile.taxNumber}
                     onChange={(e) => setProfile({ ...profile, taxNumber: e.target.value })}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-mono focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-[#00e5c9]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">Business Registration No (BR)</label>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Business Registration No (BR)</label>
                   <input
                     type="text"
                     value={profile.businessRegistration}
                     onChange={(e) => setProfile({ ...profile, businessRegistration: e.target.value })}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-mono focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-[#00e5c9]"
                   />
                 </div>
               </div>
 
               {/* Remittance Bank Details */}
-              <div className="rounded-xl border border-[#233549] bg-[#0c1420] p-4 space-y-3">
-                <span className="font-semibold text-white block">Remittance Bank Account (For Invoices)</span>
+              <div className="rounded-xl border border-slate-200 dark:border-[#233549] bg-slate-50 dark:bg-[#0c1420] p-4 space-y-3">
+                <span className="font-semibold text-slate-900 dark:text-white block">Remittance Bank Account (For Invoices)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-slate-400 text-[11px] mb-1">Bank Name</label>
+                    <label className="block text-slate-500 dark:text-slate-400 text-[11px] mb-1">Bank Name</label>
                     <input
                       type="text"
                       value={profile.bankName}
                       onChange={(e) => setProfile({ ...profile, bankName: e.target.value })}
-                      className="w-full rounded border border-[#233549] bg-[#111c29] p-2 text-white text-xs"
+                      className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00e5c9]"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-400 text-[11px] mb-1">Account Number</label>
+                    <label className="block text-slate-500 dark:text-slate-400 text-[11px] mb-1">Account Number</label>
                     <input
                       type="text"
                       value={profile.bankAccount}
                       onChange={(e) => setProfile({ ...profile, bankAccount: e.target.value })}
-                      className="w-full rounded border border-[#233549] bg-[#111c29] p-2 text-white text-xs font-mono"
+                      className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00e5c9]"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-400 text-[11px] mb-1">Branch</label>
+                    <label className="block text-slate-500 dark:text-slate-400 text-[11px] mb-1">Branch</label>
                     <input
                       type="text"
                       value={profile.bankBranch}
                       onChange={(e) => setProfile({ ...profile, bankBranch: e.target.value })}
-                      className="w-full rounded border border-[#233549] bg-[#111c29] p-2 text-white text-xs"
+                      className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00e5c9]"
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block font-medium text-slate-300 mb-1">Invoice Payment Terms & Conditions</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Invoice Payment Terms & Conditions</label>
                 <textarea
                   value={profile.invoiceTerms}
                   onChange={(e) => setProfile({ ...profile, invoiceTerms: e.target.value })}
                   rows={2}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
                 />
               </div>
 
               <div className="flex justify-end pt-2">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-5 py-2 text-xs font-bold text-black hover:bg-[#1affda]"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-5 py-2 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-sm transition-colors"
                 >
                   <Save className="h-4 w-4" />
                   <span>Save Company Settings</span>
@@ -262,23 +269,120 @@ export default function SettingsPage() {
             </form>
           </div>
 
-          {/* Service Rate Card Configuration (1 col) */}
+          {/* Right Column: Theme Settings & Service Rate Cards (1 col) */}
           <div className="space-y-6">
-            <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-4 text-xs">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+            {/* Appearance & Theme Configuration Card */}
+            <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 shadow-sm space-y-4 text-xs">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1a2738]">
+                <div className="flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9]" />
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Appearance & Theme
+                  </h2>
+                </div>
+                <span className="text-[11px] font-mono text-[#00897b] dark:text-[#00e5c9] bg-[#00e5c9]/10 px-2 py-0.5 rounded-full capitalize font-semibold">
+                  {theme === 'system' ? `System (${resolvedTheme})` : theme}
+                </span>
+              </div>
+
+              <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                Customize your operational console appearance. Preferences are automatically saved to your browser.
+              </p>
+
+              <div className="grid grid-cols-1 gap-2.5">
+                {/* Dark Console Card */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTheme('dark');
+                    showToast('✓ Dark console theme activated');
+                  }}
+                  className={`group relative flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                    theme === 'dark'
+                      ? 'border-[#00e5c9] bg-[#00e5c9]/10 shadow-sm'
+                      : 'border-slate-200 dark:border-[#1e2e42] bg-slate-50 dark:bg-[#111c29] hover:border-slate-300 dark:hover:border-slate-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-[#090d12] border border-slate-300 dark:border-[#233549] text-[#00897b] dark:text-[#00e5c9]">
+                      <Moon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="block font-semibold text-slate-900 dark:text-white">Dark Console</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">Cyber Teal & deep obsidian night</span>
+                    </div>
+                  </div>
+                  {theme === 'dark' && <CheckCircle2 className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9]" />}
+                </button>
+
+                {/* Light Theme Card */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTheme('light');
+                    showToast('✓ Light theme activated');
+                  }}
+                  className={`group relative flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                    theme === 'light'
+                      ? 'border-[#00a894] dark:border-[#00e5c9] bg-[#00a894]/10 dark:bg-[#00e5c9]/10 shadow-sm'
+                      : 'border-slate-200 dark:border-[#1e2e42] bg-slate-50 dark:bg-[#111c29] hover:border-slate-300 dark:hover:border-slate-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f8fafc] border border-[#cbd5e1] text-amber-500 shadow-sm">
+                      <Sun className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="block font-semibold text-slate-900 dark:text-white">Clean Light</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">Crisp high-contrast day mode</span>
+                    </div>
+                  </div>
+                  {theme === 'light' && <CheckCircle2 className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9]" />}
+                </button>
+
+                {/* System Default Card */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTheme('system');
+                    showToast('✓ Following operating system theme');
+                  }}
+                  className={`group relative flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                    theme === 'system'
+                      ? 'border-[#00a894] dark:border-[#00e5c9] bg-[#00a894]/10 dark:bg-[#00e5c9]/10 shadow-sm'
+                      : 'border-slate-200 dark:border-[#1e2e42] bg-slate-50 dark:bg-[#111c29] hover:border-slate-300 dark:hover:border-slate-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#090d12] to-[#f8fafc] border border-slate-200 dark:border-[#233549] text-indigo-500 dark:text-indigo-400 shadow-sm">
+                      <Laptop className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="block font-semibold text-slate-900 dark:text-white">Sync with System</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">Automatic OS theme detection</span>
+                    </div>
+                  </div>
+                  {theme === 'system' && <CheckCircle2 className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9]" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Production Services & Catalog */}
+            <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 shadow-sm space-y-4 text-xs">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                 Production Services & Catalog
               </h2>
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {services.map((srv: any) => (
                   <div
                     key={srv.id}
-                    className="flex justify-between items-center p-2.5 rounded-lg bg-[#0f1724] border border-[#1d2a3a]"
+                    className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-[#0f1724] border border-slate-200 dark:border-[#1d2a3a]"
                   >
                     <div>
-                      <span className="font-semibold text-white block">{srv.name}</span>
-                      <span className="text-[10px] text-slate-400">{srv.category}</span>
+                      <span className="font-semibold text-slate-900 dark:text-white block">{srv.name}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">{srv.category}</span>
                     </div>
-                    <span className="font-mono font-semibold text-white">
+                    <span className="font-mono font-semibold text-slate-900 dark:text-white">
                       {formatCurrency(srv.unitPrice)}
                     </span>
                   </div>
@@ -286,20 +390,20 @@ export default function SettingsPage() {
               </div>
 
               {/* Add Service */}
-              <form onSubmit={handleAddService} className="pt-3 border-t border-[#1c2a3a] space-y-2.5">
-                <span className="font-semibold text-white block">Add Service to Catalog</span>
+              <form onSubmit={handleAddService} className="pt-3 border-t border-slate-100 dark:border-[#1c2a3a] space-y-2.5">
+                <span className="font-semibold text-slate-900 dark:text-white block">Add Service to Catalog</span>
                 <input
                   type="text"
                   value={newServiceName}
                   onChange={(e) => setNewServiceName(e.target.value)}
                   placeholder="e.g. 4x Sparkular Pyrotechnics"
-                  className="w-full rounded border border-[#233549] bg-[#111c29] p-2 text-white text-xs focus:outline-none"
+                  className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00e5c9]"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     value={newServiceCat}
                     onChange={(e) => setNewServiceCat(e.target.value)}
-                    className="w-full rounded border border-[#233549] bg-[#111c29] p-2 text-white text-xs focus:outline-none"
+                    className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00e5c9]"
                   >
                     <option value="DJ">DJ</option>
                     <option value="Sound">Sound</option>
@@ -312,12 +416,12 @@ export default function SettingsPage() {
                     value={newServicePrice}
                     onChange={(e) => setNewServicePrice(Number(e.target.value))}
                     placeholder="Rate"
-                    className="w-full rounded border border-[#233549] bg-[#111c29] p-2 text-white text-xs font-mono focus:outline-none"
+                    className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00e5c9]"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="w-full rounded-lg bg-[#192738] border border-[#233549] py-2 text-xs font-semibold text-[#00e5c9] hover:bg-[#203144]"
+                  className="w-full rounded-lg bg-slate-100 dark:bg-[#192738] border border-slate-300 dark:border-[#233549] py-2 text-xs font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-slate-200 dark:hover:bg-[#203144] transition-colors"
                 >
                   + Add Service Package
                 </button>

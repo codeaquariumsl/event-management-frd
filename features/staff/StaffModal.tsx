@@ -85,23 +85,23 @@ export function StaffModal({
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Full Name *</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Kasun Perera"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Role *</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Role *</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as StaffRole)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             >
               <option value="DJ">DJ & MC</option>
               <option value="Sound Engineer">Sound Engineer</option>
@@ -117,36 +117,36 @@ export function StaffModal({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Phone Number *</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number *</label>
             <input
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+94 77 123 4567"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Email</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="staff@seekers.lk"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Employment Type</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Employment Type</label>
             <select
               value={employmentType}
               onChange={(e) => setEmploymentType(e.target.value as EmploymentType)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             >
               <option value="Full Time">Full Time</option>
               <option value="Part Time">Part Time</option>
@@ -156,11 +156,11 @@ export function StaffModal({
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Status</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as StaffStatus)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             >
               <option value="Active">Active</option>
               <option value="On Leave">On Leave</option>
@@ -170,83 +170,83 @@ export function StaffModal({
         </div>
 
         <div>
-          <label className="block font-medium text-slate-300 mb-1">Skills & Specializations (comma separated)</label>
+          <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Skills & Specializations (comma separated)</label>
           <input
             type="text"
             value={skills}
             onChange={(e) => setSkills(e.target.value)}
             placeholder="e.g. Rekordbox Pro, GrandMA3, Allen & Heath, Line Array"
-            className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+            className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
           />
         </div>
 
         {/* Compensation */}
-        <div className="p-3.5 rounded-xl border border-[#203144] bg-[#0c141f] space-y-3">
-          <span className="font-semibold text-white block">Compensation & Bank Details</span>
+        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-[#203144] bg-slate-50/70 dark:bg-[#0c141f] space-y-3">
+          <span className="font-semibold text-slate-900 dark:text-white block">Compensation & Bank Details</span>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-400 text-[11px] mb-1">Monthly Basic Salary (LKR)</label>
+              <label className="block text-slate-500 dark:text-slate-400 text-[11px] mb-1">Monthly Basic Salary (LKR)</label>
               <input
                 type="number"
                 value={basicSalary}
                 onChange={(e) => setBasicSalary(Number(e.target.value))}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-400 text-[11px] mb-1">Default Rate Per Event (LKR)</label>
+              <label className="block text-slate-500 dark:text-slate-400 text-[11px] mb-1">Default Rate Per Event (LKR)</label>
               <input
                 type="number"
                 value={defaultRate}
                 onChange={(e) => setDefaultRate(Number(e.target.value))}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#182332]">
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200 dark:border-[#182332]">
             <div>
-              <label className="block text-slate-400 text-[10px] mb-1">Bank</label>
+              <label className="block text-slate-500 dark:text-slate-400 text-[10px] mb-1">Bank</label>
               <input
                 type="text"
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
-                className="w-full rounded border border-[#233549] bg-[#111c29] p-1.5 text-[11px] text-white"
+                className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-1.5 text-[11px] text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-slate-400 text-[10px] mb-1">Account No</label>
+              <label className="block text-slate-500 dark:text-slate-400 text-[10px] mb-1">Account No</label>
               <input
                 type="text"
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
-                className="w-full rounded border border-[#233549] bg-[#111c29] p-1.5 text-[11px] text-white"
+                className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-1.5 text-[11px] text-slate-900 dark:text-white font-mono"
               />
             </div>
             <div>
-              <label className="block text-slate-400 text-[10px] mb-1">Branch</label>
+              <label className="block text-slate-500 dark:text-slate-400 text-[10px] mb-1">Branch</label>
               <input
                 type="text"
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
-                className="w-full rounded border border-[#233549] bg-[#111c29] p-1.5 text-[11px] text-white"
+                className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-1.5 text-[11px] text-slate-900 dark:text-white"
               />
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#1c2a3a]">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-[#1c2a3a]">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[#233549] bg-[#14202e] px-4 py-2 text-xs font-medium text-slate-300 hover:bg-[#1b2b3d]"
+            className="rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-[#041816] hover:bg-[#1affda]"
+            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00a894]/20 dark:shadow-[#00e5c9]/20 transition-all"
           >
             {initialData ? 'Save Changes' : 'Add Staff Member'}
           </button>

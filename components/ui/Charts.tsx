@@ -59,13 +59,13 @@ export function MonthlyRevenueChart({ data }: MonthlyRevenueChartProps) {
       </div>
 
       {/* SVG / Flex Bar Chart */}
-      <div className="relative h-36 sm:h-40 w-full flex items-end justify-between gap-1.5 sm:gap-2.5 pt-4 pb-5 border-b border-[#1c2a3a]">
+      <div className="relative h-36 sm:h-40 w-full flex items-end justify-between gap-1.5 sm:gap-2.5 pt-4 pb-5 border-b border-slate-200 dark:border-[#1c2a3a]">
         {/* Grid lines */}
-        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-15">
-          <div className="border-b border-dashed border-slate-500 w-full" />
-          <div className="border-b border-dashed border-slate-500 w-full" />
-          <div className="border-b border-dashed border-slate-500 w-full" />
-          <div className="border-b border-dashed border-slate-500 w-full" />
+        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
+          <div className="border-b border-dashed border-slate-400 dark:border-slate-500 w-full" />
+          <div className="border-b border-dashed border-slate-400 dark:border-slate-500 w-full" />
+          <div className="border-b border-dashed border-slate-400 dark:border-slate-500 w-full" />
+          <div className="border-b border-dashed border-slate-400 dark:border-slate-500 w-full" />
         </div>
 
         {chartData.map((item, idx) => {
@@ -84,20 +84,20 @@ export function MonthlyRevenueChart({ data }: MonthlyRevenueChartProps) {
               <div
                 style={{ height: `${revHeight}%` }}
                 className={`w-2 sm:w-3 rounded-t-sm transition-all duration-200 ${
-                  isHovered ? 'bg-[#1affda] shadow-lg shadow-[#00e5c9]/40' : 'bg-[#00e5c9]'
+                  isHovered ? 'bg-[#00897b] dark:bg-[#1affda] shadow-lg shadow-[#00e5c9]/40' : 'bg-[#00a894] dark:bg-[#00e5c9]'
                 }`}
               />
               {/* Expense bar */}
               <div
                 style={{ height: `${expHeight}%` }}
                 className={`w-2 sm:w-3 rounded-t-sm transition-all duration-200 ${
-                  isHovered ? 'bg-[#647c9c]' : 'bg-[#3b4c60]'
+                  isHovered ? 'bg-slate-500 dark:bg-[#647c9c]' : 'bg-slate-300 dark:bg-[#3b4c60]'
                 }`}
               />
               {/* Month label */}
               <span
                 className={`absolute -bottom-5 text-[10px] transition-colors ${
-                  isHovered ? 'text-[#00e5c9] font-bold' : 'text-slate-400'
+                  isHovered ? 'text-[#00897b] dark:text-[#00e5c9] font-bold' : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 {item.month}
@@ -146,7 +146,7 @@ export function EventStatusChart({ stats }: EventStatusChartProps) {
           className="h-28 w-28 rounded-full shadow-inner"
           style={{
             background: total === 0
-              ? '#1b2a3b'
+              ? '#cbd5e1'
               : `conic-gradient(
                   #00e5c9 0% ${pctConfirmed}%,
                   #ffb703 ${pctConfirmed}% ${pctConfirmed + pctPending}%,
@@ -156,51 +156,51 @@ export function EventStatusChart({ stats }: EventStatusChartProps) {
                 )`,
           }}
         />
-        <div className="absolute h-18 w-18 rounded-full bg-[#0e1622] flex flex-col items-center justify-center border border-[#1d2b3c] shadow-md">
-          <span className="text-xl font-black text-white tracking-tight leading-none">{total}</span>
-          <span className="text-[9px] text-slate-400 uppercase tracking-wider mt-0.5">Events</span>
+        <div className="absolute h-18 w-18 rounded-full bg-white dark:bg-[#0e1622] flex flex-col items-center justify-center border border-slate-200 dark:border-[#1d2b3c] shadow-md">
+          <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{total}</span>
+          <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Events</span>
         </div>
       </div>
 
       {/* Compact Legend List */}
       <div className="w-full sm:flex-1 space-y-1.5 text-[11px]">
-        <div className="flex items-center justify-between text-slate-300 py-0.5">
+        <div className="flex items-center justify-between text-slate-600 dark:text-slate-300 py-0.5">
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-[#00e5c9] shrink-0" />
             <span>Confirmed</span>
           </div>
-          <span className="font-bold text-white">
-            {data.confirmed} <span className="text-slate-500 font-normal">({pctConfirmed}%)</span>
+          <span className="font-bold text-slate-900 dark:text-white">
+            {data.confirmed} <span className="text-slate-400 dark:text-slate-500 font-normal">({pctConfirmed}%)</span>
           </span>
         </div>
 
-        <div className="flex items-center justify-between text-slate-300 py-0.5">
+        <div className="flex items-center justify-between text-slate-600 dark:text-slate-300 py-0.5">
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-[#ffb703] shrink-0" />
             <span>Pending</span>
           </div>
-          <span className="font-bold text-white">
-            {data.pending} <span className="text-slate-500 font-normal">({pctPending}%)</span>
+          <span className="font-bold text-slate-900 dark:text-white">
+            {data.pending} <span className="text-slate-400 dark:text-slate-500 font-normal">({pctPending}%)</span>
           </span>
         </div>
 
-        <div className="flex items-center justify-between text-slate-300 py-0.5">
+        <div className="flex items-center justify-between text-slate-600 dark:text-slate-300 py-0.5">
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-[#7c5cff] shrink-0" />
             <span>In Progress</span>
           </div>
-          <span className="font-bold text-white">
-            {data.inProgress} <span className="text-slate-500 font-normal">({pctInProgress}%)</span>
+          <span className="font-bold text-slate-900 dark:text-white">
+            {data.inProgress} <span className="text-slate-400 dark:text-slate-500 font-normal">({pctInProgress}%)</span>
           </span>
         </div>
 
-        <div className="flex items-center justify-between text-slate-300 py-0.5">
+        <div className="flex items-center justify-between text-slate-600 dark:text-slate-300 py-0.5">
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-[#10b981] shrink-0" />
             <span>Completed</span>
           </div>
-          <span className="font-bold text-white">
-            {data.completed} <span className="text-slate-500 font-normal">({pctCompleted}%)</span>
+          <span className="font-bold text-slate-900 dark:text-white">
+            {data.completed} <span className="text-slate-400 dark:text-slate-500 font-normal">({pctCompleted}%)</span>
           </span>
         </div>
       </div>
@@ -225,7 +225,7 @@ export function ServiceDistributionChart({ data }: ServiceDistributionChartProps
 
   if (!data || data.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-[#233549] p-4 text-center text-xs text-slate-400 bg-[#0d1624]">
+      <div className="rounded-lg border border-dashed border-slate-300 dark:border-[#233549] p-4 text-center text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-[#0d1624]">
         No service bookings recorded yet.
       </div>
     );
@@ -235,13 +235,13 @@ export function ServiceDistributionChart({ data }: ServiceDistributionChartProps
     <div className="space-y-2.5 text-xs">
       {data.map((srv, idx) => (
         <div key={srv.name} className="space-y-1">
-          <div className="flex justify-between text-[11px] text-slate-300">
-            <span className="font-medium text-white truncate max-w-[160px]">{srv.name}</span>
+          <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-300">
+            <span className="font-medium text-slate-900 dark:text-white truncate max-w-[160px]">{srv.name}</span>
             <span>
-              <strong className="text-white">{srv.count}</strong> ({srv.percentage}%)
+              <strong className="text-slate-900 dark:text-white">{srv.count}</strong> ({srv.percentage}%)
             </span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-[#162130] overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-[#162130] overflow-hidden">
             <div
               className={`h-full rounded-full ${srv.color || defaultColors[idx % defaultColors.length]} transition-all duration-500`}
               style={{ width: `${srv.percentage}%` }}

@@ -80,7 +80,7 @@ export default function RecurringEventsPage() {
       className: 'max-w-[280px]',
       render: (r) => (
         <div>
-          <span className="font-semibold text-white block truncate">{r.seriesName}</span>
+          <span className="font-semibold text-slate-900 dark:text-white block truncate">{r.seriesName}</span>
           <span className="text-[11px] text-slate-400 block truncate">{r.customerName}</span>
         </div>
       ),
@@ -103,7 +103,7 @@ export default function RecurringEventsPage() {
       className: 'w-36',
       render: (r) => (
         <div>
-          <span className="text-white font-medium block">{r.eventDay || 'Regular'}</span>
+          <span className="text-slate-800 dark:text-white font-medium block">{r.eventDay || 'Regular'}</span>
           <span className="text-[10px] text-slate-400 block font-mono">
             {r.startTime} - {r.endTime}
           </span>
@@ -120,7 +120,7 @@ export default function RecurringEventsPage() {
       key: 'defaultPrice',
       header: 'Rate / Session',
       sortable: true,
-      className: 'text-right font-mono font-bold text-white w-28',
+      className: 'text-right font-mono font-bold text-slate-900 dark:text-white w-28',
       render: (r) => formatCurrency(r.defaultPrice),
     },
     {
@@ -129,7 +129,7 @@ export default function RecurringEventsPage() {
       sortable: true,
       className: 'text-center w-24',
       render: (r) => (
-        <span className="rounded bg-[#15202e] px-2 py-0.5 text-xs font-mono font-semibold text-slate-200">
+        <span className="rounded bg-slate-100 dark:bg-[#15202e] px-2 py-0.5 text-xs font-mono font-semibold text-slate-700 dark:text-slate-200">
           {r.generatedCount} events
         </span>
       ),
@@ -162,12 +162,12 @@ export default function RecurringEventsPage() {
         />
 
         {/* Informational Banner */}
-        <div className="rounded-xl border border-[#1e2f42] bg-[#0c1420] p-4 text-xs text-slate-300 flex items-center justify-between gap-4">
+        <div className="rounded-xl border border-slate-200 dark:border-[#1e2f42] bg-slate-50 dark:bg-[#0c1420] p-4 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-[#00e5c9] shrink-0" />
+            <Sparkles className="h-5 w-5 text-[#00897b] dark:text-[#00e5c9] shrink-0" />
             <div>
-              <strong className="text-white block font-semibold">One-Click Event Generation Engine</strong>
-              <span className="text-slate-400">
+              <strong className="text-slate-900 dark:text-white block font-semibold">One-Click Event Generation Engine</strong>
+              <span className="text-slate-500 dark:text-slate-400">
                 Generate upcoming batches of events for any residency. Generated events automatically link crew, services, rates, and sync to the production calendar.
               </span>
             </div>
@@ -192,14 +192,14 @@ export default function RecurringEventsPage() {
               </button>
               <button
                 onClick={() => setEditingSeries(r)}
-                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-[#00e5c9]"
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
                 title="Edit Series"
               >
                 <Edit2 className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => handleDeleteSeries(r.id)}
-                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-rose-400"
+                className="rounded p-1 text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                 title="Delete Series"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -236,33 +236,33 @@ export default function RecurringEventsPage() {
           maxWidth="md"
         >
           <div className="space-y-4 text-xs">
-            <div className="rounded-xl border border-[#21354a] bg-[#0d1624] p-4 space-y-2">
+            <div className="rounded-xl border border-slate-200 dark:border-[#21354a] bg-slate-50 dark:bg-[#0d1624] p-4 space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-400">Client:</span>
-                <span className="font-semibold text-white">{selectedSeriesForGeneration.customerName}</span>
+                <span className="text-slate-500 dark:text-slate-400">Client:</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{selectedSeriesForGeneration.customerName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Frequency:</span>
-                <span className="text-[#00e5c9] font-medium">{selectedSeriesForGeneration.frequency} ({selectedSeriesForGeneration.eventDay})</span>
+                <span className="text-[#00897b] dark:text-[#00e5c9] font-medium">{selectedSeriesForGeneration.frequency} ({selectedSeriesForGeneration.eventDay})</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Rate per session:</span>
-                <span className="font-mono font-bold text-white">{formatCurrency(selectedSeriesForGeneration.defaultPrice)}</span>
+                <span className="text-slate-500 dark:text-slate-400">Rate per session:</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(selectedSeriesForGeneration.defaultPrice)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Already generated:</span>
-                <span className="font-mono text-slate-300">{selectedSeriesForGeneration.generatedCount} sessions</span>
+                <span className="text-slate-500 dark:text-slate-400">Already generated:</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300">{selectedSeriesForGeneration.generatedCount} sessions</span>
               </div>
             </div>
 
             <div>
-              <label className="block font-medium text-slate-300 mb-1">
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 How many upcoming sessions to generate into Calendar?
               </label>
               <select
                 value={generateCount}
                 onChange={(e) => setGenerateCount(Number(e.target.value))}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-semibold focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
               >
                 <option value={2}>Generate Next 2 Events</option>
                 <option value={4}>Generate Next 4 Events (1 Month)</option>
@@ -271,16 +271,16 @@ export default function RecurringEventsPage() {
               </select>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-[#1c2a3a]">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-[#1c2a3a]">
               <button
                 onClick={() => setSelectedSeriesForGeneration(null)}
-                className="rounded-lg border border-[#233549] bg-[#14202e] px-4 py-2 text-slate-300 hover:bg-[#1b2b3d]"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleExecuteGeneration}
-                className="rounded-lg bg-[#00e5c9] px-4 py-2 font-bold text-[#041816] hover:bg-[#1affda]"
+                className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-sm"
               >
                 Generate {generateCount} Events Now
               </button>

@@ -29,21 +29,21 @@ export function PageHeader({
     <div className={cn('mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between', className)}>
       <div>
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav className="mb-2 flex items-center gap-1.5 text-xs text-slate-400">
+          <nav className="mb-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
             {breadcrumbs.map((crumb, idx) => {
               const isLast = idx === breadcrumbs.length - 1;
               return (
                 <React.Fragment key={crumb.label}>
-                  {idx > 0 && <ChevronRight className="h-3.5 w-3.5 text-slate-600" />}
+                  {idx > 0 && <ChevronRight className="h-3.5 w-3.5 text-slate-400 dark:text-slate-600" />}
                   {crumb.href && !isLast ? (
                     <Link
                       href={crumb.href}
-                      className="transition-colors hover:text-[#00e5c9]"
+                      className="transition-colors hover:text-[#00897b] dark:hover:text-[#00e5c9]"
                     >
                       {crumb.label}
                     </Link>
                   ) : (
-                    <span className={cn(isLast && 'font-medium text-slate-200')}>
+                    <span className={cn(isLast && 'font-medium text-slate-800 dark:text-slate-200')}>
                       {crumb.label}
                     </span>
                   )}
@@ -54,13 +54,13 @@ export function PageHeader({
         )}
 
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             {title}
           </h1>
           {badge}
         </div>
 
-        {subtitle && <p className="mt-1 text-sm text-slate-400">{subtitle}</p>}
+        {subtitle && <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{subtitle}</p>}
       </div>
 
       {actions && (

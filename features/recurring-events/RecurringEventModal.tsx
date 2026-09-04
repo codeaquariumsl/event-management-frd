@@ -204,31 +204,31 @@ export function RecurringEventModal({
       <form onSubmit={handleSubmit} className="space-y-5 text-xs">
         {/* STEP 1: Select Event (Only required when creating new) */}
         {!initialData && (
-          <div className="rounded-xl border border-[#1f2f42] bg-[#0c1420] p-4 space-y-3">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1f2f42] bg-slate-50/70 dark:bg-[#0c1420] p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block font-bold text-white text-xs flex items-center gap-1.5">
-                <CalendarDays className="h-4 w-4 text-[#00e5c9]" />
+              <label className="block font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                <CalendarDays className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9]" />
                 <span>1. Select Base Event *</span>
               </label>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
                 {events.length} event{events.length !== 1 ? 's' : ''} found in database
               </span>
             </div>
 
             {isLoadingEvents ? (
-              <div className="p-3 text-center text-slate-400 text-xs">
+              <div className="p-3 text-center text-slate-500 dark:text-slate-400 text-xs">
                 Loading events from database...
               </div>
             ) : events.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-[#233549] p-4 text-center space-y-2">
-                <p className="text-slate-300 font-medium">No events available in database</p>
+              <div className="rounded-lg border border-dashed border-slate-300 dark:border-[#233549] p-4 text-center space-y-2">
+                <p className="text-slate-700 dark:text-slate-300 font-medium">No events available in database</p>
                 <p className="text-slate-500 text-[11px]">
                   Recurring series require a base event blueprint with services and timing.
                 </p>
                 <Link
                   href="/events/new"
                   onClick={onClose}
-                  className="inline-flex items-center gap-1 text-[#00e5c9] hover:underline font-semibold text-xs"
+                  className="inline-flex items-center gap-1 text-[#00897b] dark:text-[#00e5c9] hover:underline font-semibold text-xs"
                 >
                   <span>+ Create an Event First</span>
                   <ArrowRight className="h-3 w-3" />
@@ -238,7 +238,7 @@ export function RecurringEventModal({
               <select
                 value={selectedEventId}
                 onChange={(e) => handleSelectEvent(e.target.value)}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-medium focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-medium focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                 required
               >
                 <option value="">-- Choose an event to make recurring --</option>
@@ -254,12 +254,12 @@ export function RecurringEventModal({
 
         {/* STEP 2: Selected Event Details Display */}
         {(selectedEvent || initialData) && (
-          <div className="rounded-xl border border-[#00e5c9]/30 bg-[#00e5c9]/5 p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#00e5c9]/15">
-              <span className="text-[11px] font-bold text-[#00e5c9] uppercase tracking-wider flex items-center gap-1.5">
+          <div className="rounded-xl border border-teal-200 dark:border-[#00e5c9]/30 bg-teal-50/60 dark:bg-[#00e5c9]/5 p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-teal-200/60 dark:border-[#00e5c9]/15">
+              <span className="text-[11px] font-bold text-[#00897b] dark:text-[#00e5c9] uppercase tracking-wider flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5" /> Selected Event Blueprint
               </span>
-              <span className="rounded bg-[#00e5c9]/15 border border-[#00e5c9]/30 px-2 py-0.5 text-[10px] font-mono font-semibold text-[#00e5c9]">
+              <span className="rounded bg-teal-100 dark:bg-[#00e5c9]/15 border border-teal-300 dark:border-[#00e5c9]/30 px-2 py-0.5 text-[10px] font-mono font-semibold text-[#00897b] dark:text-[#00e5c9]">
                 {selectedEvent?.id || initialData?.id}
               </span>
             </div>
@@ -267,11 +267,11 @@ export function RecurringEventModal({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div>
                 <span className="text-slate-500 text-[10px] block uppercase">Customer</span>
-                <span className="text-white font-semibold block truncate">
+                <span className="text-slate-900 dark:text-white font-semibold block truncate">
                   {selectedEvent?.customerName || initialData?.customerName}
                 </span>
                 {selectedEvent?.customerCompany && (
-                  <span className="text-slate-400 text-[10px] block truncate">
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px] block truncate">
                     {selectedEvent.customerCompany}
                   </span>
                 )}
@@ -279,21 +279,21 @@ export function RecurringEventModal({
 
               <div>
                 <span className="text-slate-500 text-[10px] block uppercase">Event Type</span>
-                <span className="text-[#00e5c9] font-medium block truncate">
+                <span className="text-[#00897b] dark:text-[#00e5c9] font-medium block truncate">
                   {selectedEvent?.eventType || initialData?.eventType}
                 </span>
               </div>
 
               <div>
                 <span className="text-slate-500 text-[10px] block uppercase">Original Date</span>
-                <span className="text-white font-medium block">
+                <span className="text-slate-900 dark:text-white font-medium block">
                   {selectedEvent?.eventDate || initialData?.startDate}
                 </span>
               </div>
 
               <div>
                 <span className="text-slate-500 text-[10px] block uppercase">Base Price</span>
-                <span className="text-white font-mono font-bold block text-emerald-400">
+                <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold block">
                   {formatCurrency(selectedEvent?.totalAmount || initialData?.defaultPrice || 0)}
                 </span>
               </div>
@@ -301,12 +301,12 @@ export function RecurringEventModal({
 
             {/* Included Services & Crew Badges */}
             {selectedEvent && selectedEvent.services && selectedEvent.services.length > 0 && (
-              <div className="pt-2 border-t border-[#00e5c9]/15 flex items-center gap-2 flex-wrap text-[11px]">
-                <span className="text-slate-400 text-[10px]">Included Services:</span>
+              <div className="pt-2 border-t border-teal-200/60 dark:border-[#00e5c9]/15 flex items-center gap-2 flex-wrap text-[11px]">
+                <span className="text-slate-500 dark:text-slate-400 text-[10px]">Included Services:</span>
                 {selectedEvent.services.map((s, idx) => (
                   <span
                     key={s.id || idx}
-                    className="rounded bg-[#121f2d] border border-[#233549] px-2 py-0.5 text-[10px] text-slate-300"
+                    className="rounded bg-white dark:bg-[#121f2d] border border-slate-200 dark:border-[#233549] px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-300"
                   >
                     {s.name} {s.quantity > 1 ? `(x${s.quantity})` : ''}
                   </span>
@@ -320,7 +320,7 @@ export function RecurringEventModal({
         {(selectedEvent || initialData) && (
           <div className="space-y-4 pt-1">
             <div>
-              <label className="block font-medium text-slate-300 mb-1">
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Recurring Series Name *
               </label>
               <input
@@ -328,18 +328,18 @@ export function RecurringEventModal({
                 value={seriesName}
                 onChange={(e) => setSeriesName(e.target.value)}
                 placeholder="e.g. Friday Night Residency — Colombo"
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-semibold focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-semibold focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <label className="block font-medium text-slate-300 mb-1">Recurrence Frequency</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Recurrence Frequency</label>
                 <select
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                 >
                   <option value="Weekly">Weekly</option>
                   <option value="Biweekly">Biweekly</option>
@@ -350,34 +350,34 @@ export function RecurringEventModal({
               </div>
 
               <div>
-                <label className="block font-medium text-slate-300 mb-1">Schedule Day</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Schedule Day</label>
                 <input
                   type="text"
                   value={eventDay}
                   onChange={(e) => setEventDay(e.target.value)}
                   placeholder="e.g. Every Friday"
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-300 mb-1">Start Date *</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Start Date *</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-300 mb-1">End Date *</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">End Date *</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                   required
                 />
               </div>
@@ -385,27 +385,27 @@ export function RecurringEventModal({
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <label className="block font-medium text-slate-300 mb-1">Session Start Time</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Session Start Time</label>
                 <input
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-300 mb-1">Session End Time</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Session End Time</label>
                 <input
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block font-medium text-slate-300 mb-1">Venue / Location</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Venue / Location</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
@@ -413,7 +413,7 @@ export function RecurringEventModal({
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. Kama Club, Colombo"
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] py-2.5 pl-9 pr-3 text-white focus:border-[#00e5c9] focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] py-2.5 pl-9 pr-3 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                     required
                   />
                 </div>
@@ -421,7 +421,7 @@ export function RecurringEventModal({
             </div>
 
             <div>
-              <label className="block font-medium text-slate-300 mb-1">
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Rate Per Session (LKR)
               </label>
               <input
@@ -430,7 +430,7 @@ export function RecurringEventModal({
                 value={defaultPrice}
                 onChange={(e) => setDefaultPrice(Number(e.target.value))}
                 placeholder="Rate per recurring session"
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 font-mono text-sm text-white font-bold focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 font-mono text-sm text-slate-900 dark:text-white font-bold focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
                 required
               />
             </div>
@@ -438,18 +438,18 @@ export function RecurringEventModal({
         )}
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#1c2a3a]">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-[#1c2a3a]">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[#233549] bg-[#14202e] px-4 py-2 text-xs font-medium text-slate-300 hover:bg-[#1b2b3d]"
+            className="rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting || (!initialData && !selectedEvent)}
-            className="rounded-lg bg-[#00e5c9] px-5 py-2 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/20 disabled:opacity-40 transition-all"
+            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-5 py-2 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00a894]/20 dark:shadow-[#00e5c9]/20 disabled:opacity-40 transition-all"
           >
             {isSubmitting
               ? 'Saving...'

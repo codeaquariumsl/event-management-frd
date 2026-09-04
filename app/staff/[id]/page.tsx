@@ -75,7 +75,7 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
     return (
       <AppShell>
         <div className="py-20 text-center text-xs text-slate-400">
-          <p className="text-base font-semibold text-white">Staff Member Not Found</p>
+          <p className="text-base font-semibold text-slate-900 dark:text-white">Staff Member Not Found</p>
           <Link href="/staff" className="mt-4 inline-block text-[#00e5c9] hover:underline">
             ← Back to Staff Directory
           </Link>
@@ -104,11 +104,11 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2.5">
-                  <h1 className="text-2xl font-bold text-white">{staff.name}</h1>
+                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{staff.name}</h1>
                   <StatusBadge status={staff.status} size="sm" />
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                  <span className="rounded bg-[#172332] px-2 py-0.5 font-semibold text-[#00e5c9]">
+                  <span className="rounded bg-slate-100 dark:bg-[#172332] px-2 py-0.5 font-semibold text-[#00897b] dark:text-[#00e5c9]">
                     {staff.role}
                   </span>
                   <span>{staff.employmentType}</span>
@@ -130,7 +130,7 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
 
             <button
               onClick={() => setIsPaymentModalOpen(true)}
-              className="rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/20"
+              className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/20"
             >
               + Record Payout / Salary
             </button>
@@ -142,7 +142,7 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
               <span className="text-slate-400 block text-[11px] mb-1.5">Specialized Skills</span>
               <div className="flex flex-wrap gap-1.5">
                 {staff.skills.map((sk) => (
-                  <span key={sk} className="rounded bg-[#131e2b] border border-[#203042] px-2.5 py-1 text-slate-200">
+                  <span key={sk} className="rounded bg-slate-100 dark:bg-[#131e2b] border border-slate-200 dark:border-[#203042] px-2.5 py-1 text-slate-700 dark:text-slate-200">
                     {sk}
                   </span>
                 ))}
@@ -151,7 +151,7 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
 
             {staff.bankDetails && (
               <div className="text-right sm:text-right text-[11px] text-slate-400">
-                <span className="text-white font-semibold block">{staff.bankDetails.bankName}</span>
+                <span className="text-slate-900 dark:text-white font-semibold block">{staff.bankDetails.bankName}</span>
                 <span className="font-mono text-slate-300">{staff.bankDetails.accountNumber}</span> • {staff.bankDetails.branch}
               </div>
             )}
@@ -160,15 +160,15 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
 
         {/* 4 Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 text-xs">
             <span className="text-slate-400 block text-[11px]">Events Assigned</span>
-            <strong className="text-2xl font-extrabold text-white block mt-1">
+            <strong className="text-2xl font-extrabold text-slate-900 dark:text-white block mt-1">
               {staff.totalEventsAssigned}
             </strong>
             <span className="text-slate-500 mt-1 block">Active on {assignedEvents.length} productions</span>
           </div>
 
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 text-xs">
             <span className="text-slate-400 block text-[11px]">Default Rate / Event</span>
             <strong className="text-2xl font-extrabold text-[#00e5c9] font-mono block mt-1">
               {formatCurrency(staff.defaultRatePerEvent)}
@@ -176,7 +176,7 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
             <span className="text-slate-500 mt-1 block">Basic: {formatCurrency(staff.basicSalary)}</span>
           </div>
 
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 text-xs">
             <span className="text-slate-400 block text-[11px]">Total Lifetime Earnings</span>
             <strong className="text-2xl font-extrabold text-emerald-400 font-mono block mt-1">
               {formatCurrency(staff.totalEarnings)}
@@ -184,7 +184,7 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
             <span className="text-emerald-500/80 mt-1 block">Cleared via bank</span>
           </div>
 
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 text-xs">
             <span className="text-slate-400 block text-[11px]">Pending Compensation</span>
             <strong className="text-2xl font-extrabold text-amber-300 font-mono block mt-1">
               {formatCurrency(staff.pendingPayments)}
@@ -194,8 +194,8 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Event History Table */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-4">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-4">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
             Assigned Event Productions ({assignedEvents.length})
           </h2>
           {assignedEvents.length === 0 ? (
@@ -219,8 +219,8 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
                   {assignedEvents.map((evt) => {
                     const as = evt.assignedStaff.find((a) => a.staffId === staff.id);
                     return (
-                      <tr key={evt.id} className="hover:bg-[#101824]">
-                        <td className="py-3 px-3 font-semibold text-white">
+                      <tr key={evt.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
+                        <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">
                           <Link href={`/events/${evt.id}`} className="hover:text-[#00e5c9]">
                             {evt.name}
                           </Link>
@@ -230,7 +230,7 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
                         </td>
                         <td className="py-3 px-3 text-slate-400">{evt.location}</td>
                         <td className="py-3 px-3 text-[#00e5c9] font-medium">{as?.role}</td>
-                        <td className="py-3 px-3 text-right font-mono font-bold text-white">
+                        <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
                           {formatCurrency(as?.paymentAmount || 0)}
                         </td>
                         <td className="py-3 px-3 text-center">
@@ -246,8 +246,8 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Payment History Table */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 text-xs space-y-4">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-4">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
             Payment & Salary History ({paymentHistory.length})
           </h2>
           {paymentHistory.length === 0 ? (
@@ -270,9 +270,9 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
                 </thead>
                 <tbody className="divide-y divide-[#182535]">
                   {paymentHistory.map((p) => (
-                    <tr key={p.id} className="hover:bg-[#101824]">
+                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
                       <td className="py-3 px-3 text-slate-300">{formatDate(p.date)}</td>
-                      <td className="py-3 px-3 font-semibold text-white">{p.paymentType}</td>
+                      <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">{p.paymentType}</td>
                       <td className="py-3 px-3 text-slate-400">{p.eventName || p.notes || '—'}</td>
                       <td className="py-3 px-3 text-slate-300">{p.paymentMethod}</td>
                       <td className="py-3 px-3 font-mono text-[11px] text-slate-400">{p.referenceNumber || '—'}</td>

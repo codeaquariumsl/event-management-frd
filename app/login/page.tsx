@@ -60,8 +60,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#070b10] p-4 text-slate-100">
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-[#1d2d3e] bg-[#0c1420] p-8 shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-[#070b10] p-4 text-slate-900 dark:text-slate-100">
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-[#1d2d3e] bg-white dark:bg-[#0c1420] p-8 shadow-2xl">
         {/* Glow behind card */}
         <div className="pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full bg-[#00e5c9]/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-[#7c5cff]/15 blur-3xl" />
@@ -75,10 +75,10 @@ export default function LoginPage() {
               className="h-full w-full object-cover rounded-xl"
             />
           </div>
-          <h1 className="text-2xl font-black tracking-wider text-white mt-4">
+          <h1 className="text-2xl font-black tracking-wider text-slate-900 dark:text-white mt-4">
             SEEKERS ENTERTAINMENT
           </h1>
-          <p className="text-xs text-[#00e5c9] font-medium tracking-wide">
+          <p className="text-xs text-[#00897b] dark:text-[#00e5c9] font-medium tracking-wide">
             Operations & Technical Production Command Center
           </p>
         </div>
@@ -93,7 +93,7 @@ export default function LoginPage() {
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-4 text-xs">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Operator / Manager Email</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Operator / Manager Email</label>
             <input
               type="email"
               value={email}
@@ -102,14 +102,14 @@ export default function LoginPage() {
                 if (error) setError(null);
               }}
               placeholder="operator@seekersentertainment.lk"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-3 text-white text-xs focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-3 text-slate-900 dark:text-white text-xs placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#00e5c9] focus:outline-none"
               required
             />
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block font-medium text-slate-300">Password</label>
+              <label className="block font-medium text-slate-700 dark:text-slate-300">Password</label>
             </div>
             <div className="relative">
               <input
@@ -120,7 +120,7 @@ export default function LoginPage() {
                   if (error) setError(null);
                 }}
                 placeholder="••••••••••••"
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-3 pr-10 text-white text-xs focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-3 pr-10 text-slate-900 dark:text-white text-xs placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#00e5c9] focus:outline-none"
                 required
               />
               <button
@@ -142,7 +142,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || authLoading}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#00e5c9] py-3 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/20 transition-all disabled:opacity-50 mt-2 cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] py-3 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/20 transition-all disabled:opacity-50 mt-2 cursor-pointer"
           >
             <span>{loading ? 'Authenticating Session...' : 'Sign In to Command Center'}</span>
             <ArrowRight className="h-4 w-4" />

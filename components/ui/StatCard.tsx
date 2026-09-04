@@ -36,14 +36,14 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'group relative rounded-xl bg-[#0e1622] border border-[#1d2b3c] transition-all duration-200 hover:border-[#2d4057] hover:bg-[#121c2b] shadow-sm',
+        'group relative rounded-xl bg-white dark:bg-[#0e1622] border border-slate-200 dark:border-[#1d2b3c] transition-all duration-200 hover:border-slate-300 dark:hover:border-[#2d4057] hover:bg-slate-50 dark:hover:bg-[#121c2b] shadow-sm',
         compact ? 'p-3.5' : 'p-5',
         className
       )}
     >
       <div className="flex items-center justify-between gap-2">
         <span className={cn(
-          "font-semibold uppercase tracking-wider text-slate-400 truncate",
+          "font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate",
           compact ? "text-[11px]" : "text-xs"
         )}>
           {title}
@@ -61,7 +61,7 @@ export function StatCard({
 
       <div className={compact ? "mt-2" : "mt-3"}>
         <div className={cn(
-          "font-black tracking-tight text-white truncate",
+          "font-black tracking-tight text-slate-900 dark:text-white truncate",
           compact ? "text-xl sm:text-[22px]" : "text-2xl"
         )}>
           {value}
@@ -76,9 +76,9 @@ export function StatCard({
           <span
             className={cn(
               'inline-flex items-center font-medium truncate',
-              trend === 'up' && 'text-emerald-400',
-              trend === 'down' && 'text-rose-400',
-              trend === 'neutral' && 'text-slate-400'
+              trend === 'up' && 'text-emerald-600 dark:text-emerald-400',
+              trend === 'down' && 'text-rose-600 dark:text-rose-400',
+              trend === 'neutral' && 'text-slate-500 dark:text-slate-400'
             )}
           >
             {trend === 'up' && <ArrowUpRight className="mr-0.5 h-3 w-3 shrink-0" />}
@@ -86,7 +86,7 @@ export function StatCard({
             {change}
           </span>
           {comparisonText && !compact && (
-            <span className="text-slate-500 truncate">{comparisonText}</span>
+            <span className="text-slate-400 dark:text-slate-500 truncate">{comparisonText}</span>
           )}
         </div>
       )}

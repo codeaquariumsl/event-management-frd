@@ -107,8 +107,8 @@ export function CustomerModal({
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">
-              Customer / Contact Name <span className="text-rose-400">*</span>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Customer / Contact Name <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -118,27 +118,27 @@ export function CustomerModal({
                 if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
               }}
               placeholder="e.g. Nadeesha Perera"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white placeholder-slate-500 focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             />
-            {errors.name && <p className="text-rose-400 text-[11px] mt-1">{errors.name}</p>}
+            {errors.name && <p className="text-rose-500 text-[11px] mt-1">{errors.name}</p>}
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Company / Organization</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Company / Organization</label>
             <input
               type="text"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="e.g. Cinnamon Grand / MAS Holdings"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white placeholder-slate-500 focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">
-              Phone Number <span className="text-rose-400">*</span>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Phone Number <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -148,30 +148,30 @@ export function CustomerModal({
                 if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
               }}
               placeholder="e.g. 077 123 4567"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-mono placeholder-slate-500 focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-mono placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             />
-            {errors.phone && <p className="text-rose-400 text-[11px] mt-1">{errors.phone}</p>}
+            {errors.phone && <p className="text-rose-500 text-[11px] mt-1">{errors.phone}</p>}
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Email Address</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. nadeesha@gmail.com"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white placeholder-slate-500 focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Customer Classification</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Customer Classification</label>
             <select
               value={customerType}
               onChange={(e) => setCustomerType(e.target.value as CustomerType)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             >
               <option value="Individual">Individual (Weddings, Private)</option>
               <option value="Corporate">Corporate / Enterprise</option>
@@ -183,11 +183,11 @@ export function CustomerModal({
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Account Status</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Account Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive' | 'Lead')}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             >
               <option value="Active">Active Client</option>
               <option value="Inactive">Inactive / Suspended</option>
@@ -196,43 +196,43 @@ export function CustomerModal({
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Billing City / Area</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Billing City / Area</label>
             <input
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="e.g. Colombo 07"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white placeholder-slate-500 focus:border-[#00e5c9] focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             />
           </div>
         </div>
 
         <div>
-          <label className="block font-medium text-slate-300 mb-1">Notes / Special Preferences</label>
+          <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Notes / Special Preferences</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             placeholder="Special AV requirements, preferred genres, VIP notes..."
-            className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white placeholder-slate-500 focus:border-[#00e5c9] focus:outline-none"
+            className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
           />
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#1c2a3a]">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-[#1c2a3a]">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-lg border border-[#233549] bg-[#14202e] px-4 py-2 text-xs font-medium text-slate-300 hover:bg-[#1b2b3d] transition-colors disabled:opacity-50"
+            className="rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-lg bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-[#041816] hover:bg-[#1affda] transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] transition-colors disabled:opacity-50 flex items-center gap-1.5"
           >
-            {isSubmitting && <div className="h-3 w-3 animate-spin rounded-full border border-black border-t-transparent" />}
+            {isSubmitting && <div className="h-3 w-3 animate-spin rounded-full border border-current border-t-transparent" />}
             <span>{initialData ? 'Save Changes' : 'Create Customer'}</span>
           </button>
         </div>

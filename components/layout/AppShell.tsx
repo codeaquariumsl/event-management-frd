@@ -31,17 +31,17 @@ export function AppShell({ children }: AppShellProps) {
   // Prevent flash of protected UI before session authentication is confirmed
   if (!mounted || isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#090d12]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#00e5c9] border-t-transparent shadow-lg shadow-[#00e5c9]/20" />
-          <span className="text-xs font-mono text-slate-400">Verifying Operator Session...</span>
+          <span className="text-xs font-mono text-muted-foreground">Verifying Operator Session...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-[#090d12] text-slate-100 selection:bg-[#00e5c9] selection:text-black">
+    <div className="flex min-h-screen bg-background text-foreground selection:bg-[#00e5c9] selection:text-black transition-colors duration-200">
       {/* Sidebar Navigation */}
       <Sidebar
         isCollapsed={isCollapsed}

@@ -63,17 +63,17 @@ export default function UsersPage() {
   const getRoleBadgeStyle = (role: UserRole) => {
     switch (role) {
       case 'Super Admin':
-        return 'bg-purple-950/60 border-purple-800/60 text-purple-300';
+        return 'bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300';
       case 'Event Director':
-        return 'bg-[#00e5c9]/10 border-[#00e5c9]/30 text-[#00e5c9]';
+        return 'bg-teal-50 dark:bg-[#00e5c9]/10 border border-teal-200 dark:border-[#00e5c9]/30 text-teal-700 dark:text-[#00e5c9]';
       case 'Production Manager':
-        return 'bg-blue-950/60 border-blue-800/60 text-blue-300';
+        return 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 text-blue-700 dark:text-blue-300';
       case 'Finance Officer':
-        return 'bg-emerald-950/60 border-emerald-800/60 text-emerald-300';
+        return 'bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300';
       case 'Crew Coordinator':
-        return 'bg-amber-950/60 border-amber-800/60 text-amber-300';
+        return 'bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300';
       default:
-        return 'bg-slate-800/60 border-slate-700/60 text-slate-300';
+        return 'bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-300';
     }
   };
 
@@ -95,7 +95,7 @@ export default function UsersPage() {
             {u.avatar || u.name.slice(0, 2).toUpperCase()}
           </div>
           <div className="truncate">
-            <span className="font-semibold text-white block truncate">{u.name}</span>
+            <span className="font-semibold text-slate-900 dark:text-white block truncate">{u.name}</span>
             <span className="text-[11px] text-slate-400 block truncate">{u.email}</span>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function UsersPage() {
       header: 'Granted Privileges',
       className: 'w-36',
       render: (u) => (
-        <span className="rounded bg-[#162130] px-2 py-0.5 text-xs font-mono text-slate-300">
+        <span className="rounded bg-slate-100 dark:bg-[#162130] px-2 py-0.5 text-xs font-mono text-slate-700 dark:text-slate-300">
           {u.permissions?.length || 0} permissions
         </span>
       ),
@@ -228,13 +228,13 @@ export default function UsersPage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="border-b border-[#1c2a3b] flex items-center gap-4 text-xs font-semibold">
+        <div className="border-b border-slate-200 dark:border-[#1c2a3b] flex items-center gap-4 text-xs font-semibold">
           <button
             onClick={() => setActiveTab('users')}
             className={`pb-3 px-2 border-b-2 transition-colors ${
               activeTab === 'users'
-                ? 'border-[#00e5c9] text-[#00e5c9]'
-                : 'border-transparent text-slate-400 hover:text-white'
+                ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             Operator Directory ({users.length})
@@ -243,8 +243,8 @@ export default function UsersPage() {
             onClick={() => setActiveTab('matrix')}
             className={`pb-3 px-2 border-b-2 transition-colors ${
               activeTab === 'matrix'
-                ? 'border-[#00e5c9] text-[#00e5c9]'
-                : 'border-transparent text-slate-400 hover:text-white'
+                ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             Roles & Permissions Matrix (RBAC)
@@ -271,7 +271,7 @@ export default function UsersPage() {
                     setSelectedUser(u);
                     setIsModalOpen(true);
                   }}
-                  className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-[#00e5c9]"
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9]"
                   title="Edit User & Permissions"
                 >
                   <Edit2 className="h-3.5 w-3.5" />
@@ -279,7 +279,7 @@ export default function UsersPage() {
                 {u.id !== 'USR-001' && (
                   <button
                     onClick={() => handleDelete(u.id, u.name)}
-                    className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-rose-400"
+                    className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-rose-400"
                     title="Delete Account"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -293,13 +293,13 @@ export default function UsersPage() {
         {/* TAB 2: ROLES & PERMISSIONS MATRIX */}
         {activeTab === 'matrix' && (
           <div className="space-y-6">
-            <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-4 text-xs">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-[#1a2738]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 shadow-sm space-y-4 text-xs">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200 dark:border-[#1a2738]">
                 <div>
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                     Role-Based Access Control (RBAC) Matrix
                   </h2>
-                  <p className="text-slate-400 text-xs mt-0.5">
+                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
                     Authorized module operations across system roles
                   </p>
                 </div>
@@ -308,7 +308,7 @@ export default function UsersPage() {
                     setSelectedUser(null);
                     setIsModalOpen(true);
                   }}
-                  className="rounded-lg bg-[#152332] border border-[#233549] px-3 py-1.5 font-semibold text-[#00e5c9] hover:bg-[#1b2c3f]"
+                  className="rounded-lg bg-slate-100 dark:bg-[#152332] border border-slate-300 dark:border-[#233549] px-3 py-1.5 font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-slate-200 dark:hover:bg-[#1b2c3f]"
                 >
                   + Create Operator with Custom Role
                 </button>
@@ -317,7 +317,7 @@ export default function UsersPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-[#233549] text-slate-300">
+                    <tr className="border-b border-slate-200 dark:border-[#233549] text-slate-700 dark:text-slate-300">
                       <th className="py-3 px-3 min-w-[240px]">Permission / Module Action</th>
                       {ROLES.map((role) => (
                         <th key={role} className="py-3 px-2 text-center min-w-[120px]">
@@ -332,11 +332,11 @@ export default function UsersPage() {
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#172332]">
+                  <tbody className="divide-y divide-slate-200 dark:divide-[#172332]">
                     {PERMISSION_ROWS.map((perm) => (
-                      <tr key={perm.key} className="hover:bg-[#101824]">
+                      <tr key={perm.key} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
                         <td className="py-2.5 px-3">
-                          <span className="font-semibold text-white block">{perm.label}</span>
+                          <span className="font-semibold text-slate-900 dark:text-white block">{perm.label}</span>
                           <span className="font-mono text-[10px] text-slate-500">{perm.key}</span>
                         </td>
                         {ROLES.map((role) => {
@@ -344,11 +344,11 @@ export default function UsersPage() {
                           return (
                             <td key={role} className="py-2.5 px-2 text-center">
                               {hasPerm ? (
-                                <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-950/70 border border-emerald-700/60 text-emerald-400">
+                                <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700/60 text-emerald-700 dark:text-emerald-400">
                                   <CheckCircle2 className="h-3.5 w-3.5" />
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center justify-center h-5 w-5 text-slate-600">
+                                <span className="inline-flex items-center justify-center h-5 w-5 text-slate-400 dark:text-slate-600">
                                   <Minus className="h-3 w-3" />
                                 </span>
                               )}
@@ -364,23 +364,23 @@ export default function UsersPage() {
 
             {/* Role Descriptions Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 space-y-2">
-                <span className="font-bold text-white block">Super Admin</span>
-                <p className="text-slate-400 text-[11px] leading-relaxed">
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 space-y-2">
+                <span className="font-bold text-slate-900 dark:text-white block">Super Admin</span>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
                   Full unrestricted rights across all production management, accounting, company remittance settings, and operator provisioning.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 space-y-2">
-                <span className="font-bold text-[#00e5c9] block">Event Director</span>
-                <p className="text-slate-400 text-[11px] leading-relaxed">
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 space-y-2">
+                <span className="font-bold text-[#00897b] dark:text-[#00e5c9] block">Event Director</span>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
                   Authoring, client agreements, staff allocation, quotation approval, and calendar coordination.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 space-y-2">
-                <span className="font-bold text-emerald-400 block">Finance Officer</span>
-                <p className="text-slate-400 text-[11px] leading-relaxed">
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 space-y-2">
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 block">Finance Officer</span>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
                   Managing client invoice collections, issuing tax receipts, reconciling staff gig payouts, and monthly payroll.
                 </p>
               </div>

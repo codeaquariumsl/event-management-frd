@@ -28,13 +28,13 @@ import { ServiceCatalogItem } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Sound: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
-  DJ: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
-  Lighting: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
-  LED: { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/30' },
-  Production: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-  'Special FX': { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/30' },
-  Other: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/30' },
+  Sound: { bg: 'bg-blue-50 dark:bg-blue-500/10', text: 'text-blue-700 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-500/30' },
+  DJ: { bg: 'bg-purple-50 dark:bg-purple-500/10', text: 'text-purple-700 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-500/30' },
+  Lighting: { bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-500/30' },
+  LED: { bg: 'bg-cyan-50 dark:bg-cyan-500/10', text: 'text-cyan-700 dark:text-cyan-400', border: 'border-cyan-200 dark:border-cyan-500/30' },
+  Production: { bg: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-500/30' },
+  'Special FX': { bg: 'bg-rose-50 dark:bg-rose-500/10', text: 'text-rose-700 dark:text-rose-400', border: 'border-rose-200 dark:border-rose-500/30' },
+  Other: { bg: 'bg-slate-100 dark:bg-slate-500/10', text: 'text-slate-700 dark:text-slate-400', border: 'border-slate-200 dark:border-slate-500/30' },
 };
 
 
@@ -333,7 +333,7 @@ export default function ServicesPage() {
         </div>
 
         {/* Controls: Search, Category Filters, and View Toggle */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-[#1b293a] bg-[#0c1420] p-3">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 dark:border-[#1b293a] bg-white dark:bg-[#0c1420] p-3 shadow-sm">
           {/* Dynamic Category Tabs from Backend */}
           <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto">
             {displayCategories.map((cat) => {
@@ -344,13 +344,13 @@ export default function ServicesPage() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${isSelected
-                      ? 'bg-[#00e5c9] text-[#051319] shadow-md shadow-[#00e5c9]/20'
-                      : 'bg-[#142030] text-slate-300 hover:bg-[#1a2c42] hover:text-white'
+                      ? 'bg-[#00e5c9] text-black shadow-md shadow-[#00e5c9]/20 font-bold'
+                      : 'bg-slate-100 dark:bg-[#142030] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1a2c42] hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-transparent'
                     }`}
                 >
                   <span>{cat}</span>
                   <span
-                    className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected ? 'bg-black/20 text-[#051319]' : 'bg-[#21344c] text-slate-400'
+                    className={`rounded-full px-1.5 py-0.2 text-[10px] ${isSelected ? 'bg-black/20 text-black font-bold' : 'bg-slate-200 dark:bg-[#21344c] text-slate-600 dark:text-slate-400'
                       }`}
                   >
                     {count}
@@ -363,19 +363,19 @@ export default function ServicesPage() {
           {/* Search & View Mode */}
           <div className="flex items-center gap-2">
             <div className="relative min-w-[200px] flex-1 sm:w-64">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search packages, features..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] py-1.5 pl-8 pr-3 text-xs text-white placeholder-slate-500 focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] py-1.5 pl-8 pr-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#00a894] dark:focus:border-[#00e5c9] focus:outline-none"
               />
             </div>
-            <div className="flex rounded-lg border border-[#233549] bg-[#111c29] p-0.5">
+            <div className="flex rounded-lg border border-slate-200 dark:border-[#233549] bg-slate-100 dark:bg-[#111c29] p-0.5">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`rounded p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-[#1e2f42] text-[#00e5c9]' : 'text-slate-400 hover:text-white'
+                className={`rounded p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-white dark:bg-[#1e2f42] text-[#00897b] dark:text-[#00e5c9] shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 title="Grid Cards"
               >
@@ -383,7 +383,7 @@ export default function ServicesPage() {
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`rounded p-1.5 transition-colors ${viewMode === 'table' ? 'bg-[#1e2f42] text-[#00e5c9]' : 'text-slate-400 hover:text-white'
+                className={`rounded p-1.5 transition-colors ${viewMode === 'table' ? 'bg-white dark:bg-[#1e2f42] text-[#00897b] dark:text-[#00e5c9] shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 title="Table View"
               >
@@ -395,16 +395,16 @@ export default function ServicesPage() {
 
         {/* Content View */}
         {isLoading ? (
-          <div className="flex h-64 items-center justify-center rounded-2xl border border-[#1b293a] bg-[#0c1420]">
+          <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-200 dark:border-[#1b293a] bg-white dark:bg-[#0c1420]">
             <div className="flex flex-col items-center gap-3">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#00e5c9] border-t-transparent" />
               <p className="text-xs text-slate-400">Loading services catalog...</p>
             </div>
           </div>
         ) : filteredServices.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-[#1b293a] bg-[#0c1420] text-center p-6">
+          <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-[#1b293a] bg-white dark:bg-[#0c1420] text-center p-6">
             <Sparkles className="h-10 w-10 text-slate-600 mb-3" />
-            <p className="font-semibold text-white">No services found</p>
+            <p className="font-semibold text-slate-900 dark:text-white">No services found</p>
             <p className="text-xs text-slate-400 mt-1 max-w-sm">
               {searchQuery
                 ? `No service matches "${searchQuery}". Try a different search term.`
@@ -426,7 +426,7 @@ export default function ServicesPage() {
               return (
                 <div
                   key={service.id}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-[#1c2a3d] bg-[#0c1420] p-5 shadow-xl transition-all duration-300 hover:border-[#00e5c9]/50 hover:shadow-2xl hover:shadow-[#00e5c9]/5"
+                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-[#1c2a3d] bg-white dark:bg-[#0c1420] p-5 shadow-xl transition-all duration-300 hover:border-[#00e5c9]/50 hover:shadow-2xl hover:shadow-[#00e5c9]/5"
                 >
                   <div>
                     {/* Top Badges & Actions */}
@@ -438,7 +438,7 @@ export default function ServicesPage() {
                           {service.category}
                         </span>
                         {service.duration && (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-[#162232] px-2 py-0.5 text-[10px] font-medium text-slate-300">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-[#162232] px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-transparent">
                             <Clock className="h-3 w-3 text-slate-400" />
                             <span>{service.duration}</span>
                           </span>
@@ -447,7 +447,7 @@ export default function ServicesPage() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleOpenEdit(service)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-[#192738] hover:text-white transition-colors"
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#192738] hover:text-slate-900 dark:hover:text-white transition-colors"
                           title="Edit Service"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
@@ -466,7 +466,7 @@ export default function ServicesPage() {
                     </div>
 
                     {/* Title & Description */}
-                    <h3 className="mt-3 text-base font-bold text-white group-hover:text-[#00e5c9] transition-colors line-clamp-1">
+                    <h3 className="mt-3 text-base font-bold text-slate-900 dark:text-white group-hover:text-[#00e5c9] transition-colors line-clamp-1">
                       {service.name}
                     </h3>
                     <p className="mt-1.5 text-xs text-slate-400 line-clamp-2 leading-relaxed">
@@ -524,11 +524,11 @@ export default function ServicesPage() {
           </div>
         ) : (
           /* Table View */
-          <div className="overflow-hidden rounded-2xl border border-[#1c2a3d] bg-[#0c1420] shadow-xl">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-[#1c2a3d] bg-white dark:bg-[#0c1420] shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-[#1c2a3d] bg-[#0f1926] text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                  <tr className="border-b border-slate-200 dark:border-[#1c2a3d] bg-slate-50 dark:bg-[#0f1926] text-slate-500 dark:text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
                     <th className="py-3 px-4">Package Name & Spec</th>
                     <th className="py-3 px-4">Category</th>
                     <th className="py-3 px-4">Duration</th>
@@ -542,9 +542,9 @@ export default function ServicesPage() {
                   {filteredServices.map((service) => {
                     const catTheme = CATEGORY_COLORS[service.category] || CATEGORY_COLORS.Other;
                     return (
-                      <tr key={service.id} className="hover:bg-[#111c29] transition-colors">
+                      <tr key={service.id} className="hover:bg-slate-50 dark:hover:bg-[#111c29] transition-colors">
                         <td className="py-3 px-4">
-                          <p className="font-bold text-white">{service.name}</p>
+                          <p className="font-bold text-slate-900 dark:text-white">{service.name}</p>
                           <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
                             {service.description || 'No description provided'}
                           </p>
@@ -584,7 +584,7 @@ export default function ServicesPage() {
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => handleOpenEdit(service)}
-                              className="rounded-lg p-1.5 text-slate-400 hover:bg-[#192738] hover:text-white transition-colors"
+                              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#192738] hover:text-slate-900 dark:hover:text-white transition-colors"
                               title="Edit"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
@@ -621,7 +621,7 @@ export default function ServicesPage() {
           <form onSubmit={handleSave} className="space-y-4 text-xs">
             {/* Quick 1-Click Templates from Backend Presets */}
             {!editingService && backendPresets.length > 0 && (
-              <div className="rounded-xl border border-[#1d2d3e] bg-[#0f1722] p-3 space-y-2">
+              <div className="rounded-xl border border-slate-200 dark:border-[#1d2d3e] bg-slate-50 dark:bg-[#0f1722] p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles className="h-3 w-3 text-[#00e5c9]" /> Live 1-Click Package Templates
@@ -648,7 +648,7 @@ export default function ServicesPage() {
                         });
                         showToast(`✓ Loaded template: ${preset.name}`);
                       }}
-                      className="rounded-lg border border-[#233549] bg-[#142030] px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:border-[#00e5c9] hover:bg-[#192a3e] hover:text-[#00e5c9] transition-all"
+                      className="rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#142030] px-2.5 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#192a3e] transition-all"
                     >
                       + {preset.name} ({formatCurrency(preset.unitPrice)})
                     </button>
@@ -666,7 +666,7 @@ export default function ServicesPage() {
                 placeholder="e.g. Luxury Wedding Audio & Moving Head Lighting"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
               />
             </div>
 
@@ -690,13 +690,13 @@ export default function ServicesPage() {
                     placeholder="Type new category (e.g. Drones, Staging)"
                     value={customCategory}
                     onChange={(e) => setCustomCategory(e.target.value)}
-                    className="w-full rounded-lg border border-[#00e5c9]/60 bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                    className="w-full rounded-lg border border-[#00a894] dark:border-[#00e5c9]/60 bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
                   />
                 ) : (
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
                   >
                     {modalCategories.map((cat) => (
                       <option key={cat} value={cat}>
@@ -713,7 +713,7 @@ export default function ServicesPage() {
                   placeholder="e.g. 6 Hours, Per Event, Per Day"
                   value={formData.duration}
                   onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
                 />
               </div>
             </div>
@@ -732,7 +732,7 @@ export default function ServicesPage() {
                     placeholder="120000"
                     value={formData.unitPrice}
                     onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] py-2.5 pl-10 pr-3 font-mono font-bold text-white focus:border-[#00e5c9] focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] py-2.5 pl-10 pr-3 font-mono font-bold text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
                   />
                 </div>
               </div>
@@ -742,10 +742,10 @@ export default function ServicesPage() {
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="h-4 w-4 rounded border-[#233549] bg-[#111c29] text-[#00e5c9] focus:ring-0 focus:ring-offset-0"
+                    className="h-4 w-4 rounded border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] text-[#00897b] dark:text-[#00e5c9] focus:ring-0 focus:ring-offset-0"
                   />
                   <div>
-                    <span className="font-semibold text-white block">Active Package</span>
+                    <span className="font-semibold text-slate-900 dark:text-white block">Active Package</span>
                     <span className="text-[11px] text-slate-400 block">Available for selection in quotations & events</span>
                   </div>
                 </label>
@@ -777,7 +777,7 @@ export default function ServicesPage() {
                           });
                         }
                       }}
-                      className="rounded bg-[#162332] border border-[#233549] px-2 py-0.5 text-[10px] text-slate-400 hover:text-[#00e5c9] hover:border-[#00e5c9]/50 transition-colors"
+                      className="rounded bg-slate-100 dark:bg-[#162332] border border-slate-200 dark:border-[#233549] px-2 py-0.5 text-[10px] text-slate-600 dark:text-slate-400 hover:text-[#00e5c9] hover:border-[#00e5c9]/50 transition-colors"
                     >
                       + {tag}
                     </button>
@@ -789,7 +789,7 @@ export default function ServicesPage() {
                 placeholder="Line Array Speakers x4&#10;Wireless Microphones x2&#10;Moving Head Stage Spotlights x4&#10;Sound Tech Included"
                 value={formData.features}
                 onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 font-mono text-xs text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 font-mono text-xs text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
               />
               <span className="text-[11px] text-slate-500 mt-1 block">
                 Enter items separated by newlines. These appear as bullet points on client rate cards.
@@ -804,7 +804,7 @@ export default function ServicesPage() {
                 placeholder="Comprehensive description of the package, ideal audience, venue requirements, etc."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
               />
             </div>
 
@@ -813,14 +813,14 @@ export default function ServicesPage() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="rounded-lg border border-[#233549] bg-[#142030] px-4 py-2 font-medium text-slate-300 hover:bg-[#1a2c42]"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#142030] px-4 py-2 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1a2c42]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-5 py-2 font-bold text-[#051319] hover:bg-[#1affda] disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-5 py-2 font-bold text-slate-900 dark:text-white dark:text-[#051319] hover:bg-[#1affda] disabled:opacity-50"
               >
                 {isSubmitting ? 'Saving...' : editingService ? 'Save Changes' : 'Create Package'}
               </button>

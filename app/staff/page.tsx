@@ -74,7 +74,7 @@ export default function StaffPage() {
             {s.avatar || s.name.slice(0, 2).toUpperCase()}
           </div>
           <div className="truncate">
-            <span className="font-semibold text-white block truncate hover:text-[#00e5c9]">
+            <span className="font-semibold text-slate-900 dark:text-white block truncate hover:text-[#00897b] dark:hover:text-[#00e5c9]">
               {s.name}
             </span>
             <span className="text-[11px] text-slate-400 block truncate">
@@ -90,7 +90,7 @@ export default function StaffPage() {
       sortable: true,
       className: 'w-36',
       render: (s) => (
-        <span className="rounded bg-[#172332] px-2.5 py-0.5 text-xs font-semibold text-[#00e5c9] border border-[#00e5c9]/30">
+        <span className="rounded bg-slate-100 dark:bg-[#172332] px-2.5 py-0.5 text-xs font-semibold text-[#00897b] dark:text-[#00e5c9] border border-slate-200 dark:border-[#00e5c9]/30">
           {s.role}
         </span>
       ),
@@ -102,7 +102,7 @@ export default function StaffPage() {
       render: (s) => (
         <div className="flex flex-wrap gap-1">
           {s.skills.slice(0, 2).map((sk) => (
-            <span key={sk} className="rounded bg-[#111a24] px-1.5 py-0.5 text-[10px] text-slate-300">
+            <span key={sk} className="rounded bg-slate-100 dark:bg-[#111a24] px-1.5 py-0.5 text-[10px] text-slate-700 dark:text-slate-300">
               {sk}
             </span>
           ))}
@@ -118,7 +118,7 @@ export default function StaffPage() {
       sortable: true,
       className: 'w-24',
       render: (s) => (
-        <span className="text-slate-300 font-medium text-xs">
+        <span className="text-slate-700 dark:text-slate-300 font-medium text-xs">
           {s.employmentType}
         </span>
       ),
@@ -129,7 +129,7 @@ export default function StaffPage() {
       sortable: true,
       className: 'text-center w-20',
       render: (s) => (
-        <span className="font-mono text-white font-bold text-xs">{s.totalEventsAssigned}</span>
+        <span className="font-mono text-slate-900 dark:text-white font-bold text-xs">{s.totalEventsAssigned}</span>
       ),
     },
     {
@@ -183,7 +183,7 @@ export default function StaffPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="rounded-lg border border-[#233549] bg-[#111c29] px-2.5 py-2 text-white focus:outline-none"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2.5 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00a894] dark:focus:ring-[#00e5c9]"
               >
                 <option value="ALL">All Roles</option>
                 <option value="DJ">DJ & MC</option>
@@ -198,7 +198,7 @@ export default function StaffPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="rounded-lg border border-[#233549] bg-[#111c29] px-2.5 py-2 text-white focus:outline-none"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2.5 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00a894] dark:focus:ring-[#00e5c9]"
               >
                 <option value="ALL">All Employment Types</option>
                 <option value="Full Time">Full Time</option>
@@ -215,7 +215,7 @@ export default function StaffPage() {
                   e.stopPropagation();
                   router.push(`/staff/${s.id}`);
                 }}
-                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-white"
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-slate-900 dark:hover:text-white transition-colors"
                 title="View Profile"
               >
                 <Eye className="h-3.5 w-3.5" />
@@ -225,7 +225,7 @@ export default function StaffPage() {
                   e.stopPropagation();
                   setPaymentTargetStaff(s);
                 }}
-                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-[#00e5c9]"
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
                 title="Record Staff Payment"
               >
                 <DollarSign className="h-3.5 w-3.5" />

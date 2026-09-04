@@ -66,7 +66,7 @@ export default function StaffPaymentsPage() {
       key: 'staffName',
       header: 'Staff Member',
       sortable: true,
-      className: 'font-semibold text-white',
+      className: 'font-semibold text-slate-900 dark:text-white',
     },
     {
       key: 'paymentType',
@@ -74,7 +74,7 @@ export default function StaffPaymentsPage() {
       sortable: true,
       className: 'w-32',
       render: (p) => (
-        <span className="rounded bg-[#172332] px-2 py-0.5 text-xs text-slate-300 font-medium">
+        <span className="rounded bg-slate-100 dark:bg-[#172332] px-2 py-0.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
           {p.paymentType}
         </span>
       ),
@@ -119,10 +119,10 @@ export default function StaffPaymentsPage() {
       key: 'staffName',
       header: 'Staff Name & Role',
       sortable: true,
-      className: 'font-semibold text-white',
+      className: 'font-semibold text-slate-900 dark:text-white',
       render: (p) => (
         <div>
-          <span className="text-white font-bold block">{p.staffName}</span>
+          <span className="text-slate-900 dark:text-white font-bold block">{p.staffName}</span>
           <span className="text-[11px] text-[#00e5c9]">{p.role} • {p.employmentType}</span>
         </div>
       ),
@@ -157,7 +157,7 @@ export default function StaffPaymentsPage() {
       key: 'netPay',
       header: 'Net Payable',
       sortable: true,
-      className: 'text-right font-mono font-bold text-white',
+      className: 'text-right font-mono font-bold text-slate-900 dark:text-white',
       render: (p) => formatCurrency(p.netPay),
     },
     {
@@ -192,7 +192,7 @@ export default function StaffPaymentsPage() {
           actions={
             <button
               onClick={() => setIsPaymentModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/25 transition-all"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/25 transition-all"
             >
               <Plus className="h-4 w-4" />
               <span>+ Record Payout</span>
@@ -237,14 +237,14 @@ export default function StaffPaymentsPage() {
         </div>
 
         {/* View Switcher Tabs & Month Selector */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1c2a3b] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#1c2a3b] pb-3">
           <div className="flex items-center gap-3 text-xs font-semibold">
             <button
               onClick={() => setActiveTab('payroll')}
               className={`pb-2 px-1 border-b-2 transition-colors ${
                 activeTab === 'payroll'
-                  ? 'border-[#00e5c9] text-[#00e5c9]'
-                  : 'border-transparent text-slate-400 hover:text-white'
+                  ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Monthly Salary & Payroll Summary
@@ -253,8 +253,8 @@ export default function StaffPaymentsPage() {
               onClick={() => setActiveTab('transactions')}
               className={`pb-2 px-1 border-b-2 transition-colors ${
                 activeTab === 'transactions'
-                  ? 'border-[#00e5c9] text-[#00e5c9]'
-                  : 'border-transparent text-slate-400 hover:text-white'
+                  ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               All Payment Transactions ({payments.length})
@@ -262,12 +262,12 @@ export default function StaffPaymentsPage() {
           </div>
 
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400">Payroll Month:</span>
+            <span className="text-slate-500 dark:text-slate-400">Payroll Month:</span>
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="rounded-lg border border-[#233549] bg-[#111c29] px-3 py-1.5 text-xs text-white focus:outline-none"
+              className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00a894] dark:focus:ring-[#00e5c9]"
             />
           </div>
         </div>
@@ -275,10 +275,10 @@ export default function StaffPaymentsPage() {
         {/* Tab 1: Payroll Summary */}
         {activeTab === 'payroll' && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs text-slate-400 flex items-center justify-between">
+            <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-slate-50 dark:bg-[#0c1420] p-4 text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
               <div>
-                <strong className="text-white">Payroll Calculation Formula:</strong>{' '}
-                <span className="font-mono text-[#00e5c9]">
+                <strong className="text-slate-900 dark:text-white">Payroll Calculation Formula:</strong>{' '}
+                <span className="font-mono text-[#00897b] dark:text-[#00e5c9]">
                   Basic Salary + Event Payments + Overtime + Bonus - Deductions - Advance = Net Pay
                 </span>
               </div>

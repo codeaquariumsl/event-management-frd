@@ -58,7 +58,7 @@ export default function CustomerPaymentsPage() {
       key: 'invoiceNumber',
       header: 'Invoice #',
       sortable: true,
-      className: 'w-32 font-mono font-bold text-white',
+      className: 'w-32 font-mono font-bold text-slate-900 dark:text-white',
     },
     {
       key: 'eventName',
@@ -67,7 +67,7 @@ export default function CustomerPaymentsPage() {
       className: 'max-w-[260px]',
       render: (p) => (
         <div>
-          <span className="font-semibold text-white block truncate">{p.eventName}</span>
+          <span className="font-semibold text-slate-900 dark:text-white block truncate">{p.eventName}</span>
           <span className="text-[11px] text-slate-400 block truncate">{p.customerName}</span>
         </div>
       ),
@@ -129,7 +129,7 @@ export default function CustomerPaymentsPage() {
                   if (ev) setSelectedPaymentEvent(ev);
                 }}
                 defaultValue=""
-                className="rounded-lg border border-[#233549] bg-[#111c29] px-3 py-2 text-xs font-semibold text-white focus:outline-none"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00a894] dark:focus:ring-[#00e5c9]"
               >
                 <option value="" disabled>
                   + Select Event to Pay...
@@ -187,7 +187,7 @@ export default function CustomerPaymentsPage() {
                 {ev && (
                   <button
                     onClick={() => setSelectedInvoiceEvent(ev)}
-                    className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-white"
+                    className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-slate-900 dark:hover:text-white transition-colors"
                     title="Print Tax Invoice"
                   >
                     <Printer className="h-3.5 w-3.5" />

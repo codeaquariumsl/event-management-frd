@@ -86,7 +86,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     return (
       <AppShell>
         <div className="py-20 text-center text-xs text-slate-400">
-          <p className="text-base font-semibold text-white">Customer Not Found</p>
+          <p className="text-base font-semibold text-slate-900 dark:text-white">Customer Not Found</p>
           <Link href="/customers" className="mt-4 inline-block text-[#00e5c9] hover:underline">
             ← Back to Customers
           </Link>
@@ -112,7 +112,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#14202e] border border-[#233549] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:text-white hover:bg-[#1a2b3d] transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-[#14202e] border border-slate-300 dark:border-[#233549] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#1a2b3d] transition-colors"
             >
               <Edit2 className="h-3.5 w-3.5" />
               <span>Edit Client</span>
@@ -134,11 +134,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
               <div className="flex items-center gap-3">
                 <span className="font-mono text-xs text-[#00e5c9] font-bold">{customer.id}</span>
                 <StatusBadge status={customer.status} size="sm" />
-                <span className="rounded bg-[#172332] px-2.5 py-0.5 text-xs text-slate-300">
+                <span className="rounded bg-slate-100 dark:bg-[#172332] px-2.5 py-0.5 text-xs text-slate-700 dark:text-slate-300">
                   {customer.customerType}
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                 {customer.name}
               </h1>
               {customer.company && (
@@ -166,7 +166,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
             <Link
               href={`/events/new?customerId=${customer.id}`}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/20"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/20"
             >
               <Plus className="h-4 w-4" />
               <span>Book Event for Client</span>
@@ -176,23 +176,23 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
         {/* 4 Financial & Booking Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 text-xs">
             <span className="text-slate-400 block text-[11px]">Total Events Booked</span>
-            <strong className="text-2xl font-extrabold text-white block mt-1">
+            <strong className="text-2xl font-extrabold text-slate-900 dark:text-white block mt-1">
               {events.length}
             </strong>
             <span className="text-slate-500 mt-1 block">Production contracts</span>
           </div>
 
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 text-xs">
             <span className="text-slate-400 block text-[11px]">Total Invoiced Revenue</span>
-            <strong className="text-2xl font-extrabold text-white font-mono block mt-1">
+            <strong className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono block mt-1">
               {formatCurrency(customer.totalRevenue)}
             </strong>
             <span className="text-slate-500 mt-1 block">Contract value</span>
           </div>
 
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 text-xs">
             <span className="text-slate-400 block text-[11px]">Paid Collections</span>
             <strong className="text-2xl font-extrabold text-emerald-400 font-mono block mt-1">
               {formatCurrency(totalPaid)}
@@ -200,7 +200,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <span className="text-slate-500 mt-1 block">{payments.length} payments recorded</span>
           </div>
 
-          <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-4 text-xs">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4 text-xs">
             <span className="text-slate-400 block text-[11px]">Outstanding Balance</span>
             <strong
               className={`text-2xl font-extrabold font-mono block mt-1 ${
@@ -214,11 +214,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         </div>
 
         {/* Event History */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-5 shadow-sm text-xs">
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-5 shadow-sm text-xs">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#182535]">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-[#00e5c9]" />
-              <h2 className="text-sm font-bold text-white">Event Bookings History</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Event Bookings History</h2>
             </div>
             <span className="text-slate-400">{events.length} Events Total</span>
           </div>
@@ -244,13 +244,13 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     <tr
                       key={e.id}
                       onClick={() => router.push(`/events/${e.id}`)}
-                      className="cursor-pointer hover:bg-[#101824] transition-colors"
+                      className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#101824] transition-colors"
                     >
-                      <td className="py-3 px-3 font-medium text-white hover:text-[#00e5c9]">{e.name}</td>
+                      <td className="py-3 px-3 font-medium text-slate-900 dark:text-white hover:text-[#00897b] dark:hover:text-[#00e5c9]">{e.name}</td>
                       <td className="py-3 px-3 text-slate-300">{formatDate(e.eventDate)}</td>
                       <td className="py-3 px-3 text-slate-400">{e.eventType}</td>
                       <td className="py-3 px-3 text-slate-400">{e.location}</td>
-                      <td className="py-3 px-3 text-right font-mono font-semibold text-white">
+                      <td className="py-3 px-3 text-right font-mono font-semibold text-slate-900 dark:text-white">
                         {formatCurrency(e.totalAmount)}
                       </td>
                       <td className="py-3 px-3 text-right font-mono font-semibold text-amber-300">
@@ -268,11 +268,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         </div>
 
         {/* Payment History */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-5 shadow-sm text-xs">
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-5 shadow-sm text-xs">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#182535]">
             <div className="flex items-center gap-2">
               <Receipt className="h-4 w-4 text-[#00e5c9]" />
-              <h2 className="text-sm font-bold text-white">Payments & Receipts</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Payments & Receipts</h2>
             </div>
             <span className="text-slate-400">{payments.length} Payments Total</span>
           </div>
@@ -295,8 +295,8 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 </thead>
                 <tbody className="divide-y divide-[#182535]">
                   {payments.map((p) => (
-                    <tr key={p.id} className="hover:bg-[#101824]">
-                      <td className="py-3 px-3 font-mono font-semibold text-white">{p.invoiceNumber}</td>
+                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
+                      <td className="py-3 px-3 font-mono font-semibold text-slate-900 dark:text-white">{p.invoiceNumber}</td>
                       <td className="py-3 px-3 text-slate-300">{formatDate(p.date)}</td>
                       <td className="py-3 px-3 text-slate-400">{p.eventName}</td>
                       <td className="py-3 px-3 text-slate-300">{p.paymentMethod}</td>

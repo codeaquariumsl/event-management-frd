@@ -122,25 +122,25 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
       <form onSubmit={handleSubmit} className="space-y-5 text-xs">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Full Name *</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Kasun Silva"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none focus:border-[#00e5c9]"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#00897b] dark:focus:border-[#00e5c9]"
               required
             />
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Email Address *</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address *</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="operator@seekersentertainment.lk"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none focus:border-[#00e5c9]"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#00897b] dark:focus:border-[#00e5c9]"
               required
             />
           </div>
@@ -148,22 +148,22 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Phone Number</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
             <input
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+94 77 123 4567"
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Access Role *</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Access Role *</label>
             <select
               value={role}
               onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-semibold focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none"
             >
               <option value="Super Admin">Super Admin</option>
               <option value="Event Director">Event Director</option>
@@ -175,11 +175,11 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
           </div>
 
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Account Status</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Account Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
-              className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none"
             >
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
@@ -190,14 +190,14 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
 
         {!user && (
           <div>
-            <label className="block font-medium text-slate-300 mb-1">Initial Password</label>
+            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Password</label>
             <div className="relative">
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-mono focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-mono focus:outline-none"
               />
               <span className="absolute right-3 top-2.5 text-[10px] text-slate-500 font-mono">
                 Default: seekers2026
@@ -207,13 +207,13 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
         )}
 
         {/* Granular Permission Matrix Checkboxes */}
-        <div className="rounded-xl border border-[#203246] bg-[#0c1420] p-4 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#1b2a3a] pb-2.5">
+        <div className="rounded-xl border border-slate-200 dark:border-[#203246] bg-slate-50/70 dark:bg-[#0c1420] p-4 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#1b2a3a] pb-2.5">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-[#00e5c9]" />
-              <span className="font-bold text-white text-xs">Assigned Permissions ({permissions.length})</span>
+              <ShieldCheck className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9]" />
+              <span className="font-bold text-slate-900 dark:text-white text-xs">Assigned Permissions ({permissions.length})</span>
             </div>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">
               Role template applied; individual overrides allowed
             </span>
           </div>
@@ -223,7 +223,7 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
               const groupPerms = ALL_PERMISSIONS.filter((p) => p.group === group);
               return (
                 <div key={group} className="space-y-2">
-                  <span className="text-[11px] font-bold text-[#00e5c9] uppercase tracking-wider block">
+                  <span className="text-[11px] font-bold text-[#00897b] dark:text-[#00e5c9] uppercase tracking-wider block">
                     {group}
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -234,17 +234,17 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
                           key={p.key}
                           className={`flex items-center gap-2.5 p-2 rounded-lg border transition-colors cursor-pointer ${
                             isChecked
-                              ? 'bg-[#00e5c9]/10 border-[#00e5c9]/30 text-white'
-                              : 'bg-[#101926] border-[#1b2838] text-slate-400 hover:border-slate-600'
+                              ? 'bg-teal-50 dark:bg-[#00e5c9]/10 border-teal-300 dark:border-[#00e5c9]/30 text-[#00897b] dark:text-white font-semibold'
+                              : 'bg-white dark:bg-[#101926] border-slate-200 dark:border-[#1b2838] text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600'
                           }`}
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => handleTogglePermission(p.key)}
-                            className="h-3.5 w-3.5 rounded border-[#243549] bg-[#111b27] text-[#00e5c9] accent-[#00e5c9]"
+                            className="h-3.5 w-3.5 rounded border-slate-300 dark:border-[#243549] bg-white dark:bg-[#111b27] text-[#00897b] dark:text-[#00e5c9] accent-[#00897b] dark:accent-[#00e5c9]"
                           />
-                          <span className="text-xs font-medium">{p.label}</span>
+                          <span className="text-xs">{p.label}</span>
                         </label>
                       );
                     })}
@@ -255,17 +255,17 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-3 border-t border-[#1c2a3a]">
+        <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-[#1c2a3a]">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[#233549] bg-[#14202e] px-4 py-2 text-slate-300 hover:bg-[#1b2b3d]"
+            className="rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-[#00e5c9] px-5 py-2 font-bold text-[#041816] hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/20"
+            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-5 py-2 font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00a894]/20 dark:shadow-[#00e5c9]/20 transition-all"
           >
             {user ? 'Save Operator Changes' : 'Create Operator Account'}
           </button>

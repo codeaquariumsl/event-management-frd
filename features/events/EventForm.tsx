@@ -280,20 +280,20 @@ export function EventForm({ initialData }: EventFormProps) {
     <>
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* SECTION 1: Customer Selection (Firstly Select Customer) */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#1a2738]">
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1a2738]">
             <div className="flex items-center gap-2.5">
-              <Users className="h-5 w-5 text-[#00e5c9]" />
+              <Users className="h-5 w-5 text-[#00897b] dark:text-[#00e5c9]" />
               <div>
-                <h2 className="text-base font-bold text-white">1. Select Customer *</h2>
-                <p className="text-xs text-slate-400">First select the client to automatically load their address into the venue location</p>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">1. Select Customer *</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">First select the client to automatically load their address into the venue location</p>
               </div>
             </div>
 
             <button
               type="button"
               onClick={() => setIsCustomerModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#00e5c9]/40 bg-[#00e5c9]/10 px-3 py-1.5 text-xs font-semibold text-[#00e5c9] hover:bg-[#00e5c9]/20 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#00a894]/40 dark:border-[#00e5c9]/40 bg-[#00a894]/10 dark:bg-[#00e5c9]/10 px-3 py-1.5 text-xs font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/20 dark:hover:bg-[#00e5c9]/20 transition-colors"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>+ Create New Customer</span>
@@ -302,11 +302,11 @@ export function EventForm({ initialData }: EventFormProps) {
 
           <div className="text-xs space-y-3">
             <div>
-              <label className="block font-medium text-slate-300 mb-1">Customer / Client *</label>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Customer / Client *</label>
               <select
                 value={customerId}
                 onChange={(e) => handleCustomerChange(e.target.value)}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-medium focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-medium focus:border-[#00e5c9] focus:outline-none"
                 required
               >
                 <option value="">-- Choose a Customer ({customers.length} available) * --</option>
@@ -319,16 +319,16 @@ export function EventForm({ initialData }: EventFormProps) {
             </div>
 
             {selectedCustomer && (
-              <div className="rounded-lg border border-[#1e2f42] bg-[#101926] p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="rounded-lg border border-slate-200 dark:border-[#1e2f42] bg-slate-50 dark:bg-[#101926] p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-[#00e5c9]/15 border border-[#00e5c9]/30 flex items-center justify-center text-[#00e5c9] font-bold text-sm">
+                  <div className="h-9 w-9 rounded-full bg-[#00a894]/15 dark:bg-[#00e5c9]/15 border border-[#00a894]/30 dark:border-[#00e5c9]/30 flex items-center justify-center text-[#00897b] dark:text-[#00e5c9] font-bold text-sm">
                     {selectedCustomer.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <span className="font-semibold text-white block">
+                    <span className="font-semibold text-slate-900 dark:text-white block">
                       {selectedCustomer.name} {selectedCustomer.company ? `(${selectedCustomer.company})` : ''}
                     </span>
-                    <span className="text-[11px] text-slate-400 block">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
                       Phone: {selectedCustomer.phone} • Email: {selectedCustomer.email || 'N/A'}
                     </span>
                   </div>
@@ -336,10 +336,10 @@ export function EventForm({ initialData }: EventFormProps) {
 
                 {selectedCustomer.address && (
                   <div className="text-left sm:text-right">
-                    <span className="text-[10px] text-[#00e5c9] uppercase tracking-wider block font-semibold">
+                    <span className="text-[10px] text-[#00897b] dark:text-[#00e5c9] uppercase tracking-wider block font-semibold">
                       Venue Location
                     </span>
-                    <span className="text-slate-300 text-xs font-medium block">
+                    <span className="text-slate-700 dark:text-slate-300 text-xs font-medium block">
                       {selectedCustomer.address}
                     </span>
                   </div>
@@ -350,35 +350,35 @@ export function EventForm({ initialData }: EventFormProps) {
         </div>
 
         {/* SECTION 2: Event Details & Timing */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2.5 pb-3 border-b border-[#1a2738]">
-            <CalendarDays className="h-5 w-5 text-[#00e5c9]" />
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 shadow-sm space-y-5">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-[#1a2738]">
+            <CalendarDays className="h-5 w-5 text-[#00897b] dark:text-[#00e5c9]" />
             <div>
-              <h2 className="text-base font-bold text-white">2. Event Details & Timing</h2>
-              <p className="text-xs text-slate-400">Core booking information, event category, and venue coordinates</p>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">2. Event Details & Timing</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Core booking information, event category, and venue coordinates</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div className="sm:col-span-2">
-              <label className="block font-medium text-slate-300 mb-1">Event Title / Name *</label>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Event Title / Name *</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Colombo Wedding Reception — Perera & Fernando"
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-medium focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-medium focus:border-[#00e5c9] focus:outline-none"
                 required
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block font-medium text-slate-300">Event Type *</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300">Event Type *</label>
                 <button
                   type="button"
                   onClick={() => router.push('/event-types')}
-                  className="text-[10px] text-[#00e5c9] hover:underline"
+                  className="text-[10px] text-[#00897b] dark:text-[#00e5c9] hover:underline"
                 >
                   Manage
                 </button>
@@ -386,7 +386,7 @@ export function EventForm({ initialData }: EventFormProps) {
               <select
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
                 required
               >
                 {dynamicEventTypes.length === 0 ? (
@@ -404,34 +404,34 @@ export function EventForm({ initialData }: EventFormProps) {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div>
-              <label className="block font-medium text-slate-300 mb-1">Event Date *</label>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Event Date *</label>
               <input
                 type="date"
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
                 required
               />
             </div>
 
             <div>
-              <label className="block font-medium text-slate-300 mb-1">Start Time *</label>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Start Time *</label>
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
                 required
               />
             </div>
 
             <div>
-              <label className="block font-medium text-slate-300 mb-1">End Time *</label>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">End Time *</label>
               <input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
                 required
               />
             </div>
@@ -440,7 +440,7 @@ export function EventForm({ initialData }: EventFormProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block font-medium text-slate-300">Venue / Location *</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300">Venue / Location *</label>
               </div>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -449,62 +449,62 @@ export function EventForm({ initialData }: EventFormProps) {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g. Cinnamon Grand Main Ballroom, Colombo"
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] py-2.5 pl-9 pr-3 text-white focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] py-2.5 pl-9 pr-3 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block font-medium text-slate-300 mb-1">Street Address</label>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Street Address</label>
               <input
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="e.g. 77 Galle Road, Colombo 03"
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-medium text-slate-300 mb-1">Event Description</label>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Event Description</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
                 placeholder="Scope of work, theme, audience count, special cues..."
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-medium text-slate-300 mb-1">Internal Operations Notes</label>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Internal Operations Notes</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 placeholder="Power breaker requirements, load-in elevator access..."
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* SECTION 3: Services & Equipment Packages */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-5">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#1a2738]">
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-[#1a2738]">
             <div>
-              <h2 className="text-base font-bold text-white">3. Services & Production Equipment</h2>
-              <p className="text-xs text-slate-400">Load real packages from service catalog or gear from inventory</p>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">3. Services & Production Equipment</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Load real packages from service catalog or gear from inventory</p>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleAddCustomLine}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#233549] bg-[#142030] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-[#1c2c3e] hover:text-[#00e5c9] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#142030] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1c2c3e] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>+ Custom Item</span>
@@ -513,11 +513,11 @@ export function EventForm({ initialData }: EventFormProps) {
           </div>
 
           {/* Real Backend Data Selectors */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-[#1b2a3d] bg-[#0f1826]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-[#1b2a3d] bg-slate-50 dark:bg-[#0f1826]">
             {/* Service Catalog Selector */}
             <div>
-              <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1">
-                <Sparkles className="h-3.5 w-3.5 text-[#00e5c9]" /> Add From Service Catalog ({servicesCatalog.length} packages)
+              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                <Sparkles className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" /> Add From Service Catalog ({servicesCatalog.length} packages)
               </label>
               <select
                 value={selectedCatalogId}
@@ -529,7 +529,7 @@ export function EventForm({ initialData }: EventFormProps) {
                     setSelectedCatalogId('');
                   }
                 }}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2 text-xs text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-xs text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
               >
                 <option value="">-- Choose package to add to event --</option>
                 {servicesCatalog.map((pkg) => (
@@ -542,8 +542,8 @@ export function EventForm({ initialData }: EventFormProps) {
 
             {/* Inventory Gear Selector */}
             <div>
-              <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1">
-                <Boxes className="h-3.5 w-3.5 text-amber-400" /> Add From Inventory Gear ({inventoryGear.length} units)
+              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                <Boxes className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" /> Add From Inventory Gear ({inventoryGear.length} units)
               </label>
               <select
                 value={selectedGearId}
@@ -555,7 +555,7 @@ export function EventForm({ initialData }: EventFormProps) {
                     setSelectedGearId('');
                   }
                 }}
-                className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2 text-xs text-white focus:border-[#00e5c9] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-xs text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
               >
                 <option value="">-- Choose gear to add to event --</option>
                 {inventoryGear.map((gear) => (
@@ -569,10 +569,10 @@ export function EventForm({ initialData }: EventFormProps) {
 
           {/* Services Table or Empty State */}
           {services.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#233549] p-8 text-center bg-[#0d1622]">
-              <Package className="h-8 w-8 text-slate-500 mx-auto mb-2" />
-              <p className="font-semibold text-white text-xs">No services or equipment added yet</p>
-              <p className="text-[11px] text-slate-400 mt-1 max-w-md mx-auto">
+            <div className="rounded-xl border border-dashed border-slate-300 dark:border-[#233549] p-8 text-center bg-slate-50 dark:bg-[#0d1622]">
+              <Package className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
+              <p className="font-semibold text-slate-900 dark:text-white text-xs">No services or equipment added yet</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
                 Use the dropdowns above to select real packages from your service catalog, hardware from your inventory gear, or add a custom line item.
               </p>
             </div>
@@ -580,7 +580,7 @@ export function EventForm({ initialData }: EventFormProps) {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[#1f2e41] text-slate-400 text-[11px] uppercase">
+                  <tr className="border-b border-slate-200 dark:border-[#1f2e41] text-slate-500 dark:text-slate-400 text-[11px] uppercase">
                     <th className="py-2.5 px-3">Service / Gear Name & Specs</th>
                     <th className="py-2.5 px-3">Category</th>
                     <th className="py-2.5 px-3 text-center w-24">Qty</th>
@@ -589,9 +589,9 @@ export function EventForm({ initialData }: EventFormProps) {
                     <th className="py-2.5 px-3 text-right w-12" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#182535]">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#182535]">
                   {services.map((service) => (
-                    <tr key={service.id} className="hover:bg-[#101824]">
+                    <tr key={service.id} className="hover:bg-slate-50 dark:hover:bg-[#101824] transition-colors">
                       <td className="py-3 px-3">
                         <input
                           type="text"
@@ -604,7 +604,7 @@ export function EventForm({ initialData }: EventFormProps) {
                               prev.map((s) => (s.id === service.id ? { ...s, name: val } : s))
                             );
                           }}
-                          className="w-full rounded bg-transparent font-medium text-white focus:bg-[#131d2b] focus:outline-none p-1"
+                          className="w-full rounded bg-transparent font-medium text-slate-900 dark:text-white focus:bg-slate-100 dark:focus:bg-[#131d2b] focus:outline-none p-1"
                         />
                         <input
                           type="text"
@@ -616,12 +616,12 @@ export function EventForm({ initialData }: EventFormProps) {
                             );
                           }}
                           placeholder="Add notes / specs..."
-                          className="w-full rounded bg-transparent text-[11px] text-slate-400 focus:bg-[#131d2b] focus:outline-none p-1 mt-0.5"
+                          className="w-full rounded bg-transparent text-[11px] text-slate-500 dark:text-slate-400 focus:bg-slate-100 dark:focus:bg-[#131d2b] focus:outline-none p-1 mt-0.5"
                         />
                       </td>
 
                       <td className="py-3 px-3">
-                        <span className="rounded bg-[#162232] border border-[#233549] px-2 py-0.5 text-[10px] font-semibold text-[#00e5c9]">
+                        <span className="rounded bg-slate-100 dark:bg-[#162232] border border-slate-200 dark:border-[#233549] px-2 py-0.5 text-[10px] font-semibold text-[#00897b] dark:text-[#00e5c9]">
                           {service.category || 'Production'}
                         </span>
                       </td>
@@ -632,7 +632,7 @@ export function EventForm({ initialData }: EventFormProps) {
                           min={1}
                           value={service.quantity}
                           onChange={(e) => handleUpdateServiceQuantity(service.id, Number(e.target.value))}
-                          className="w-16 rounded border border-[#233549] bg-[#111c29] p-1.5 text-center text-white focus:outline-none"
+                          className="w-16 rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-1.5 text-center text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
                         />
                       </td>
 
@@ -642,11 +642,11 @@ export function EventForm({ initialData }: EventFormProps) {
                           min={0}
                           value={service.unitPrice}
                           onChange={(e) => handleUpdateServicePrice(service.id, Number(e.target.value))}
-                          className="w-28 rounded border border-[#233549] bg-[#111c29] p-1.5 text-right text-white focus:outline-none font-mono"
+                          className="w-28 rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-1.5 text-right text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9] font-mono"
                         />
                       </td>
 
-                      <td className="py-3 px-3 text-right font-semibold text-white font-mono">
+                      <td className="py-3 px-3 text-right font-semibold text-slate-900 dark:text-white font-mono">
                         {formatCurrency(service.totalPrice)}
                       </td>
 
@@ -654,7 +654,7 @@ export function EventForm({ initialData }: EventFormProps) {
                         <button
                           type="button"
                           onClick={() => handleRemoveService(service.id)}
-                          className="text-slate-500 hover:text-rose-400 transition-colors"
+                          className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                           title="Remove Service"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -669,35 +669,35 @@ export function EventForm({ initialData }: EventFormProps) {
         </div>
 
         {/* SECTION 4: Staff Assignment & Scheduling Conflict Detection */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#1a2738]">
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1a2738]">
             <div className="flex items-center gap-2.5">
-              <Users className="h-5 w-5 text-[#00e5c9]" />
+              <Users className="h-5 w-5 text-[#00897b] dark:text-[#00e5c9]" />
               <div>
-                <h2 className="text-base font-bold text-white">4. Production Crew & Talent</h2>
-                <p className="text-xs text-slate-400">Assign resident DJs, sound/lighting engineers, and managers</p>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">4. Production Crew & Talent</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Assign resident DJs, sound/lighting engineers, and managers</p>
               </div>
             </div>
 
             <button
               type="button"
               onClick={() => setIsStaffModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#24374b] bg-[#14202e] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1c2c3e] transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#24374b] bg-slate-100 dark:bg-[#14202e] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-[#1c2c3e] transition-colors"
             >
-              <Plus className="h-3.5 w-3.5 text-[#00e5c9]" />
+              <Plus className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
               <span>+ Assign Staff</span>
             </button>
           </div>
 
           {assignedStaff.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[#1f2d3d] p-6 text-center text-xs text-slate-400">
+            <div className="rounded-lg border border-dashed border-slate-300 dark:border-[#1f2d3d] p-6 text-center text-xs text-slate-500 dark:text-slate-400">
               No staff members assigned yet. Click <strong>+ Assign Staff</strong> to schedule crew.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[#1f2e41] text-slate-400 text-[11px] uppercase">
+                  <tr className="border-b border-slate-200 dark:border-[#1f2e41] text-slate-500 dark:text-slate-400 text-[11px] uppercase">
                     <th className="py-2 px-3">Staff Name</th>
                     <th className="py-2 px-3">Role</th>
                     <th className="py-2 px-3">Timeslot</th>
@@ -705,26 +705,26 @@ export function EventForm({ initialData }: EventFormProps) {
                     <th className="py-2 px-3 text-right w-12" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#182535]">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#182535]">
                   {assignedStaff.map((as) => (
-                    <tr key={as.id} className="hover:bg-[#101824]">
-                      <td className="py-2.5 px-3 font-medium text-white">{as.staffName}</td>
-                      <td className="py-2.5 px-3 text-slate-300">
-                        <span className="rounded bg-[#172332] px-2 py-0.5 text-[11px] font-medium text-[#00e5c9]">
+                    <tr key={as.id} className="hover:bg-slate-50 dark:hover:bg-[#101824] transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-slate-900 dark:text-white">{as.staffName}</td>
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">
+                        <span className="rounded bg-slate-100 dark:bg-[#172332] px-2 py-0.5 text-[11px] font-medium text-[#00897b] dark:text-[#00e5c9]">
                           {as.role}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-400">
+                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400">
                         {as.startTime} - {as.endTime}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-semibold text-white font-mono">
+                      <td className="py-2.5 px-3 text-right font-semibold text-slate-900 dark:text-white font-mono">
                         {formatCurrency(as.paymentAmount)}
                       </td>
                       <td className="py-2.5 px-3 text-right">
                         <button
                           type="button"
                           onClick={() => handleRemoveStaffAssignment(as.id)}
-                          className="text-slate-500 hover:text-rose-400 transition-colors"
+                          className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -738,8 +738,8 @@ export function EventForm({ initialData }: EventFormProps) {
         </div>
 
         {/* SECTION 5: Financial Breakdown */}
-        <div className="rounded-xl border border-[#1d2b3c] bg-[#0c1420] p-6 shadow-sm space-y-4">
-          <h2 className="text-base font-bold text-white pb-3 border-b border-[#1a2738]">
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white pb-3 border-b border-slate-100 dark:border-[#1a2738]">
             5. Financial Breakdown & Pricing
           </h2>
 
@@ -747,18 +747,18 @@ export function EventForm({ initialData }: EventFormProps) {
             <div className="space-y-4 sm:col-span-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">Special Discount (LKR)</label>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Special Discount (LKR)</label>
                   <input
                     type="number"
                     min={0}
                     value={discount}
                     onChange={(e) => setDiscount(Number(e.target.value))}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-mono focus:border-[#00e5c9] focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-mono focus:border-[#00e5c9] focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Additional Charges (Transport / Generator)
                   </label>
                   <input
@@ -766,13 +766,13 @@ export function EventForm({ initialData }: EventFormProps) {
                     min={0}
                     value={additionalCharges}
                     onChange={(e) => setAdditionalCharges(Number(e.target.value))}
-                    className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-mono focus:border-[#00e5c9] focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-mono focus:border-[#00e5c9] focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-medium text-slate-300 mb-1">
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Advance / Paid Amount Collected (LKR)
                 </label>
                 <input
@@ -781,38 +781,38 @@ export function EventForm({ initialData }: EventFormProps) {
                   max={totalAmount}
                   value={paidAmount}
                   onChange={(e) => setPaidAmount(Number(e.target.value))}
-                  className="w-full rounded-lg border border-[#233549] bg-[#111c29] p-2.5 text-white font-mono focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-mono focus:border-[#00e5c9] focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Financial Summary Card */}
-            <div className="rounded-xl border border-[#223347] bg-[#091019] p-4 space-y-2.5 self-start">
-              <div className="flex justify-between text-slate-300">
+            <div className="rounded-xl border border-slate-200 dark:border-[#223347] bg-slate-50 dark:bg-[#091019] p-4 space-y-2.5 self-start">
+              <div className="flex justify-between text-slate-600 dark:text-slate-300">
                 <span>Services Subtotal:</span>
-                <span className="font-mono font-semibold">{formatCurrency(subtotal)}</span>
+                <span className="font-mono font-semibold text-slate-900 dark:text-white">{formatCurrency(subtotal)}</span>
               </div>
               {discount > 0 && (
-                <div className="flex justify-between text-emerald-400">
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                   <span>Discount:</span>
                   <span className="font-mono">- {formatCurrency(discount)}</span>
                 </div>
               )}
               {additionalCharges > 0 && (
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-slate-600 dark:text-slate-300">
                   <span>Additional Charges:</span>
                   <span className="font-mono">+ {formatCurrency(additionalCharges)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-[#1e2e40]">
+              <div className="flex justify-between text-sm font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-[#1e2e40]">
                 <span>Total Amount:</span>
                 <span className="font-mono">{formatCurrency(totalAmount)}</span>
               </div>
-              <div className="flex justify-between text-emerald-400">
+              <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                 <span>Paid Amount:</span>
                 <span className="font-mono">{formatCurrency(paidAmount)}</span>
               </div>
-              <div className="flex justify-between text-base font-extrabold text-[#00e5c9] pt-2 border-t border-[#1e2e40]">
+              <div className="flex justify-between text-base font-extrabold text-[#00897b] dark:text-[#00e5c9] pt-2 border-t border-slate-200 dark:border-[#1e2e40]">
                 <span>Outstanding Balance:</span>
                 <span className="font-mono">{formatCurrency(balance)}</span>
               </div>
@@ -825,13 +825,13 @@ export function EventForm({ initialData }: EventFormProps) {
           <button
             type="button"
             onClick={() => router.back()}
-            className="rounded-lg border border-[#233549] bg-[#14202e] px-5 py-2.5 text-xs font-semibold text-slate-300 hover:bg-[#1b2b3d] transition-colors"
+            className="rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-[#00e5c9] px-6 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/20 transition-all duration-150"
+            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-6 py-2.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/20 transition-all duration-150"
           >
             {initialData ? 'Save Changes' : 'Create & Confirm Event'}
           </button>

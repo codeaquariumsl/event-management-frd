@@ -50,25 +50,25 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity animate-fade-in"
+        className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm transition-opacity animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal Card */}
       <div
         className={cn(
-          'relative w-full rounded-xl border border-[#233549] bg-[#0f1722] p-6 shadow-2xl transition-all duration-200 animate-fade-in max-h-[90vh] flex flex-col',
+          'relative w-full rounded-xl border border-slate-200 dark:border-[#233549] bg-white dark:bg-[#0f1722] p-6 shadow-2xl transition-all duration-200 animate-fade-in max-h-[90vh] flex flex-col text-slate-900 dark:text-white',
           maxWidthClasses[maxWidth]
         )}
       >
-        <div className="flex items-start justify-between pb-4 border-b border-[#1c2a3a]">
+        <div className="flex items-start justify-between pb-4 border-b border-slate-200 dark:border-[#1c2a3a]">
           <div>
-            <h2 className="text-lg font-semibold text-white">{title}</h2>
-            {subtitle && <p className="mt-0.5 text-xs text-slate-400">{subtitle}</p>}
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
+            {subtitle && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-[#192636] hover:text-white transition-colors"
+            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#192636] dark:hover:text-white transition-colors"
             aria-label="Close modal"
           >
             <X className="h-4 w-4" />

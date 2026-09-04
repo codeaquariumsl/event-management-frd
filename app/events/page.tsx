@@ -91,7 +91,7 @@ export default function EventsPage() {
       className: 'max-w-[260px]',
       render: (evt) => (
         <div>
-          <span className="font-semibold text-white block truncate hover:text-[#00e5c9]">
+          <span className="font-semibold text-slate-900 dark:text-white block truncate hover:text-[#00897b] dark:hover:text-[#00e5c9]">
             {evt.name}
           </span>
           <span className="text-[11px] text-slate-400 block truncate">
@@ -107,8 +107,8 @@ export default function EventsPage() {
       className: 'w-32',
       render: (evt) => (
         <div>
-          <span className="text-white block">{formatDate(evt.eventDate)}</span>
-          <span className="text-[10px] text-slate-400 block font-mono">
+          <span className="text-slate-900 dark:text-white block font-medium">{formatDate(evt.eventDate)}</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono">
             {evt.startTime} - {evt.endTime}
           </span>
         </div>
@@ -126,7 +126,7 @@ export default function EventsPage() {
       sortable: true,
       className: 'w-28',
       render: (evt) => (
-        <span className="rounded bg-[#162130] px-2 py-0.5 text-[11px] text-slate-300">
+        <span className="rounded bg-slate-100 dark:bg-[#162130] border border-slate-200 dark:border-[#223347] px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-300">
           {evt.eventType}
         </span>
       ),
@@ -136,8 +136,8 @@ export default function EventsPage() {
       header: 'Crew',
       className: 'w-20 text-center',
       render: (evt) => (
-        <span className="inline-flex items-center gap-1 text-[11px] text-slate-300 font-medium bg-[#141f2d] border border-[#233346] px-2 py-0.5 rounded">
-          <Users className="h-3 w-3 text-[#00e5c9]" />
+        <span className="inline-flex items-center gap-1 text-[11px] text-slate-700 dark:text-slate-300 font-medium bg-slate-100 dark:bg-[#141f2d] border border-slate-200 dark:border-[#233346] px-2 py-0.5 rounded">
+          <Users className="h-3 w-3 text-[#00897b] dark:text-[#00e5c9]" />
           {evt.assignedStaff.length}
         </span>
       ),
@@ -146,7 +146,7 @@ export default function EventsPage() {
       key: 'totalAmount',
       header: 'Total Amount',
       sortable: true,
-      className: 'text-right font-mono font-semibold text-white w-28',
+      className: 'text-right font-mono font-semibold text-slate-900 dark:text-white w-28',
       render: (evt) => formatCurrency(evt.totalAmount),
     },
     {
@@ -219,7 +219,7 @@ export default function EventsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-[#233549] bg-[#111c29] px-2.5 py-2 text-white focus:outline-none"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2.5 py-2 text-slate-900 dark:text-white focus:outline-none"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="Confirmed">Confirmed</option>
@@ -233,7 +233,7 @@ export default function EventsPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="rounded-lg border border-[#233549] bg-[#111c29] px-2.5 py-2 text-white focus:outline-none"
+                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2.5 py-2 text-slate-900 dark:text-white focus:outline-none"
               >
                 <option value="ALL">All Event Types</option>
                 {eventTypes.map((t) => (
@@ -251,7 +251,7 @@ export default function EventsPage() {
                   e.stopPropagation();
                   router.push(`/events/${evt.id}`);
                 }}
-                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-white"
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-slate-900 dark:hover:text-white transition-colors"
                 title="View Event Details"
               >
                 <Eye className="h-3.5 w-3.5" />
@@ -262,7 +262,7 @@ export default function EventsPage() {
                   e.stopPropagation();
                   setAssignStaffEvent(evt);
                 }}
-                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-[#00e5c9]"
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
                 title="Assign Staff"
               >
                 <Users className="h-3.5 w-3.5" />
@@ -273,7 +273,7 @@ export default function EventsPage() {
                   e.stopPropagation();
                   setPaymentEvent(evt);
                 }}
-                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-emerald-400"
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 title="Record Payment"
               >
                 <CreditCard className="h-3.5 w-3.5" />
@@ -284,8 +284,8 @@ export default function EventsPage() {
                   e.stopPropagation();
                   setInvoiceEvent(evt);
                 }}
-                className="rounded p-1 text-slate-400 hover:bg-[#182637] hover:text-white"
-                title="View & Print Invoice"
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                title="Print Invoice"
               >
                 <Printer className="h-3.5 w-3.5" />
               </button>

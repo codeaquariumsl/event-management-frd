@@ -89,31 +89,31 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
       />
 
       {/* Search Palette */}
-      <div className="relative w-full max-w-2xl rounded-xl border border-[#243549] bg-[#0d151f] shadow-2xl overflow-hidden animate-fade-in z-10 flex flex-col max-h-[80vh]">
+      <div className="relative w-full max-w-2xl rounded-xl border border-slate-200 dark:border-[#243549] bg-white dark:bg-[#0d151f] shadow-2xl overflow-hidden animate-fade-in z-10 flex flex-col max-h-[80vh]">
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[#1c2a3a]">
-          <Search className="h-5 w-5 text-[#00e5c9]" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 dark:border-[#1c2a3a]">
+          <Search className="h-5 w-5 text-[#00897b] dark:text-[#00e5c9]" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search events, customers, staff, invoices... (Try 'John', 'Wedding', 'Sound')"
-            className="flex-1 bg-transparent text-sm text-white placeholder-slate-400 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
             autoFocus
           />
-          <kbd className="hidden sm:inline-block rounded bg-[#162332] px-2 py-0.5 text-[10px] font-mono text-slate-400">
+          <kbd className="hidden sm:inline-block rounded bg-slate-100 dark:bg-[#162332] px-2 py-0.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
             ESC
           </kbd>
           <button
             onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:text-white"
+            className="rounded p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Results Body */}
-        <div className="overflow-y-auto p-4 flex-1 divide-y divide-[#182535]">
+        <div className="overflow-y-auto p-4 flex-1 divide-y divide-slate-100 dark:divide-[#182535]">
           {!query.trim() ? (
             <div className="py-8 text-center text-xs text-slate-500">
               Type keywords to search across Seekers Entertainment records
@@ -127,7 +127,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
               {/* Events */}
               {results.events.length > 0 && (
                 <div className="pb-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2">
                     Events
                   </span>
                   <div className="mt-1.5 space-y-1">
@@ -138,20 +138,20 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
                           onClose();
                           router.push(`/events/${evt.id}`);
                         }}
-                        className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-[#14202d] transition-colors group"
+                        className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-[#14202d] transition-colors group"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <CalendarDays className="h-4 w-4 text-[#00e5c9] shrink-0" />
+                          <CalendarDays className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9] shrink-0" />
                           <div className="truncate">
-                            <p className="text-xs font-semibold text-white truncate group-hover:text-[#00e5c9]">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-[#00897b] dark:group-hover:text-[#00e5c9]">
                               {evt.name}
                             </p>
-                            <p className="text-[11px] text-slate-400">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
                               {evt.customerName} • {formatDate(evt.eventDate)} • {evt.location}
                             </p>
                           </div>
                         </div>
-                        <span className="text-xs font-medium text-slate-300 shrink-0">
+                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300 shrink-0">
                           {formatCurrency(evt.totalAmount, true)}
                         </span>
                       </button>
@@ -163,7 +163,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
               {/* Customers */}
               {results.customers.length > 0 && (
                 <div className="py-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2">
                     Customers
                   </span>
                   <div className="mt-1.5 space-y-1">
@@ -174,20 +174,20 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
                           onClose();
                           router.push(`/customers/${c.id}`);
                         }}
-                        className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-[#14202d] transition-colors group"
+                        className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-[#14202d] transition-colors group"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <ClipboardList className="h-4 w-4 text-purple-400 shrink-0" />
+                          <ClipboardList className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
                           <div className="truncate">
-                            <p className="text-xs font-semibold text-white truncate group-hover:text-purple-300">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-300">
                               {c.name}
                             </p>
-                            <p className="text-[11px] text-slate-400">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
                               {c.company || c.customerType} • {c.phone}
                             </p>
                           </div>
                         </div>
-                        <ArrowRight className="h-3.5 w-3.5 text-slate-600 group-hover:text-white shrink-0" />
+                        <ArrowRight className="h-3.5 w-3.5 text-slate-400 dark:text-slate-600 group-hover:text-slate-900 dark:group-hover:text-white shrink-0" />
                       </button>
                     ))}
                   </div>
@@ -197,7 +197,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
               {/* Staff */}
               {results.staff.length > 0 && (
                 <div className="py-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2">
                     Staff & Production Crew
                   </span>
                   <div className="mt-1.5 space-y-1">
@@ -208,20 +208,20 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
                           onClose();
                           router.push(`/staff/${s.id}`);
                         }}
-                        className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-[#14202d] transition-colors group"
+                        className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-[#14202d] transition-colors group"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <Users className="h-4 w-4 text-emerald-400 shrink-0" />
+                          <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                           <div className="truncate">
-                            <p className="text-xs font-semibold text-white truncate group-hover:text-emerald-300">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-300">
                               {s.name}
                             </p>
-                            <p className="text-[11px] text-slate-400">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
                               {s.role} • {s.employmentType} • {s.phone}
                             </p>
                           </div>
                         </div>
-                        <span className="text-[11px] text-slate-400 shrink-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
                           {s.totalEventsAssigned} events
                         </span>
                       </button>
@@ -233,7 +233,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
               {/* Invoices & Payments */}
               {results.payments.length > 0 && (
                 <div className="pt-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2">
                     Invoices & Payments
                   </span>
                   <div className="mt-1.5 space-y-1">
@@ -244,20 +244,20 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
                           onClose();
                           router.push('/customer-payments');
                         }}
-                        className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-[#14202d] transition-colors group"
+                        className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-[#14202d] transition-colors group"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <FileText className="h-4 w-4 text-amber-400 shrink-0" />
+                          <FileText className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                           <div className="truncate">
-                            <p className="text-xs font-semibold text-white truncate group-hover:text-amber-300">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-300">
                               {p.invoiceNumber} — {p.customerName}
                             </p>
-                            <p className="text-[11px] text-slate-400">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
                               {p.eventName} • {p.paymentMethod}
                             </p>
                           </div>
                         </div>
-                        <span className="text-xs font-semibold text-emerald-400 shrink-0">
+                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
                           + {formatCurrency(p.amount)}
                         </span>
                       </button>

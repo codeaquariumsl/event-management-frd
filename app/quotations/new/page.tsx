@@ -20,17 +20,20 @@ import {
   Mail,
   MapPin,
   Sparkles,
+  CalendarDays,
+  History,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
-import { Quotation, QuotationLineItem, QuotationStatus, Customer, InventoryItem, EventTypeItem } from '@/lib/types';
+import { Quotation, QuotationLineItem, QuotationStatus, Customer, InventoryItem, EventTypeItem, EventItem } from '@/lib/types';
 import { quotationService } from '@/lib/api/quotationService';
 import { customerService } from '@/lib/api/customerService';
 import { eventTypeService } from '@/lib/api/eventTypeService';
 import { inventoryService } from '@/lib/api/inventoryService';
-import { formatCurrency } from '@/lib/utils';
+import { eventService } from '@/lib/api/eventService';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { CustomerModal } from '@/features/customers/CustomerModal';
 
 export default function NewQuotationPage() {
@@ -40,15 +43,23 @@ export default function NewQuotationPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [eventTypes, setEventTypes] = useState<EventTypeItem[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [allEvents, setAllEvents] = useState<EventItem[]>([]);
+  const [clientEvents, setClientEvents] = useState<EventItem[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
 
   // Modals
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isInventoryPickerOpen, setIsInventoryPickerOpen] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
 
-  // Form State
-  const year = new Date().getFullYear();
-  const [quotationNumber, setQuotationNumber] = useState(`QT-${year}-${String(Date.now()).slice(-3)}`);
+  // Form State: quotationNumber in YYMM-4-digit sequence format (e.g. 2609-0001)
+  const getInitialQuotationNumber = () => {
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    return `${yy}${mm}-0001`;
+  };
+  const [quotationNumber, setQuotationNumber] = useState(getInitialQuotationNumber());
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState<QuotationStatus>('Draft');
   const [eventDate, setEventDate] = useState(new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]);
@@ -74,11 +85,52 @@ export default function NewQuotationPage() {
   // Notes & Terms
   const [notes, setNotes] = useState('');
   const [termsAndConditions, setTermsAndConditions] = useState(
-    '50% advance payment required upon quotation confirmation. Remaining 50% balance due within 24 hours of event completion.'
+`* Payment method can be cash, bank transfer.
+* Payment must be made in full without deducting any tax.
+* Transportation, handling, food, labor charges, are included in this rate.
+* Make all checks payable to “ Seekers’s Entertainment (pvt) Ltd”`
   );
 
   useEffect(() => {
-    customerService.getCustomers().then((custs) => {
+    Promise.all([
+      customerService.getCustomers(),
+      eventTypeService.getEventTypes(),
+      inventoryService.getItems(),
+      eventService.getEvents(),
+      quotationService.getAll(),
+    ]).then(([custs, types, inv, evts, quotes]) => {
+      // Auto-generate YYMM-4-digit sequence based on existing quotations for the current month
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const prefix = `${yy}${mm}-`;
+
+      let nextSeq = 1;
+      if (Array.isArray(quotes)) {
+        const matching = quotes
+          .map((q) => q.quotationNumber)
+          .filter((qn): qn is string => typeof qn === 'string' && qn.startsWith(prefix));
+
+        if (matching.length > 0) {
+          const maxSeq = matching.reduce((max, numStr) => {
+            const seqPart = numStr.slice(prefix.length);
+            const parsed = parseInt(seqPart, 10);
+            return !isNaN(parsed) && parsed > max ? parsed : max;
+          }, 0);
+          nextSeq = maxSeq + 1;
+        }
+      }
+      setQuotationNumber(`${prefix}${String(nextSeq).padStart(4, '0')}`);
+      if (Array.isArray(types)) {
+        setEventTypes(types);
+        if (types.length > 0) setEventType(types[0].name);
+      }
+
+      if (Array.isArray(inv)) setInventoryItems(inv);
+
+      const eventsList = Array.isArray(evts) ? evts : [];
+      setAllEvents(eventsList);
+
       if (Array.isArray(custs)) {
         setCustomers(custs);
         if (custs.length > 0) {
@@ -88,30 +140,69 @@ export default function NewQuotationPage() {
           setCustomerEmail(first.email);
           setCustomerPhone(first.phone);
           setCustomerCompany(first.company || '');
+          setClientEvents(eventsList.filter((e) => e.customerId === first.id));
         }
       }
-    });
-
-    eventTypeService.getEventTypes().then((types) => {
-      if (Array.isArray(types)) {
-        setEventTypes(types);
-        if (types.length > 0) setEventType(types[0].name);
-      }
-    });
-
-    inventoryService.getItems().then((inv) => {
-      if (Array.isArray(inv)) setInventoryItems(inv);
     });
   }, []);
 
   const handleCustomerSelect = (id: string) => {
     setCustomerId(id);
+    setSelectedEventId('');
     const selected = customers.find((c) => c.id === id);
     if (selected) {
       setCustomerName(selected.name);
       setCustomerEmail(selected.email);
       setCustomerPhone(selected.phone);
       setCustomerCompany(selected.company || '');
+    }
+    const filteredEvents = allEvents.filter((e) => e.customerId === id);
+    setClientEvents(filteredEvents);
+    if (filteredEvents.length > 0) {
+      showToast(`Loaded ${filteredEvents.length} past event(s) for ${selected?.name || 'client'}`);
+    }
+  };
+
+  const handleLoadItemsFromEvent = (eventId: string) => {
+    const targetEvent = allEvents.find((e) => e.id === eventId);
+    if (!targetEvent) return;
+
+    if (!targetEvent.services || targetEvent.services.length === 0) {
+      showToast(`Event "${targetEvent.name}" has no services/items recorded`, 'error');
+      return;
+    }
+
+    const newQuotationItems: QuotationLineItem[] = targetEvent.services.map((s, idx) => ({
+      id: `qli-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+      itemId: s.id,
+      name: s.name,
+      category: s.category || 'General',
+      description: s.description || '',
+      quantity: Number(s.quantity) || 1,
+      unitPrice: Number(s.unitPrice) || 0,
+      discount: 0,
+      totalPrice: Number(s.totalPrice) || (Number(s.quantity || 1) * Number(s.unitPrice || 0)),
+    }));
+
+    setItems(newQuotationItems);
+
+    if (targetEvent.location || targetEvent.address) {
+      setVenue(targetEvent.location || targetEvent.address || '');
+    }
+    if (targetEvent.eventType) {
+      setEventType(targetEvent.eventType);
+    }
+    if (!title || title.startsWith('Quotation -')) {
+      setTitle(`Quotation - ${targetEvent.name}`);
+    }
+
+    showToast(`✓ Loaded ${newQuotationItems.length} items from "${targetEvent.name}"`);
+  };
+
+  const handleSelectPastEvent = (eventId: string) => {
+    setSelectedEventId(eventId);
+    if (eventId) {
+      handleLoadItemsFromEvent(eventId);
     }
   };
 
@@ -360,6 +451,83 @@ export default function NewQuotationPage() {
                   <span className="text-slate-900 dark:text-white font-medium">{customerEmail || 'None'}</span>
                 </div>
               </div>
+
+              {/* Past Events & Import Items */}
+              {customerId && (
+                <div id="past-events-selector" className="rounded-xl border border-teal-200/80 dark:border-[#1f374d] bg-teal-50/50 dark:bg-[#0c1825] p-4 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <History className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9]" />
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                          Client Past Events & Previous Bookings
+                        </h3>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {clientEvents.length > 0
+                            ? `Select any past event from ${customerName} to auto-load its equipment and services into this quotation`
+                            : `No previous events found in database for ${customerName || 'this client'}`}
+                        </p>
+                      </div>
+                    </div>
+                    {clientEvents.length > 0 && (
+                      <span className="rounded-full bg-[#00a894]/15 dark:bg-[#00e5c9]/15 border border-[#00a894]/30 dark:border-[#00e5c9]/30 px-2.5 py-0.5 text-[10px] font-bold text-[#00897b] dark:text-[#00e5c9]">
+                        {clientEvents.length} Event{clientEvents.length > 1 ? 's' : ''} Available
+                      </span>
+                    )}
+                  </div>
+
+                  {clientEvents.length > 0 && (
+                    <div className="space-y-2.5">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <select
+                          value={selectedEventId}
+                          onChange={(e) => handleSelectPastEvent(e.target.value)}
+                          className="flex-1 px-3 py-2 bg-white dark:bg-[#111c29] border border-slate-300 dark:border-[#233549] rounded-lg text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                        >
+                          <option value="">-- Select a Past Event to Load Its Items --</option>
+                          {clientEvents.map((evt) => (
+                            <option key={evt.id} value={evt.id}>
+                              {evt.name} ({formatDate(evt.eventDate)} • {evt.eventType} • {evt.services.length} items)
+                            </option>
+                          ))}
+                        </select>
+
+                        <button
+                          type="button"
+                          disabled={!selectedEventId}
+                          onClick={() => handleLoadItemsFromEvent(selectedEventId)}
+                          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm whitespace-nowrap"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          <span>Load Event Items</span>
+                        </button>
+                      </div>
+
+                      {selectedEventId && (
+                        (() => {
+                          const selectedEvt = clientEvents.find((e) => e.id === selectedEventId);
+                          if (!selectedEvt) return null;
+                          return (
+                            <div className="rounded-lg bg-white dark:bg-[#101b28] border border-teal-200/50 dark:border-[#1d2f44] p-3 text-xs flex flex-wrap items-center justify-between gap-2 shadow-sm">
+                              <div>
+                                <span className="font-bold text-slate-900 dark:text-white block">
+                                  {selectedEvt.name}
+                                </span>
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  {formatDate(selectedEvt.eventDate)} • Location: {selectedEvt.location || 'N/A'} • Subtotal: {formatCurrency(selectedEvt.subtotal)}
+                                </span>
+                              </div>
+                              <span className="text-xs font-bold text-[#00897b] dark:text-[#00e5c9] bg-[#00e5c9]/10 px-2.5 py-1 rounded-full">
+                                ✓ {selectedEvt.services.length} line item(s) loaded
+                              </span>
+                            </div>
+                          );
+                        })()
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Section 2: Event Scope & Schedule */}
@@ -433,6 +601,20 @@ export default function NewQuotationPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {clientEvents.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById('past-events-selector');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="flex items-center gap-1.5 rounded-lg bg-teal-50 dark:bg-[#0e2130] border border-teal-200 dark:border-[#00e5c9]/30 px-3 py-1.5 text-xs font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-teal-100 dark:hover:bg-[#132c40] transition-colors"
+                      title="Load items from client's past events"
+                    >
+                      <History className="h-3.5 w-3.5" />
+                      From Past Event ({clientEvents.length})
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setIsInventoryPickerOpen(true)}
@@ -454,7 +636,33 @@ export default function NewQuotationPage() {
 
               {/* Items Table */}
               <div className="space-y-3">
-                {items.map((item, index) => (
+                {items.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-300 dark:border-[#23354b] p-8 text-center space-y-2.5">
+                    <Boxes className="h-8 w-8 text-slate-400 mx-auto" />
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                      No line items added yet
+                    </p>
+                    <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                      Add items from your inventory, create a custom package, or select an event from the past event list above to load all previously booked services.
+                    </p>
+                    {clientEvents.length > 0 && (
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById('past-events-selector');
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#00a894]/15 dark:bg-[#00e5c9]/15 border border-[#00a894]/30 dark:border-[#00e5c9]/30 text-xs font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/25 dark:hover:bg-[#00e5c9]/25 transition-colors"
+                        >
+                          <History className="h-3.5 w-3.5" />
+                          <span>Load from Past Events ({clientEvents.length} available)</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  items.map((item, index) => (
                   <div
                     key={item.id || index}
                     className="rounded-lg border border-slate-200 dark:border-[#1e2d3e] bg-slate-50 dark:bg-[#121c29] p-3.5 space-y-3 transition-colors hover:border-slate-300 dark:hover:border-[#2b3e55]"
@@ -543,7 +751,7 @@ export default function NewQuotationPage() {
                       />
                     </div>
                   </div>
-                ))}
+                )))}
               </div>
             </div>
           </div>
@@ -623,13 +831,26 @@ export default function NewQuotationPage() {
                 </div>
               </div>
 
+              {/* Bank Details */}
+              <div className="pt-3 border-t border-slate-200 dark:border-[#1a2636] space-y-1.5">
+                <span className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Bank Details
+                </span>
+                <div className="rounded-lg bg-slate-50 dark:bg-[#111c29] border border-slate-200 dark:border-[#1b2b3d] p-3 text-xs font-mono text-slate-700 dark:text-slate-300 space-y-1">
+                  <div className="font-semibold text-slate-900 dark:text-white">Seekers’s Entertainment (pvt) Ltd</div>
+                  <div>Account: 94630427</div>
+                  <div>Bank: BOC bank</div>
+                  <div>Branch: Walgama</div>
+                </div>
+              </div>
+
               {/* Terms & Conditions */}
               <div className="pt-3 border-t border-slate-200 dark:border-[#1a2636] space-y-2">
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                   Terms & Conditions
                 </label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={termsAndConditions}
                   onChange={(e) => setTermsAndConditions(e.target.value)}
                   className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded text-slate-900 dark:text-slate-300 focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"

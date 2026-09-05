@@ -104,6 +104,7 @@ export function StaffModal({
               className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
             >
               <option value="DJ">DJ & MC</option>
+              <option value="VJ">VJ & Video Operator</option>
               <option value="Sound Engineer">Sound Engineer</option>
               <option value="Lighting Technician">Lighting Technician</option>
               <option value="LED Technician">LED Technician</option>

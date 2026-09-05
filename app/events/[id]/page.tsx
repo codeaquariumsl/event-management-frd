@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Receipt,
   FileText,
+  ChevronDown,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -28,14 +29,27 @@ import { InvoiceModal } from '@/components/ui/InvoiceModal';
 import { RecordPaymentModal } from '@/features/events/RecordPaymentModal';
 import { StaffAssignmentModal } from '@/features/events/StaffAssignmentModal';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
+import { EditStaffPaymentModal } from '@/features/staff/EditStaffPaymentModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { eventService } from '@/lib/api/eventService';
 import { customerService } from '@/lib/api/customerService';
 import { paymentService } from '@/lib/api/paymentService';
 import { staffService } from '@/lib/api/staffService';
 import { formatCurrency, formatDate, calculateProfit } from '@/lib/utils';
-import { EventItem, EventExpense, StaffAssignment, Customer, CustomerPayment, Staff } from '@/lib/types';
+import { EventItem, EventExpense, StaffAssignment, Customer, CustomerPayment, Staff, StaffRole, EventStatus } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
+
+const AVAILABLE_ROLES: StaffRole[] = [
+  'DJ',
+  'VJ',
+  'Sound Engineer',
+  'Lighting Technician',
+  'LED Technician',
+  'Event Manager',
+  'Driver',
+  'Assistant',
+  'Other',
+];
 
 export default function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -52,6 +66,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [staffPaymentTarget, setStaffPaymentTarget] = useState<StaffAssignment | null>(null);
+  const [editAssignmentTarget, setEditAssignmentTarget] = useState<StaffAssignment | null>(null);
   const [staffTargetProfile, setStaffTargetProfile] = useState<Staff | undefined>(undefined);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
 
@@ -146,6 +161,97 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     loadData();
   };
 
+  const handleEventStatusChange = async (newStatus: EventStatus) => {
+    if (!event) return;
+    await eventService.updateEvent(event.id, { status: newStatus });
+    setEvent((prev) => (prev ? { ...prev, status: newStatus } : prev));
+    showToast(`✓ Event status updated to ${newStatus}`);
+  };
+
+  const handleLoadAllStaff = async () => {
+    if (!event) return;
+    try {
+      const allStaff = await staffService.getStaff();
+      const activeStaff = allStaff.filter((s) => s.status === 'Active');
+
+      if (!activeStaff.length) {
+        showToast('No active staff members found in directory', 'error');
+        return;
+      }
+
+      const existingStaffIds = new Set(event.assignedStaff.map((as) => as.staffId));
+      const newCrew: StaffAssignment[] = activeStaff
+        .filter((s) => !existingStaffIds.has(s.id))
+        .map((s) => ({
+          id: `as-${s.id}-${Date.now()}`,
+          staffId: s.id,
+          staffName: s.name,
+          role: s.role,
+          assignedDate: event.eventDate,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          paymentAmount: s.defaultRatePerEvent || 20000,
+          paidAmount: 0,
+          status: 'Assigned',
+        }));
+
+      if (newCrew.length === 0) {
+        showToast('All active staff members are already in the production crew', 'info');
+        return;
+      }
+
+      const updatedAssignments = [...event.assignedStaff, ...newCrew];
+      await eventService.updateEvent(event.id, { assignedStaff: updatedAssignments });
+      setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedAssignments } : prev));
+      showToast(`✓ Loaded ${newCrew.length} staff members into production crew`);
+    } catch {
+      showToast('Failed to load all staff members', 'error');
+    }
+  };
+
+  const handleUpdateStaffRole = async (assignmentId: string, newRole: StaffRole) => {
+    if (!event) return;
+    const updatedStaff = event.assignedStaff.map((a) =>
+      a.id === assignmentId ? { ...a, role: newRole } : a
+    );
+    await eventService.updateEvent(event.id, { assignedStaff: updatedStaff });
+    setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedStaff } : prev));
+    showToast(`✓ Updated role to ${newRole}`);
+  };
+
+  const handleUpdateStaffPaymentAmount = async (assignmentId: string, newAmount: number) => {
+    if (!event) return;
+    const validAmount = Math.max(0, newAmount);
+    const updatedStaff = event.assignedStaff.map((a) =>
+      a.id === assignmentId ? { ...a, paymentAmount: validAmount } : a
+    );
+    await eventService.updateEvent(event.id, { assignedStaff: updatedStaff });
+    setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedStaff } : prev));
+    showToast(`✓ Updated agreed payment to ${formatCurrency(validAmount)}`);
+  };
+
+  const handleSaveEditedStaffAssignment = async (
+    assignmentId: string,
+    updatedData: Partial<StaffAssignment>
+  ) => {
+    if (!event) return;
+    const updatedStaff = event.assignedStaff.map((a) =>
+      a.id === assignmentId ? { ...a, ...updatedData } : a
+    );
+    await eventService.updateEvent(event.id, { assignedStaff: updatedStaff });
+    setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedStaff } : prev));
+    showToast(`✓ Updated payment & crew details`);
+  };
+
+  const handleRemoveStaffAssignment = async (assignmentId: string, staffName: string) => {
+    if (!event) return;
+    if (!confirm(`Remove ${staffName} from this event's production crew?`)) return;
+    const updatedStaff = event.assignedStaff.filter((a) => a.id !== assignmentId);
+    await eventService.updateEvent(event.id, { assignedStaff: updatedStaff });
+    setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedStaff } : prev));
+    showToast(`✓ Removed ${staffName} from crew`);
+  };
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -199,9 +305,24 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         <div className="rounded-2xl border border-slate-200 dark:border-[#1f2f42] bg-gradient-to-r from-teal-50 via-slate-50 to-white dark:from-[#0b1420] dark:to-[#111c2a] p-6 sm:p-8 shadow-xl">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-2">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <span className="font-mono text-xs text-[#00897b] dark:text-[#00e5c9] font-semibold">{event.id}</span>
-                <StatusBadge status={event.status} size="md" />
+                <div className="relative inline-flex items-center">
+                  <select
+                    value={event.status}
+                    onChange={(e) => handleEventStatusChange(e.target.value as EventStatus)}
+                    className="appearance-none rounded-full border border-teal-200 dark:border-[#00e5c9]/40 bg-teal-50/80 dark:bg-[#0d1c29] text-xs font-bold text-[#00897b] dark:text-[#00e5c9] pl-3 pr-7 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#00e5c9] transition-all"
+                    title="Change event status"
+                  >
+                    <option value="Confirmed" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Confirmed</option>
+                    <option value="In Progress" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">In Progress</option>
+                    <option value="Pending" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Pending</option>
+                    <option value="Draft" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Draft</option>
+                    <option value="Completed" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Completed</option>
+                    <option value="Cancelled" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Cancelled</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none opacity-60 text-[#00897b] dark:text-[#00e5c9]" />
+                </div>
                 <span className="rounded bg-slate-100 dark:bg-[#172332] px-2.5 py-0.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
                   {event.eventType}
                 </span>
@@ -294,11 +415,10 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`pb-3 px-3 border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
-                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={`pb-3 px-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
+                ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
             >
               {tab.label}
             </button>
@@ -537,70 +657,170 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         {/* TAB 4: STAFF */}
         {activeTab === 'staff' && (
           <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 text-xs space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Assigned Production Crew</h3>
-                <p className="text-slate-400">Manage rates and record staff payouts upon event wrap</p>
+                <p className="text-slate-400">Load all staff members, configure roles and agreed rates, and track payouts</p>
               </div>
-              <button
-                onClick={() => setIsStaffModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-1.5 font-semibold text-slate-900 dark:text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Assign Staff Member</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleLoadAllStaff}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#00a894]/40 dark:border-[#00e5c9]/40 bg-[#00a894]/10 dark:bg-[#00e5c9]/10 px-3.5 py-1.5 font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/20 dark:hover:bg-[#00e5c9]/20 transition-colors"
+                  title="Load all active staff members from directory"
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  <span>Load All Staff Members</span>
+                </button>
+                <button
+                  onClick={() => setIsStaffModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-1.5 font-semibold text-slate-900 dark:text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Assign Individually</span>
+                </button>
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-[#233549] text-slate-400 text-[11px] uppercase">
-                    <th className="py-2.5 px-3">Crew Member</th>
-                    <th className="py-2.5 px-3">Role</th>
-                    <th className="py-2.5 px-3">Timeslot</th>
-                    <th className="py-2.5 px-3 text-right">Agreed Pay</th>
-                    <th className="py-2.5 px-3 text-right">Paid to Date</th>
-                    <th className="py-2.5 px-3 text-right">Staff Balance</th>
-                    <th className="py-2.5 px-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#182535]">
-                  {event.assignedStaff.map((as) => {
-                    const balanceDue = Math.max(0, as.paymentAmount - as.paidAmount);
-                    return (
-                      <tr key={as.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
-                        <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">{as.staffName}</td>
-                        <td className="py-3 px-3">
-                          <span className="rounded bg-slate-100 dark:bg-[#172332] px-2 py-0.5 text-[11px] font-medium text-[#00897b] dark:text-[#00e5c9]">
-                            {as.role}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 text-slate-400 font-mono">
-                          {as.startTime} - {as.endTime}
-                        </td>
-                        <td className="py-3 px-3 text-right font-mono font-semibold text-slate-900 dark:text-white">
-                          {formatCurrency(as.paymentAmount)}
-                        </td>
-                        <td className="py-3 px-3 text-right font-mono text-emerald-400">
-                          {formatCurrency(as.paidAmount)}
-                        </td>
-                        <td className="py-3 px-3 text-right font-mono font-bold text-amber-300">
-                          {formatCurrency(balanceDue)}
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          <button
-                            onClick={() => setStaffPaymentTarget(as)}
-                            className="rounded bg-slate-100 dark:bg-[#162232] border border-slate-200 dark:border-[#233549] px-2.5 py-1 text-[11px] font-medium text-[#00897b] dark:text-[#00e5c9] hover:bg-slate-200 dark:hover:bg-[#1f3044]"
-                          >
-                            Pay Staff
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            {event.assignedStaff.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-[#233549] p-8 text-center space-y-3">
+                <Users className="h-8 w-8 text-slate-400 mx-auto" />
+                <div className="space-y-1">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">No Production Crew Assigned</h4>
+                  <p className="text-slate-400 max-w-sm mx-auto">
+                    Click &quot;Load All Staff Members&quot; to quickly add all active company staff with default roles and rates, or assign members one by one.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLoadAllStaff}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 font-bold text-slate-900 dark:text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/20"
+                >
+                  <Users className="h-4 w-4" />
+                  <span>Load All Staff Members</span>
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#233549] text-slate-400 text-[11px] uppercase">
+                      <th className="py-2.5 px-3">Crew Member</th>
+                      <th className="py-2.5 px-3">Role (Default shown)</th>
+                      <th className="py-2.5 px-3">Timeslot</th>
+                      <th className="py-2.5 px-3 text-right">Agreed Pay (LKR)</th>
+                      <th className="py-2.5 px-3 text-right">Paid to Date</th>
+                      <th className="py-2.5 px-3 text-right">Staff Balance</th>
+                      <th className="py-2.5 px-3 text-center">Status</th>
+                      <th className="py-2.5 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#182535]">
+                    {event.assignedStaff.map((as) => {
+                      const balanceDue = Math.max(0, as.paymentAmount - as.paidAmount);
+                      return (
+                        <tr key={as.id} className="hover:bg-slate-50 dark:hover:bg-[#101824] transition-colors">
+                          <td className="py-3 px-3">
+                            <span className="font-semibold text-slate-900 dark:text-white block">{as.staffName}</span>
+                            {as.notes && (
+                              <span className="text-[10px] text-slate-400 block truncate max-w-[150px]">{as.notes}</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-3">
+                            <select
+                              value={as.role}
+                              onChange={(e) => handleUpdateStaffRole(as.id, e.target.value as StaffRole)}
+                              className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#121c29] px-2 py-1 text-xs font-semibold text-[#00897b] dark:text-[#00e5c9] focus:outline-none focus:border-[#00e5c9]"
+                            >
+                              {AVAILABLE_ROLES.map((r) => (
+                                <option key={r} value={r}>
+                                  {r}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="py-3 px-3 text-slate-400 font-mono text-[11px]">
+                            {as.startTime} - {as.endTime}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <span className="text-slate-400 font-mono text-[10px]">LKR</span>
+                              <input
+                                type="number"
+                                min={0}
+                                step={500}
+                                defaultValue={as.paymentAmount}
+                                key={`${as.id}-${as.paymentAmount}`}
+                                onBlur={(e) => {
+                                  const val = Number(e.target.value) || 0;
+                                  if (val !== as.paymentAmount) {
+                                    handleUpdateStaffPaymentAmount(as.id, val);
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.currentTarget.blur();
+                                  }
+                                }}
+                                className="w-24 rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2 py-1 text-right font-mono font-bold text-slate-900 dark:text-white text-xs focus:border-[#00e5c9] focus:outline-none"
+                                title="Click to edit payment amount"
+                              />
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono text-emerald-400 font-semibold">
+                            {formatCurrency(as.paidAmount)}
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-bold text-amber-300">
+                            {formatCurrency(balanceDue)}
+                          </td>
+                          <td className="py-3 px-3 text-center">
+                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${as.status === 'Completed'
+                                ? 'bg-indigo-950/60 text-indigo-400 border border-indigo-800/60'
+                                : as.status === 'Confirmed'
+                                  ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
+                                  : as.status === 'Cancelled'
+                                    ? 'bg-rose-950/60 text-rose-400 border border-rose-800/60'
+                                    : 'bg-slate-800/80 text-slate-300 border border-slate-700/80'
+                              }`}>
+                              {as.status || 'Assigned'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setEditAssignmentTarget(as)}
+                                className="inline-flex items-center gap-1 rounded bg-slate-100 dark:bg-[#162232] border border-slate-200 dark:border-[#233549] px-2.5 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1f3044] transition-colors"
+                                title="Edit Payment & Assignment details"
+                              >
+                                <FileText className="h-3 w-3 text-[#00897b] dark:text-[#00e5c9]" />
+                                <span>Edit Payment</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setStaffPaymentTarget(as)}
+                                className="rounded bg-[#00a894]/15 dark:bg-[#00e5c9]/15 border border-[#00a894]/30 dark:border-[#00e5c9]/30 px-2.5 py-1 text-[11px] font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/25 dark:hover:bg-[#00e5c9]/25 transition-colors"
+                                title="Record staff payout transaction"
+                              >
+                                Pay Staff
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveStaffAssignment(as.id, as.staffName)}
+                                className="rounded p-1 text-slate-400 hover:bg-rose-950/40 hover:text-rose-400 transition-colors"
+                                title="Remove staff from event"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -720,11 +940,10 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
               {event.timeline.map((item) => (
                 <div key={item.id} className="relative group">
                   <div
-                    className={`absolute -left-[27px] top-0.5 flex h-5 w-5 items-center justify-center rounded-full border ${
-                      item.completed
-                        ? 'bg-[#00a894] dark:bg-[#00e5c9] border-[#00a894] dark:border-[#00e5c9] text-white dark:text-black'
-                        : 'bg-slate-100 dark:bg-[#0b1420] border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500'
-                    }`}
+                    className={`absolute -left-[27px] top-0.5 flex h-5 w-5 items-center justify-center rounded-full border ${item.completed
+                      ? 'bg-[#00a894] dark:bg-[#00e5c9] border-[#00a894] dark:border-[#00e5c9] text-white dark:text-black'
+                      : 'bg-slate-100 dark:bg-[#0b1420] border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500'
+                      }`}
                   >
                     <CheckCircle2 className="h-3 w-3" />
                   </div>
@@ -785,7 +1004,26 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           eventId={event.id}
           eventName={event.name}
           defaultAmount={Math.max(0, staffPaymentTarget.paymentAmount - staffPaymentTarget.paidAmount)}
-          onSuccess={loadData}
+          onSuccess={() => {
+            const targetId = staffPaymentTarget.id;
+            const updated = event.assignedStaff.map((a) =>
+              a.id === targetId ? { ...a, paidAmount: a.paymentAmount } : a
+            );
+            eventService.updateEvent(event.id, { assignedStaff: updated }).then(() => {
+              setEvent((prev) => (prev ? { ...prev, assignedStaff: updated } : prev));
+              loadData();
+            });
+          }}
+        />
+      )}
+
+      {/* Edit Staff Payment Modal */}
+      {editAssignmentTarget && (
+        <EditStaffPaymentModal
+          isOpen={!!editAssignmentTarget}
+          onClose={() => setEditAssignmentTarget(null)}
+          assignment={editAssignmentTarget}
+          onSave={handleSaveEditedStaffAssignment}
         />
       )}
 

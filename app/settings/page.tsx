@@ -29,19 +29,24 @@ export default function SettingsPage() {
   const { showToast } = useToast();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [profile, setProfile] = useState<CompanyProfile>({
-    name: 'Seekers Entertainment (Pvt) Ltd',
+    name: 'Seekers’s Entertainment (pvt) Ltd',
     tagline: 'Premier Audio-Visual Production, DJ & Event Technology',
     email: 'ops@seekersentertainment.lk',
-    phone: '+94 11 258 4930',
+    phone: `+94 71 035 87 23 (Voice / WhatsApp)
++94 76 468 00 00
++971 54 544 66 09 (UAE)`,
     address: 'No. 42, Independence Avenue, Colombo 07, Sri Lanka',
     taxNumber: 'TIN-109482710-8000',
     businessRegistration: 'PV-0028941',
     currency: 'LKR',
-    bankName: 'Commercial Bank of Ceylon',
-    bankAccount: '1000 4829 5501',
-    bankBranch: 'Colombo 07 Premier Branch',
+    bankName: 'BOC bank',
+    bankAccount: '94630427',
+    bankBranch: 'Walgama',
     logoUrl: '/seekers-logo.svg',
-    invoiceTerms: '50% advance upon confirmation. Remaining balance due within 24 hours of event completion.',
+    invoiceTerms: `* Payment method can be cash, bank transfer.
+* Payment must be made in full without deducting any tax.
+* Transportation, handling, food, labor charges, are included in this rate.
+* Make all checks payable to “ Seekers’s Entertainment (pvt) Ltd”`,
   });
   const [services, setServices] = useState<ServiceCatalogItem[]>([]);
 
@@ -170,14 +175,18 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
-                  <input
-                    type="text"
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Contact Numbers (Hotline / WhatsApp / Overseas)
+                  </label>
+                  <textarea
+                    rows={3}
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9] text-xs font-mono"
+                    placeholder="+94 71 035 87 23 (Voice / WhatsApp)&#10;+94 76 468 00 00&#10;+971 54 544 66 09 (UAE)"
                     required
                   />
+                  <p className="text-[11px] text-slate-400 mt-1">One number per line. These display in the quotation and invoice headers.</p>
                 </div>
               </div>
 

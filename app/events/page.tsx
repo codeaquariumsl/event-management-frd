@@ -14,6 +14,7 @@ import {
   Printer,
   Users,
   Calendar,
+  ChevronDown,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -29,13 +30,82 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { EventItem, EventStatus, EventType, EventTypeItem } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
+function EventStatusSelect({
+  status,
+  onChange,
+}: {
+  status: EventStatus;
+  onChange: (newStatus: EventStatus) => void;
+}) {
+  const getColors = (st: EventStatus) => {
+    switch (st) {
+      case 'Confirmed':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800/80';
+      case 'In Progress':
+        return 'bg-teal-50 text-[#00897b] border-teal-200 dark:bg-teal-950/70 dark:text-[#00e5c9] dark:border-[#00e5c9]/50';
+      case 'Pending':
+        return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-800/80';
+      case 'Completed':
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/70 dark:text-indigo-300 dark:border-indigo-800/80';
+      case 'Draft':
+        return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700/80';
+      case 'Cancelled':
+        return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800/80';
+      default:
+        return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300';
+    }
+  };
+
+  const getDot = (st: EventStatus) => {
+    switch (st) {
+      case 'Confirmed':
+        return 'bg-emerald-500 dark:bg-emerald-400';
+      case 'In Progress':
+        return 'bg-[#00897b] dark:bg-[#00e5c9] animate-pulse';
+      case 'Pending':
+        return 'bg-amber-500 dark:bg-amber-400';
+      case 'Completed':
+        return 'bg-indigo-500 dark:bg-indigo-400';
+      case 'Draft':
+        return 'bg-slate-400 dark:bg-slate-500';
+      case 'Cancelled':
+        return 'bg-rose-500 dark:bg-rose-400';
+      default:
+        return 'bg-slate-400';
+    }
+  };
+
+  return (
+    <div
+      className="relative inline-flex items-center"
+      onClick={(e) => e.stopPropagation()}
+      title="Click to change event status"
+    >
+      <span className={`absolute left-2.5 h-1.5 w-1.5 rounded-full pointer-events-none z-10 ${getDot(status)}`} />
+      <select
+        value={status}
+        onChange={(e) => onChange(e.target.value as EventStatus)}
+        className={`appearance-none rounded-full border pl-5 pr-6 py-0.5 text-[11px] font-semibold cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#00e5c9] transition-all ${getColors(status)}`}
+      >
+        <option value="Confirmed" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Confirmed</option>
+        <option value="In Progress" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">In Progress</option>
+        <option value="Pending" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Pending</option>
+        <option value="Draft" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Draft</option>
+        <option value="Completed" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Completed</option>
+        <option value="Cancelled" className="bg-white dark:bg-[#0c1420] text-slate-900 dark:text-white">Cancelled</option>
+      </select>
+      <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 pointer-events-none opacity-60 text-current" />
+    </div>
+  );
+}
+
 export default function EventsPage() {
   const router = useRouter();
   const { showToast } = useToast();
 
   const [events, setEvents] = useState<EventItem[]>([]);
   const [eventTypes, setEventTypes] = useState<EventTypeItem[]>([]);
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('Completed');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
 
@@ -52,7 +122,7 @@ export default function EventsPage() {
       ]);
       if (Array.isArray(data)) setEvents(data);
       if (Array.isArray(types)) setEventTypes(types);
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -75,6 +145,18 @@ export default function EventsPage() {
     showToast('✓ Event deleted successfully');
     setDeleteCandidateId(null);
     loadData();
+  };
+
+  const handleStatusChange = async (eventId: string, newStatus: EventStatus) => {
+    try {
+      await eventService.updateEvent(eventId, { status: newStatus });
+      setEvents((prev) =>
+        prev.map((e) => (e.id === eventId ? { ...e, status: newStatus } : e))
+      );
+      showToast(`✓ Event status changed to ${newStatus}`);
+    } catch {
+      showToast('Failed to update event status', 'error');
+    }
   };
 
   const columns: Column<EventItem>[] = [
@@ -167,8 +249,13 @@ export default function EventsPage() {
       key: 'status',
       header: 'Status',
       sortable: true,
-      className: 'text-center w-28',
-      render: (evt) => <StatusBadge status={evt.status} size="sm" />,
+      className: 'text-center w-32',
+      render: (evt) => (
+        <EventStatusSelect
+          status={evt.status}
+          onChange={(newStatus) => handleStatusChange(evt.id, newStatus)}
+        />
+      ),
     },
   ];
 

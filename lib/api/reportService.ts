@@ -42,19 +42,24 @@ export const settingsService = {
     }
 
     return {
-      name: 'Seekers Entertainment (Pvt) Ltd',
+      name: 'Seekers’s Entertainment (pvt) Ltd',
       tagline: 'Premier Audio-Visual Production, DJ & Event Technology',
       email: 'ops@seekersentertainment.lk',
-      phone: '+94 11 258 4930',
+      phone: `+94 71 035 87 23 (Voice / WhatsApp)
++94 76 468 00 00
++971 54 544 66 09 (UAE)`,
       address: 'No. 42, Independence Avenue, Colombo 07, Sri Lanka',
       taxNumber: 'TIN-109482710-8000',
       businessRegistration: 'PV-0028941',
       currency: 'LKR',
-      bankName: 'Commercial Bank of Ceylon',
-      bankAccount: '1000 4829 5501',
-      bankBranch: 'Colombo 07 Premier Branch',
+      bankName: 'BOC bank',
+      bankAccount: '94630427',
+      bankBranch: 'Walgama',
       logoUrl: '/seekers-logo.svg',
-      invoiceTerms: '50% advance upon confirmation. Remaining balance due within 24 hours of event completion.',
+      invoiceTerms: `* Payment method can be cash, bank transfer.
+* Payment must be made in full without deducting any tax.
+* Transportation, handling, food, labor charges, are included in this rate.
+* Make all checks payable to “ Seekers’s Entertainment (pvt) Ltd”`,
     };
   },
 

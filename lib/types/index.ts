@@ -12,6 +12,7 @@ export type EventType =
 
 export type StaffRole =
   | 'DJ'
+  | 'VJ'
   | 'Sound Engineer'
   | 'Lighting Technician'
   | 'LED Technician'

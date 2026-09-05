@@ -39,7 +39,7 @@ export default function StaffPage() {
     try {
       const data = await staffService.getStaff();
       if (Array.isArray(data)) setStaffList(data);
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -153,7 +153,7 @@ export default function StaffPage() {
       <div className="space-y-6">
         <PageHeader
           title="Staff & Technical Crew Management"
-          subtitle="Roster of resident DJs, sound engineers, lighting technicians, stage directors, and logistics staff"
+          subtitle="Roster of resident DJs, VJs, sound engineers, lighting technicians, stage directors, and logistics staff"
           breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Staff' }]}
           actions={
             <button
@@ -187,6 +187,7 @@ export default function StaffPage() {
               >
                 <option value="ALL">All Roles</option>
                 <option value="DJ">DJ & MC</option>
+                <option value="VJ">VJ & Video Operator</option>
                 <option value="Sound Engineer">Sound Engineer</option>
                 <option value="Lighting Technician">Lighting Technician</option>
                 <option value="LED Technician">LED Technician</option>

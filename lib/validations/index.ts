@@ -29,6 +29,7 @@ export const staffFormSchema = z.object({
   email: z.string().email('Valid email is required'),
   role: z.enum([
     'DJ',
+    'VJ',
     'Sound Engineer',
     'Lighting Technician',
     'LED Technician',

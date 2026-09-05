@@ -15,6 +15,7 @@ import {
   Package,
   Sparkles,
   Boxes,
+  CheckCircle2,
 } from 'lucide-react';
 import { eventService } from '@/lib/api/eventService';
 import { customerService } from '@/lib/api/customerService';
@@ -25,6 +26,7 @@ import { formatCurrency } from '@/lib/utils';
 import {
   Customer,
   EventItem,
+  EventStatus,
   EventType,
   EventTypeItem,
   ServiceItem,
@@ -220,8 +222,8 @@ export function EventForm({ initialData }: EventFormProps) {
   };
 
   // Form Submit
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent, overrideStatus?: EventStatus) => {
+    if (e) e.preventDefault();
     if (!name.trim()) {
       alert('Event Name is required');
       return;
@@ -236,6 +238,7 @@ export function EventForm({ initialData }: EventFormProps) {
     }
 
     const selectedCustomer = customers.find((c) => c.id === customerId);
+    const finalStatus: EventStatus = overrideStatus || (status as EventStatus) || (initialData ? initialData.status : 'Confirmed');
 
     const eventPayload = {
       id: initialData?.id,
@@ -253,7 +256,7 @@ export function EventForm({ initialData }: EventFormProps) {
       address,
       description,
       notes,
-      status,
+      status: finalStatus,
       services,
       assignedStaff,
       expenses: initialData?.expenses || [],
@@ -272,7 +275,11 @@ export function EventForm({ initialData }: EventFormProps) {
       savedEvent = await eventService.createEvent(eventPayload);
     }
 
-    showToast(initialData ? '✓ Event updated successfully' : '✓ Event created successfully');
+    const toastMsg = initialData
+      ? (overrideStatus === 'Completed' ? '✓ Event updated and marked Completed' : '✓ Event updated successfully')
+      : (overrideStatus === 'Completed' ? '✓ Event created and marked Completed' : '✓ Event created successfully');
+
+    showToast(toastMsg);
     router.push(`/events/${savedEvent.id}`);
   };
 
@@ -821,7 +828,7 @@ export function EventForm({ initialData }: EventFormProps) {
         </div>
 
         {/* Action Bar */}
-        <div className="flex items-center justify-end gap-3 pt-2">
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
           <button
             type="button"
             onClick={() => router.back()}
@@ -829,12 +836,43 @@ export function EventForm({ initialData }: EventFormProps) {
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-6 py-2.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/20 transition-all duration-150"
-          >
-            {initialData ? 'Save Changes' : 'Create & Confirm Event'}
-          </button>
+          
+          {initialData ? (
+            <>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, 'Completed')}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/20 transition-all duration-150"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Save & Mark Completed</span>
+              </button>
+              <button
+                type="submit"
+                className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-6 py-2.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/20 transition-all duration-150"
+              >
+                Save Changes
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, 'Completed')}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/20 transition-all duration-150"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Create & Completed Event</span>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, 'Confirmed')}
+                className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-6 py-2.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/20 transition-all duration-150"
+              >
+                Create & Confirm Event
+              </button>
+            </>
+          )}
         </div>
       </form>
 

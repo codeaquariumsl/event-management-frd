@@ -10,9 +10,6 @@ export const quotationService = {
       const qs = query.toString() ? `?${query.toString()}` : '';
       const quotations = await apiClient.request<Quotation[]>(`/quotations${qs}`);
       if (Array.isArray(quotations)) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('seekers_quotations', JSON.stringify(quotations));
-        }
         return quotations;
       }
     } catch (err) {
@@ -56,15 +53,6 @@ export const quotationService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_quotations');
-      const list: Quotation[] = cached ? JSON.parse(cached) : [];
-      list.unshift(saved);
-      localStorage.setItem('seekers_quotations', JSON.stringify(list));
-      window.dispatchEvent(new Event('seekers_quotations_updated'));
-    }
-
     return saved;
   },
 
@@ -73,34 +61,11 @@ export const quotationService = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_quotations');
-      if (cached) {
-        const list: Quotation[] = JSON.parse(cached);
-        const idx = list.findIndex((q) => q.id === id);
-        if (idx >= 0) list[idx] = updated;
-        localStorage.setItem('seekers_quotations', JSON.stringify(list));
-      }
-      window.dispatchEvent(new Event('seekers_quotations_updated'));
-    }
-
     return updated;
   },
 
   async delete(id: string): Promise<boolean> {
     await apiClient.request(`/quotations/${id}`, { method: 'DELETE' });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_quotations');
-      if (cached) {
-        const list: Quotation[] = JSON.parse(cached);
-        const filtered = list.filter((q) => q.id !== id);
-        localStorage.setItem('seekers_quotations', JSON.stringify(filtered));
-      }
-      window.dispatchEvent(new Event('seekers_quotations_updated'));
-    }
-
     return true;
   },
 

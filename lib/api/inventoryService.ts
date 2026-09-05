@@ -7,9 +7,6 @@ export const inventoryService = {
     try {
       const cats = await apiClient.request<InventoryCategory[]>('/inventory/categories');
       if (Array.isArray(cats)) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('seekers_inventory_categories', JSON.stringify(cats));
-        }
         return cats;
       }
     } catch (err) {
@@ -27,15 +24,6 @@ export const inventoryService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_inventory_categories');
-      const list: InventoryCategory[] = cached ? JSON.parse(cached) : [];
-      list.push(saved);
-      localStorage.setItem('seekers_inventory_categories', JSON.stringify(list));
-      window.dispatchEvent(new Event('seekers_inventory_categories_updated'));
-    }
-
     return saved;
   },
 
@@ -44,34 +32,11 @@ export const inventoryService = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_inventory_categories');
-      if (cached) {
-        const list: InventoryCategory[] = JSON.parse(cached);
-        const idx = list.findIndex((c) => c.id === id);
-        if (idx >= 0) list[idx] = updated;
-        localStorage.setItem('seekers_inventory_categories', JSON.stringify(list));
-      }
-      window.dispatchEvent(new Event('seekers_inventory_categories_updated'));
-    }
-
     return updated;
   },
 
   async deleteCategory(id: string): Promise<boolean> {
     await apiClient.request(`/inventory/categories/${id}`, { method: 'DELETE' });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_inventory_categories');
-      if (cached) {
-        const list: InventoryCategory[] = JSON.parse(cached);
-        const filtered = list.filter((c) => c.id !== id);
-        localStorage.setItem('seekers_inventory_categories', JSON.stringify(filtered));
-      }
-      window.dispatchEvent(new Event('seekers_inventory_categories_updated'));
-    }
-
     return true;
   },
 
@@ -84,9 +49,6 @@ export const inventoryService = {
       const qs = query.toString() ? `?${query.toString()}` : '';
       const items = await apiClient.request<InventoryItem[]>(`/inventory/items${qs}`);
       if (Array.isArray(items)) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('seekers_inventory_items', JSON.stringify(items));
-        }
         return items;
       }
     } catch (err) {
@@ -130,15 +92,6 @@ export const inventoryService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_inventory_items');
-      const list: InventoryItem[] = cached ? JSON.parse(cached) : [];
-      list.push(saved);
-      localStorage.setItem('seekers_inventory_items', JSON.stringify(list));
-      window.dispatchEvent(new Event('seekers_inventory_items_updated'));
-    }
-
     return saved;
   },
 
@@ -147,34 +100,11 @@ export const inventoryService = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_inventory_items');
-      if (cached) {
-        const list: InventoryItem[] = JSON.parse(cached);
-        const idx = list.findIndex((i) => i.id === id);
-        if (idx >= 0) list[idx] = updated;
-        localStorage.setItem('seekers_inventory_items', JSON.stringify(list));
-      }
-      window.dispatchEvent(new Event('seekers_inventory_items_updated'));
-    }
-
     return updated;
   },
 
   async deleteItem(id: string): Promise<boolean> {
     await apiClient.request(`/inventory/items/${id}`, { method: 'DELETE' });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_inventory_items');
-      if (cached) {
-        const list: InventoryItem[] = JSON.parse(cached);
-        const filtered = list.filter((i) => i.id !== id);
-        localStorage.setItem('seekers_inventory_items', JSON.stringify(filtered));
-      }
-      window.dispatchEvent(new Event('seekers_inventory_items_updated'));
-    }
-
     return true;
   },
 };

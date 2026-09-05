@@ -6,9 +6,6 @@ export const eventTypeService = {
     try {
       const types = await apiClient.request<EventTypeItem[]>('/event-types');
       if (Array.isArray(types)) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('seekers_event_types', JSON.stringify(types));
-        }
         return types;
       }
     } catch (err) {
@@ -47,15 +44,6 @@ export const eventTypeService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_event_types');
-      const list: EventTypeItem[] = cached ? JSON.parse(cached) : [];
-      list.push(saved);
-      localStorage.setItem('seekers_event_types', JSON.stringify(list));
-      window.dispatchEvent(new Event('seekers_event_types_updated'));
-    }
-
     return saved;
   },
 
@@ -68,18 +56,6 @@ export const eventTypeService = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_event_types');
-      if (cached) {
-        const list: EventTypeItem[] = JSON.parse(cached);
-        const idx = list.findIndex((e) => e.id === id);
-        if (idx >= 0) list[idx] = updated;
-        localStorage.setItem('seekers_event_types', JSON.stringify(list));
-      }
-      window.dispatchEvent(new Event('seekers_event_types_updated'));
-    }
-
     return updated;
   },
 
@@ -89,17 +65,6 @@ export const eventTypeService = {
 
   async delete(id: string): Promise<boolean> {
     await apiClient.request(`/event-types/${id}`, { method: 'DELETE' });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_event_types');
-      if (cached) {
-        const list: EventTypeItem[] = JSON.parse(cached);
-        const filtered = list.filter((e) => e.id !== id);
-        localStorage.setItem('seekers_event_types', JSON.stringify(filtered));
-      }
-      window.dispatchEvent(new Event('seekers_event_types_updated'));
-    }
-
     return true;
   },
 

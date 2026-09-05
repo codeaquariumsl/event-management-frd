@@ -9,9 +9,6 @@ export const customerService = {
     try {
       const customers = await apiClient.request<Customer[]>('/customers');
       if (Array.isArray(customers)) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('seekers_customers', JSON.stringify(customers));
-        }
         return customers;
       }
     } catch (err) {
@@ -54,15 +51,6 @@ export const customerService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_customers');
-      const list: Customer[] = cached ? JSON.parse(cached) : [];
-      list.unshift(saved);
-      localStorage.setItem('seekers_customers', JSON.stringify(list));
-      window.dispatchEvent(new Event('seekers_customers_updated'));
-    }
-
     return saved;
   },
 
@@ -74,18 +62,6 @@ export const customerService = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_customers');
-      if (cached) {
-        const list: Customer[] = JSON.parse(cached);
-        const idx = list.findIndex((c) => c.id === id);
-        if (idx >= 0) list[idx] = updated;
-        localStorage.setItem('seekers_customers', JSON.stringify(list));
-      }
-      window.dispatchEvent(new Event('seekers_customers_updated'));
-    }
-
     return updated;
   },
 
@@ -96,17 +72,6 @@ export const customerService = {
     await apiClient.request<{ success: boolean }>(`/customers/${id}`, {
       method: 'DELETE',
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_customers');
-      if (cached) {
-        const list: Customer[] = JSON.parse(cached);
-        const filtered = list.filter((c) => c.id !== id);
-        localStorage.setItem('seekers_customers', JSON.stringify(filtered));
-      }
-      window.dispatchEvent(new Event('seekers_customers_updated'));
-    }
-
     return true;
   },
 };

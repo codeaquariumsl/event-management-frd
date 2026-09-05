@@ -6,9 +6,6 @@ export const staffService = {
     try {
       const staff = await apiClient.request<Staff[]>('/staff');
       if (Array.isArray(staff)) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('seekers_staff', JSON.stringify(staff));
-        }
         return staff;
       }
     } catch (err) {
@@ -45,15 +42,6 @@ export const staffService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_staff');
-      const list: Staff[] = cached ? JSON.parse(cached) : [];
-      list.unshift(saved);
-      localStorage.setItem('seekers_staff', JSON.stringify(list));
-      window.dispatchEvent(new Event('seekers_staff_updated'));
-    }
-
     return saved;
   },
 
@@ -62,18 +50,6 @@ export const staffService = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_staff');
-      if (cached) {
-        const list: Staff[] = JSON.parse(cached);
-        const idx = list.findIndex((s) => s.id === id);
-        if (idx >= 0) list[idx] = updated;
-        localStorage.setItem('seekers_staff', JSON.stringify(list));
-      }
-      window.dispatchEvent(new Event('seekers_staff_updated'));
-    }
-
     return updated;
   },
 
@@ -81,17 +57,6 @@ export const staffService = {
     await apiClient.request<{ success: boolean }>(`/staff/${id}`, {
       method: 'DELETE',
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_staff');
-      if (cached) {
-        const list: Staff[] = JSON.parse(cached);
-        const filtered = list.filter((s) => s.id !== id);
-        localStorage.setItem('seekers_staff', JSON.stringify(filtered));
-      }
-      window.dispatchEvent(new Event('seekers_staff_updated'));
-    }
-
     return true;
   },
 

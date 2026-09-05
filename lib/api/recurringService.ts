@@ -6,9 +6,6 @@ export const recurringService = {
     try {
       const series = await apiClient.request<RecurringEvent[]>('/recurring-events');
       if (Array.isArray(series)) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('seekers_recurring', JSON.stringify(series));
-        }
         return series;
       }
     } catch (err) {
@@ -26,15 +23,6 @@ export const recurringService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_recurring');
-      const list: RecurringEvent[] = cached ? JSON.parse(cached) : [];
-      list.unshift(saved);
-      localStorage.setItem('seekers_recurring', JSON.stringify(list));
-      window.dispatchEvent(new Event('seekers_recurring_updated'));
-    }
-
     return saved;
   },
 
@@ -43,18 +31,6 @@ export const recurringService = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_recurring');
-      if (cached) {
-        const list: RecurringEvent[] = JSON.parse(cached);
-        const idx = list.findIndex((r) => r.id === id);
-        if (idx >= 0) list[idx] = updated;
-        localStorage.setItem('seekers_recurring', JSON.stringify(list));
-      }
-      window.dispatchEvent(new Event('seekers_recurring_updated'));
-    }
-
     return updated;
   },
 
@@ -62,17 +38,6 @@ export const recurringService = {
     await apiClient.request(`/recurring-events/${id}`, {
       method: 'DELETE',
     });
-
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('seekers_recurring');
-      if (cached) {
-        const list: RecurringEvent[] = JSON.parse(cached);
-        const filtered = list.filter((r) => r.id !== id);
-        localStorage.setItem('seekers_recurring', JSON.stringify(filtered));
-      }
-      window.dispatchEvent(new Event('seekers_recurring_updated'));
-    }
-
     return true;
   },
 

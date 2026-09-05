@@ -170,15 +170,6 @@ export default function DashboardPage() {
         <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-[#1f3144] bg-gradient-to-r from-teal-50/80 via-slate-50 to-white dark:from-[#0b1522] dark:via-[#0f1d2d] dark:to-[#121824] p-4 sm:p-5 shadow-sm dark:shadow-lg transition-colors duration-200">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-1 max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#00e5c9]/30 bg-[#00e5c9]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#00897b] dark:text-[#00e5c9]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#00a894] dark:bg-[#00e5c9] animate-pulse" />
-                  Live Operations Command
-                </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                  {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                </span>
-              </div>
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 {(new Date().getHours() < 12) ? 'Good Morning' : (new Date().getHours() < 18) ? 'Good Afternoon' : 'Good Evening'}, {user?.name || 'User'}
               </h1>
@@ -188,9 +179,14 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
+              <div className="flex flex-wrap items-center justify-end  gap-2">
+                <span className="text-[11px] text-slate-500 dark:text-slate-200 font-mono">
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              </div>
               <Link
                 href="/recurring-events"
-                className="rounded-lg border border-slate-200 dark:border-[#263b50] bg-white dark:bg-[#142232] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2e42] hover:border-slate-300 dark:hover:border-[#354f6b] transition-colors"
+                className="rounded-lg border border-slate-100 bg-[#00a894] dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2e42] hover:border-slate-300 dark:hover:border-[#354f6b] transition-colors"
               >
                 Recurring Schedules
               </Link>
@@ -199,7 +195,7 @@ export default function DashboardPage() {
                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/25 transition-all"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>+ Create Event</span>
+                <span>Create Event</span>
               </Link>
             </div>
           </div>

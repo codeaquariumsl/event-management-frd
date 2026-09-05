@@ -272,7 +272,7 @@ export default function ServicesPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
         <PageHeader
           title="Services & Rate Cards Catalog"
@@ -293,41 +293,45 @@ export default function ServicesPage() {
         />
 
         {/* Stats KPIs */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
           <StatCard
-            title="Total Service Packages"
+            compact
+            title="Total Services"
             value={totalCount}
             icon={Sparkles}
             change={`${activeCount} active`}
             trend="up"
-            comparisonText="in catalog"
             accentColor="teal"
+            onClick={() => setSelectedCategory('All')}
+            className={selectedCategory === 'All' ? 'ring-2 ring-[#00a894] dark:ring-[#00e5c9]' : ''}
           />
           <StatCard
-            title="Active Standard Rates"
+            compact
+            title="Active Packages"
             value={activeCount}
             icon={Package}
-            change="Ready"
+            change="Ready for quotes"
             trend="up"
-            comparisonText="for quotations"
             accentColor="purple"
           />
           <StatCard
-            title="Top Production Line"
+            compact
+            title="Top Category"
             value={topCategory}
             icon={Layers}
             change={`${categoryCounts[topCategory] || 0} packages`}
             trend="neutral"
-            comparisonText="highest demand"
             accentColor="amber"
+            onClick={() => setSelectedCategory(topCategory)}
+            className={selectedCategory === topCategory ? 'ring-2 ring-[#ffb703]' : ''}
           />
           <StatCard
-            title="Average Package Rate"
-            value={formatCurrency(avgPrice)}
+            compact
+            title="Average Rate"
+            value={formatCurrency(avgPrice, true)}
             icon={DollarSign}
-            change="Standard"
+            change="Catalog benchmark"
             trend="up"
-            comparisonText="rate card benchmark"
             accentColor="emerald"
           />
         </div>

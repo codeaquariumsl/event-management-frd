@@ -206,7 +206,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 8 KPI Cards Grid - High Density Compact */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           <StatCard
             compact
             title="Total Events"
@@ -215,6 +215,7 @@ export default function DashboardPage() {
             trend="up"
             icon={CalendarDays}
             accentColor="teal"
+            onClick={() => router.push('/events')}
           />
           <StatCard
             compact
@@ -224,6 +225,7 @@ export default function DashboardPage() {
             trend="up"
             icon={Clock}
             accentColor="purple"
+            onClick={() => router.push('/events')}
           />
           <StatCard
             compact
@@ -233,6 +235,7 @@ export default function DashboardPage() {
             trend="up"
             icon={TrendingUp}
             accentColor="emerald"
+            onClick={() => router.push('/events')}
           />
           <StatCard
             compact
@@ -242,6 +245,7 @@ export default function DashboardPage() {
             trend="neutral"
             icon={Users}
             accentColor="blue"
+            onClick={() => router.push('/staff')}
           />
           <StatCard
             compact
@@ -251,6 +255,7 @@ export default function DashboardPage() {
             trend="up"
             icon={Users}
             accentColor="purple"
+            onClick={() => router.push('/customers')}
           />
           <StatCard
             compact
@@ -260,6 +265,7 @@ export default function DashboardPage() {
             trend="down"
             icon={CreditCard}
             accentColor="amber"
+            onClick={() => router.push('/customer-payments')}
           />
           <StatCard
             compact
@@ -269,6 +275,7 @@ export default function DashboardPage() {
             trend="neutral"
             icon={WalletCards}
             accentColor="blue"
+            onClick={() => router.push('/staff-payments')}
           />
           <StatCard
             compact
@@ -278,6 +285,7 @@ export default function DashboardPage() {
             trend="up"
             icon={CircleDollarSign}
             accentColor="teal"
+            onClick={() => router.push('/reports')}
           />
         </div>
 

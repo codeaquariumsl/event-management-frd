@@ -116,7 +116,7 @@ export default function CustomerPaymentsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <PageHeader
           title="Customer Invoices & Payments"
           subtitle="Record client payments, track outstanding invoice balances, and generate tax receipts"
@@ -147,27 +147,30 @@ export default function CustomerPaymentsPage() {
         />
 
         {/* 3 Summary Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <StatCard
-            title="Total Revenue Collected"
-            value={formatCurrency(totalCollected)}
-            change={`${payments.length} transactions recorded`}
+            compact
+            title="Revenue Collected"
+            value={formatCurrency(totalCollected, true)}
+            change={`${payments.length} transactions`}
             trend="up"
             icon={DollarSign}
             accentColor="emerald"
           />
           <StatCard
-            title="Total Outstanding Receivables"
-            value={formatCurrency(totalOutstanding)}
-            change="Across active events"
+            compact
+            title="Outstanding Receivables"
+            value={formatCurrency(totalOutstanding, true)}
+            change={`${events.filter((e) => e.balance > 0).length} events with due`}
             trend="down"
             icon={CreditCard}
             accentColor="amber"
           />
           <StatCard
+            compact
             title="Collection Rate"
             value={`${collectionRate}%`}
-            change="+4.2% this quarter"
+            change="Settled"
             trend="up"
             icon={TrendingUp}
             accentColor="teal"

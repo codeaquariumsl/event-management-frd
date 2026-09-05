@@ -22,7 +22,7 @@ export function formatCurrency(amount: number, compact: boolean = false): string
     currency: 'LKR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount).replace('LKR', 'LKR ')
+  }).format(amount).replace('LKR', '')
 }
 
 export function formatDate(dateString: string): string {

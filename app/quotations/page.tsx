@@ -123,7 +123,7 @@ export default function QuotationsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
         <PageHeader
         title="Quotation Management"
@@ -143,31 +143,49 @@ export default function QuotationsPage() {
         }
       />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Small Stats KPI Cards Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         <StatCard
+          compact
           title="Total Quotations"
           value={quotations.length}
+          change={`${quotations.length} total`}
+          trend="neutral"
           icon={FileSpreadsheet}
           accentColor="teal"
+          onClick={() => setStatusFilter('All')}
+          className={statusFilter === 'All' ? 'ring-2 ring-[#00a894] dark:ring-[#00e5c9]' : ''}
         />
         <StatCard
-          title="Total Quoted Pipeline"
-          value={formatCurrency(totalPipelineValue)}
+          compact
+          title="Quoted Pipeline"
+          value={formatCurrency(totalPipelineValue, true)}
+          change="Gross value"
+          trend="up"
           icon={DollarSign}
           accentColor="blue"
         />
         <StatCard
-          title="Accepted & Converted"
-          value={`${acceptedCount} (${formatCurrency(acceptedValue)})`}
+          compact
+          title="Accepted Quotes"
+          value={acceptedCount}
+          change={`${formatCurrency(acceptedValue, true)} won`}
+          trend="up"
           icon={CheckCircle2}
           accentColor="emerald"
+          onClick={() => setStatusFilter('Accepted')}
+          className={statusFilter === 'Accepted' ? 'ring-2 ring-[#10b981]' : ''}
         />
         <StatCard
-          title="Pending / Active Quotes"
+          compact
+          title="Pending / Sent"
           value={pendingCount}
+          change="Awaiting action"
+          trend="neutral"
           icon={Clock}
           accentColor="amber"
+          onClick={() => setStatusFilter('Sent')}
+          className={statusFilter === 'Sent' || statusFilter === 'Draft' ? 'ring-2 ring-[#ffb703]' : ''}
         />
       </div>
 

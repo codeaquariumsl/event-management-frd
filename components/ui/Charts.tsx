@@ -83,22 +83,19 @@ export function MonthlyRevenueChart({ data }: MonthlyRevenueChartProps) {
               {/* Revenue bar */}
               <div
                 style={{ height: `${revHeight}%` }}
-                className={`w-2 sm:w-3 rounded-t-sm transition-all duration-200 ${
-                  isHovered ? 'bg-[#00897b] dark:bg-[#1affda] shadow-lg shadow-[#00e5c9]/40' : 'bg-[#00a894] dark:bg-[#00e5c9]'
-                }`}
+                className={`w-2 sm:w-3 rounded-t-sm transition-all duration-200 ${isHovered ? 'bg-[#00897b] dark:bg-[#1affda] shadow-lg shadow-[#00e5c9]/40' : 'bg-[#00a894] dark:bg-[#00e5c9]'
+                  }`}
               />
               {/* Expense bar */}
               <div
                 style={{ height: `${expHeight}%` }}
-                className={`w-2 sm:w-3 rounded-t-sm transition-all duration-200 ${
-                  isHovered ? 'bg-slate-500 dark:bg-[#647c9c]' : 'bg-slate-300 dark:bg-[#3b4c60]'
-                }`}
+                className={`w-2 sm:w-3 rounded-t-sm transition-all duration-200 ${isHovered ? 'bg-slate-500 dark:bg-[#647c9c]' : 'bg-slate-300 dark:bg-[#3b4c60]'
+                  }`}
               />
               {/* Month label */}
               <span
-                className={`absolute -bottom-5 text-[10px] transition-colors ${
-                  isHovered ? 'text-[#00897b] dark:text-[#00e5c9] font-bold' : 'text-slate-500 dark:text-slate-400'
-                }`}
+                className={`absolute -bottom-5 text-[10px] transition-colors ${isHovered ? 'text-[#00897b] dark:text-[#00e5c9] font-bold' : 'text-slate-500 dark:text-slate-400'
+                  }`}
               >
                 {item.month}
               </span>
@@ -148,10 +145,10 @@ export function EventStatusChart({ stats }: EventStatusChartProps) {
             background: total === 0
               ? '#cbd5e1'
               : `conic-gradient(
-                  #00e5c9 0% ${pctConfirmed}%,
+                  #0b96f3ff 0% ${pctConfirmed}%,
                   #ffb703 ${pctConfirmed}% ${pctConfirmed + pctPending}%,
                   #7c5cff ${pctConfirmed + pctPending}% ${pctConfirmed + pctPending + pctInProgress}%,
-                  #10b981 ${pctConfirmed + pctPending + pctInProgress}% ${pctConfirmed + pctPending + pctInProgress + pctCompleted}%,
+                  #0cd16eff ${pctConfirmed + pctPending + pctInProgress}% ${pctConfirmed + pctPending + pctInProgress + pctCompleted}%,
                   #ff4d6d ${pctConfirmed + pctPending + pctInProgress + pctCompleted}% 100%
                 )`,
           }}

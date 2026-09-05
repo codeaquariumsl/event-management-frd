@@ -186,7 +186,7 @@ export function Sidebar({
 
         {/* Footer Collapse Toggle & Status */}
         <div className="p-3 shrink-0 mt-auto border-t border-slate-200 dark:border-[#182332] space-y-2">
-          {!isCollapsed && (
+          {/* {!isCollapsed && (
             <div className="rounded-lg border border-slate-200 dark:border-[#1d2c3e] bg-slate-50 dark:bg-[#0c131d] p-2.5 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9] shrink-0" />
               <div className="truncate">
@@ -194,7 +194,7 @@ export function Sidebar({
                 <span className="block text-[10px] text-slate-500">Storage Synced</span>
               </div>
             </div>
-          )}
+          )} */}
 
           <button
             onClick={onToggleCollapse}

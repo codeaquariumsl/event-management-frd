@@ -285,13 +285,13 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
 
             <button
               onClick={() => setIsPaymentOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-bold text-slate-900 dark:text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] transition-all shadow-sm"
             >
               <CreditCard className="h-3.5 w-3.5" />
               <span>Record Payment</span>
             </button>
 
-            {event.status !== 'Cancelled' && (
+            {(event.status !== 'Completed' && event.status !== 'Cancelled') && (
               <button
                 onClick={() => setIsCancelConfirmOpen(true)}
                 className="rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-colors"
@@ -303,7 +303,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Event Header Banner */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[#1f2f42] bg-gradient-to-r from-teal-50 via-slate-50 to-white dark:from-[#0b1420] dark:to-[#111c2a] p-6 sm:p-8 shadow-xl">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#1f2f42] bg-gradient-to-r from-teal-700 via-slate-500 to-teal-500 dark:from-[#0b1420] dark:to-[#111c2a] p-6 sm:p-8 shadow-xl">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2.5">

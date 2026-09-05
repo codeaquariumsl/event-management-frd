@@ -209,28 +209,44 @@ export default function CustomersPage() {
         />
 
         {/* Top Stat Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           <StatCard
-            title="Total Registered Clients"
+            compact
+            title="Total Clients"
             value={customers.length}
+            change={`${customers.length} registered`}
+            trend="neutral"
             icon={Users}
             accentColor="teal"
+            onClick={() => setStatusFilter('ALL')}
+            className={statusFilter === 'ALL' ? 'ring-2 ring-[#00a894] dark:ring-[#00e5c9]' : ''}
           />
           <StatCard
-            title="Active Client Accounts"
+            compact
+            title="Active Accounts"
             value={activeCount}
+            change="In good standing"
+            trend="up"
             icon={CheckCircle2}
             accentColor="emerald"
+            onClick={() => setStatusFilter('Active')}
+            className={statusFilter === 'Active' ? 'ring-2 ring-[#10b981]' : ''}
           />
           <StatCard
-            title="Lifetime Booked Revenue"
-            value={formatCurrency(totalRevenue)}
+            compact
+            title="Lifetime Revenue"
+            value={formatCurrency(totalRevenue, true)}
+            change="Total booked"
+            trend="up"
             icon={DollarSign}
             accentColor="blue"
           />
           <StatCard
-            title="Total Balance Due"
-            value={formatCurrency(totalOutstanding)}
+            compact
+            title="Balance Due"
+            value={formatCurrency(totalOutstanding, true)}
+            change={`${customers.filter((c) => (c.outstandingBalance || 0) > 0).length} accounts due`}
+            trend="down"
             icon={AlertCircle}
             accentColor="amber"
           />

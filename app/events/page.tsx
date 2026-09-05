@@ -15,9 +15,13 @@ import {
   Users,
   Calendar,
   ChevronDown,
+  Clock,
+  CheckCircle2,
+  DollarSign,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { StatCard } from '@/components/ui/StatCard';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -131,9 +135,36 @@ export default function EventsPage() {
     return () => window.removeEventListener('seekers_events_updated', loadData);
   }, []);
 
+  // Small Stats Metrics
+  const stats = useMemo(() => {
+    const totalCount = events.length;
+    const activeCount = events.filter(
+      (e) => e.status === 'Confirmed' || e.status === 'In Progress'
+    ).length;
+    const completedCount = events.filter((e) => e.status === 'Completed').length;
+    const totalRevenue = events.reduce((sum, e) => sum + (e.totalAmount || 0), 0);
+    const totalPaid = events.reduce((sum, e) => sum + (e.paidAmount || 0), 0);
+    const totalBalance = events.reduce((sum, e) => sum + (e.balance || 0), 0);
+    const eventsWithBalance = events.filter((e) => (e.balance || 0) > 0).length;
+
+    return {
+      totalCount,
+      activeCount,
+      completedCount,
+      totalRevenue,
+      totalPaid,
+      totalBalance,
+      eventsWithBalance,
+    };
+  }, [events]);
+
   const filteredEvents = useMemo(() => {
     return events.filter((evt) => {
-      if (statusFilter !== 'ALL' && evt.status !== statusFilter) return false;
+      if (statusFilter === 'Active') {
+        if (evt.status !== 'Confirmed' && evt.status !== 'In Progress') return false;
+      } else if (statusFilter !== 'ALL' && evt.status !== statusFilter) {
+        return false;
+      }
       if (typeFilter !== 'ALL' && evt.eventType !== typeFilter) return false;
       return true;
     });
@@ -168,7 +199,7 @@ export default function EventsPage() {
     },
     {
       key: 'name',
-      header: 'Event Name & Customer',
+      header: 'Event & Customer',
       sortable: true,
       className: 'max-w-[260px]',
       render: (evt) => (
@@ -277,6 +308,61 @@ export default function EventsPage() {
           }
         />
 
+        {/* Small Stats Components Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+          <StatCard
+            compact
+            title="Total Events"
+            value={stats.totalCount}
+            change={`${stats.totalCount} total`}
+            trend="neutral"
+            icon={CalendarDays}
+            accentColor="teal"
+            onClick={() => setStatusFilter('ALL')}
+            className={statusFilter === 'ALL' ? 'ring-2 ring-[#00a894] dark:ring-[#00e5c9]' : ''}
+          />
+          <StatCard
+            compact
+            title="Active & Confirmed"
+            value={stats.activeCount}
+            change="In pipeline"
+            trend="up"
+            icon={Clock}
+            accentColor="purple"
+            onClick={() => setStatusFilter('Active')}
+            className={statusFilter === 'Active' || statusFilter === 'Confirmed' || statusFilter === 'In Progress' ? 'ring-2 ring-[#7c5cff]' : ''}
+          />
+          <StatCard
+            compact
+            title="Completed"
+            value={stats.completedCount}
+            change="Delivered"
+            trend="up"
+            icon={CheckCircle2}
+            accentColor="emerald"
+            onClick={() => setStatusFilter('Completed')}
+            className={statusFilter === 'Completed' ? 'ring-2 ring-[#10b981]' : ''}
+          />
+          <StatCard
+            compact
+            title="Gross Revenue"
+            value={formatCurrency(stats.totalRevenue, true)}
+            change={`${formatCurrency(stats.totalPaid, true)} paid`}
+            trend="up"
+            icon={DollarSign}
+            accentColor="blue"
+          />
+          <StatCard
+            compact
+            title="Outstanding Due"
+            value={formatCurrency(stats.totalBalance, true)}
+            change={`${stats.eventsWithBalance} due`}
+            trend="down"
+            icon={CreditCard}
+            accentColor="amber"
+          />
+        </div>
+
         <DataTable
           data={filteredEvents}
           columns={columns}
@@ -309,6 +395,7 @@ export default function EventsPage() {
                 className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2.5 py-2 text-slate-900 dark:text-white focus:outline-none"
               >
                 <option value="ALL">All Statuses</option>
+                <option value="Active">Active & Confirmed</option>
                 <option value="Confirmed">Confirmed</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Pending">Pending</option>
@@ -344,7 +431,7 @@ export default function EventsPage() {
                 <Eye className="h-3.5 w-3.5" />
               </button>
 
-              <button
+              {/* <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setAssignStaffEvent(evt);
@@ -353,7 +440,7 @@ export default function EventsPage() {
                 title="Assign Staff"
               >
                 <Users className="h-3.5 w-3.5" />
-              </button>
+              </button> */}
 
               <button
                 onClick={(e) => {
@@ -376,17 +463,18 @@ export default function EventsPage() {
               >
                 <Printer className="h-3.5 w-3.5" />
               </button>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteCandidateId(evt.id);
-                }}
-                className="rounded p-1 text-slate-400 hover:bg-rose-950/40 hover:text-rose-400"
-                title="Delete Event"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              {evt.status != 'Completed' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteCandidateId(evt.id);
+                  }}
+                  className="rounded p-1 text-slate-400 hover:bg-rose-950/40 hover:text-rose-400"
+                  title="Delete Event"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           )}
         />

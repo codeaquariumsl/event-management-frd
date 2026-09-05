@@ -12,6 +12,7 @@ import {
   PieChart,
   Layers,
   ArrowUpRight,
+  CalendarDays,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -163,7 +164,7 @@ export default function ReportsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <PageHeader
           title="Executive Business Reports & Analytics"
           subtitle="Financial statements, production utilization, staff performance, and revenue trends"
@@ -225,36 +226,40 @@ export default function ReportsPage() {
 
         {/* REPORT 1: FINANCIAL & PROFITABILITY */}
         {reportCategory === 'financial' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               <StatCard
-                title="Gross Invoiced Revenue"
-                value={formatCurrency(totalRevenue)}
+                compact
+                title="Gross Invoiced"
+                value={formatCurrency(totalRevenue, true)}
                 change={dateRange}
                 trend="up"
                 icon={DollarSign}
                 accentColor="teal"
               />
               <StatCard
+                compact
                 title="Cash Collected"
-                value={formatCurrency(totalCollections)}
-                change="Cleared bank receipts"
+                value={formatCurrency(totalCollections, true)}
+                change="Bank receipts"
                 trend="up"
                 icon={TrendingUp}
                 accentColor="emerald"
               />
               <StatCard
-                title="Crew & Gear Disbursements"
-                value={formatCurrency(totalStaffPaid)}
-                change="Staff payroll"
+                compact
+                title="Crew & Gear Payouts"
+                value={formatCurrency(totalStaffPaid, true)}
+                change="Disbursements"
                 trend="neutral"
                 icon={Users}
                 accentColor="blue"
               />
               <StatCard
-                title="Outstanding Receivables"
-                value={formatCurrency(totalOutstandingClients)}
-                change="Pending collections"
+                compact
+                title="Outstanding Due"
+                value={formatCurrency(totalOutstandingClients, true)}
+                change="Receivables"
                 trend="down"
                 icon={PieChart}
                 accentColor="amber"
@@ -299,25 +304,35 @@ export default function ReportsPage() {
 
         {/* REPORT 2: EVENT OPERATIONS */}
         {reportCategory === 'events' && (
-          <div className="space-y-6 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4">
-                <span className="text-slate-400 block text-[11px]">Total Events ({dateRange})</span>
-                <strong className="text-2xl font-bold text-slate-900 dark:text-white block mt-1">{filteredEvents.length}</strong>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4">
-                <span className="text-slate-400 block text-[11px]">Average Contract Value</span>
-                <strong className="text-2xl font-bold text-[#00e5c9] font-mono block mt-1">
-                  {formatCurrency(Math.round(totalRevenue / (filteredEvents.length || 1)))}
-                </strong>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-4">
-                <span className="text-slate-400 block text-[11px]">Completion Rate</span>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <strong className="text-2xl font-bold text-emerald-400">{completionRate}%</strong>
-                  <span className="text-slate-500 text-[11px]">({completedEventsCount} completed)</span>
-                </div>
-              </div>
+          <div className="space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <StatCard
+                compact
+                title="Total Events"
+                value={filteredEvents.length}
+                change={dateRange}
+                trend="neutral"
+                icon={CalendarDays}
+                accentColor="teal"
+              />
+              <StatCard
+                compact
+                title="Avg Contract Value"
+                value={formatCurrency(Math.round(totalRevenue / (filteredEvents.length || 1)), true)}
+                change="Per production"
+                trend="up"
+                icon={DollarSign}
+                accentColor="purple"
+              />
+              <StatCard
+                compact
+                title="Completion Rate"
+                value={`${completionRate}%`}
+                change={`${completedEventsCount} completed`}
+                trend="up"
+                icon={TrendingUp}
+                accentColor="emerald"
+              />
             </div>
 
             <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 space-y-4">

@@ -269,7 +269,7 @@ export default function InventoryPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
         <PageHeader
         title="Inventory & Equipment Management"
@@ -298,31 +298,59 @@ export default function InventoryPage() {
         }
       />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Small Stats KPI Cards Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         <StatCard
-          title="Total SKUs Tracked"
+          compact
+          title="Total SKUs"
           value={items.length}
+          change={`${items.length} tracked`}
+          trend="neutral"
           icon={Package}
           accentColor="teal"
+          onClick={() => {
+            setActiveTab('items');
+            setSelectedCategory('All');
+            setSelectedStatus('All');
+          }}
+          className={selectedCategory === 'All' && selectedStatus === 'All' && activeTab === 'items' ? 'ring-2 ring-[#00a894] dark:ring-[#00e5c9]' : ''}
         />
         <StatCard
-          title="Total Inventory Value"
-          value={formatCurrency(totalValue)}
+          compact
+          title="Inventory Value"
+          value={formatCurrency(totalValue, true)}
+          change="Asset valuation"
+          trend="up"
           icon={DollarSign}
           accentColor="emerald"
         />
         <StatCard
-          title="Low Stock Alerts"
+          compact
+          title="Low Stock"
           value={lowStockCount}
+          change={`${lowStockCount} need reorder`}
+          trend={lowStockCount > 0 ? 'down' : 'neutral'}
           icon={AlertTriangle}
           accentColor="amber"
+          onClick={() => {
+            setActiveTab('items');
+            setSelectedStatus('Low Stock');
+          }}
+          className={selectedStatus === 'Low Stock' && activeTab === 'items' ? 'ring-2 ring-[#ffb703]' : ''}
         />
         <StatCard
-          title="Out of Stock / Maintenance"
+          compact
+          title="Maintenance / Out"
           value={outOfStockCount}
+          change={`${outOfStockCount} unavailable`}
+          trend={outOfStockCount > 0 ? 'down' : 'neutral'}
           icon={Wrench}
           accentColor="purple"
+          onClick={() => {
+            setActiveTab('items');
+            setSelectedStatus(outOfStockCount > 0 ? 'Out of Stock' : 'Maintenance');
+          }}
+          className={(selectedStatus === 'Out of Stock' || selectedStatus === 'Maintenance') && activeTab === 'items' ? 'ring-2 ring-[#a78bfa]' : ''}
         />
       </div>
 

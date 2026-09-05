@@ -19,6 +19,7 @@ const ROLES: StaffRole[] = [
   'Sound Engineer',
   'Lighting Technician',
   'LED Technician',
+  'Event Crew',
   'Event Manager',
   'Driver',
   'Assistant',

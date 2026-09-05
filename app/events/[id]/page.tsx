@@ -45,6 +45,7 @@ const AVAILABLE_ROLES: StaffRole[] = [
   'Sound Engineer',
   'Lighting Technician',
   'LED Technician',
+  'Event Crew',
   'Event Manager',
   'Driver',
   'Assistant',
@@ -775,12 +776,12 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                           </td>
                           <td className="py-3 px-3 text-center">
                             <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${as.status === 'Completed'
-                                ? 'bg-indigo-950/60 text-indigo-400 border border-indigo-800/60'
-                                : as.status === 'Confirmed'
-                                  ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
-                                  : as.status === 'Cancelled'
-                                    ? 'bg-rose-950/60 text-rose-400 border border-rose-800/60'
-                                    : 'bg-slate-800/80 text-slate-300 border border-slate-700/80'
+                              ? 'bg-indigo-950/60 text-indigo-400 border border-indigo-800/60'
+                              : as.status === 'Confirmed'
+                                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
+                                : as.status === 'Cancelled'
+                                  ? 'bg-rose-950/60 text-rose-400 border border-rose-800/60'
+                                  : 'bg-slate-800/80 text-slate-300 border border-slate-700/80'
                               }`}>
                               {as.status || 'Assigned'}
                             </span>

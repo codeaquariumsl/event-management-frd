@@ -33,6 +33,7 @@ export const staffFormSchema = z.object({
     'Sound Engineer',
     'Lighting Technician',
     'LED Technician',
+    'Event Crew',
     'Event Manager',
     'Driver',
     'Assistant',

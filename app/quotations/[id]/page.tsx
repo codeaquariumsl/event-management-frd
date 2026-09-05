@@ -80,7 +80,36 @@ export default function QuotationDetailPage() {
     return () => window.removeEventListener('seekers_quotations_updated', loadData);
   }, [id]);
 
-  // Edit handlers
+  // Edit calculations & field handlers
+  const recalculateTotals = (
+    items: QuotationLineItem[] = editData.items || [],
+    discountVal = editData.discount,
+    taxRateVal = editData.taxRate,
+    additionalVal = editData.additionalCharges
+  ) => {
+    const subtotal = items.reduce((sum, it) => sum + (Number(it.totalPrice) || 0), 0);
+    const discount = Number(discountVal || 0);
+    const taxRate = Number(taxRateVal || 0);
+    const taxAmount = Math.round((Math.max(0, subtotal - discount) * taxRate) / 100);
+    const additionalCharges = Number(additionalVal || 0);
+    const totalAmount = Math.max(0, subtotal - discount + taxAmount + additionalCharges);
+
+    return { subtotal, discount, taxRate, taxAmount, additionalCharges, totalAmount };
+  };
+
+  const handleFinancialFieldChange = (field: 'discount' | 'taxRate' | 'additionalCharges', value: number) => {
+    const nextDiscount = field === 'discount' ? value : editData.discount;
+    const nextTaxRate = field === 'taxRate' ? value : editData.taxRate;
+    const nextAdditional = field === 'additionalCharges' ? value : editData.additionalCharges;
+
+    const totals = recalculateTotals(editData.items, nextDiscount, nextTaxRate, nextAdditional);
+    setEditData((prev) => ({
+      ...prev,
+      [field]: value,
+      ...totals,
+    }));
+  };
+
   const handleItemChange = (index: number, field: keyof QuotationLineItem, value: any) => {
     if (!editData.items) return;
     const updated = [...editData.items];
@@ -94,20 +123,13 @@ export default function QuotationDetailPage() {
     }
 
     updated[index] = item;
-    const subtotal = updated.reduce((sum, it) => sum + it.totalPrice, 0);
-    const discount = Number(editData.discount || 0);
-    const taxRate = Number(editData.taxRate || 0);
-    const taxAmount = Math.round((Math.max(0, subtotal - discount) * taxRate) / 100);
-    const additional = Number(editData.additionalCharges || 0);
-    const totalAmount = Math.max(0, subtotal - discount + taxAmount + additional);
+    const totals = recalculateTotals(updated);
 
-    setEditData({
-      ...editData,
+    setEditData((prev) => ({
+      ...prev,
       items: updated,
-      subtotal,
-      taxAmount,
-      totalAmount,
-    });
+      ...totals,
+    }));
   };
 
   const handleAddItem = () => {
@@ -121,26 +143,23 @@ export default function QuotationDetailPage() {
       totalPrice: 0,
     };
     const updated = [...(editData.items || []), newItem];
-    setEditData({ ...editData, items: updated });
+    const totals = recalculateTotals(updated);
+    setEditData((prev) => ({
+      ...prev,
+      items: updated,
+      ...totals,
+    }));
   };
 
   const handleRemoveItem = (index: number) => {
     if (!editData.items) return;
     const updated = editData.items.filter((_, i) => i !== index);
-    const subtotal = updated.reduce((sum, it) => sum + it.totalPrice, 0);
-    const discount = Number(editData.discount || 0);
-    const taxRate = Number(editData.taxRate || 0);
-    const taxAmount = Math.round((Math.max(0, subtotal - discount) * taxRate) / 100);
-    const additional = Number(editData.additionalCharges || 0);
-    const totalAmount = Math.max(0, subtotal - discount + taxAmount + additional);
-
-    setEditData({
-      ...editData,
+    const totals = recalculateTotals(updated);
+    setEditData((prev) => ({
+      ...prev,
       items: updated,
-      subtotal,
-      taxAmount,
-      totalAmount,
-    });
+      ...totals,
+    }));
   };
 
   // Group line items category-wise for proposal display
@@ -406,16 +425,44 @@ export default function QuotationDetailPage() {
 
   const handleSaveEdit = async () => {
     if (!quotation) return;
-    const saved = await quotationService.update(quotation.id, {
-      ...editData,
-      id: quotation.id,
-      customerName: editData.customerName || quotation.customerName,
-      title: editData.title || quotation.title,
-      termsAndConditions: editData.termsAndConditions,
-    });
-    setQuotation(saved);
-    setIsEditing(false);
-    showToast('Quotation updated successfully!', 'success');
+    try {
+      const totals = recalculateTotals(
+        editData.items,
+        editData.discount,
+        editData.taxRate,
+        editData.additionalCharges
+      );
+
+      const payload: Partial<Quotation> = {
+        ...editData,
+        id: quotation.id,
+        quotationNumber: editData.quotationNumber || quotation.quotationNumber,
+        title: editData.title || quotation.title,
+        customerId: editData.customerId || quotation.customerId,
+        customerName: editData.customerName || quotation.customerName,
+        customerCompany: editData.customerCompany ?? quotation.customerCompany,
+        customerPhone: editData.customerPhone ?? quotation.customerPhone,
+        customerEmail: editData.customerEmail ?? quotation.customerEmail,
+        eventType: editData.eventType || quotation.eventType,
+        eventDate: editData.eventDate || quotation.eventDate,
+        validUntil: editData.validUntil || quotation.validUntil,
+        venue: editData.venue ?? quotation.venue,
+        status: (editData.status as QuotationStatus) || quotation.status,
+        items: editData.items || [],
+        notes: editData.notes ?? '',
+        termsAndConditions: editData.termsAndConditions,
+        ...totals,
+      };
+
+      const saved = await quotationService.update(quotation.id, payload);
+      setQuotation(saved);
+      setIsEditing(false);
+      showToast('Quotation updated successfully!', 'success');
+      window.dispatchEvent(new Event('seekers_quotations_updated'));
+    } catch (err: any) {
+      console.error('Error updating quotation:', err);
+      showToast(err?.message || 'Failed to save changes. Please try again.', 'error');
+    }
   };
 
   const handleStatusChange = async (newStatus: QuotationStatus) => {
@@ -510,7 +557,18 @@ export default function QuotationDetailPage() {
             )}
 
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                if (!isEditing && quotation) {
+                  setEditData({
+                    ...quotation,
+                    termsAndConditions: quotation.termsAndConditions || `* Payment method can be cash, bank transfer.
+* Payment must be made in full without deducting any tax.
+* Transportation, handling, food, labor charges, are included in this rate.
+* Make all checks payable to “ Seekers’s Entertainment (pvt) Ltd”`,
+                  });
+                }
+                setIsEditing(!isEditing);
+              }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 dark:bg-[#141e2b] border border-slate-300 dark:border-[#23354b] text-slate-700 dark:text-slate-200 text-xs font-semibold hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#1c2c40] transition-colors"
             >
               <Edit2 className="h-3.5 w-3.5" />
@@ -549,70 +607,248 @@ export default function QuotationDetailPage() {
           </div>
         </div>
 
-        {/* EDIT VIEW */}
+        {/* EDIT VIEW (MANAGE ALL FIELDS) */}
         {isEditing ? (
-          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0e1622] p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#1d2b3c] pb-4">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Edit Proposal Details</h2>
-              <button
-                onClick={handleSaveEdit}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black text-xs font-bold hover:bg-[#008f7e] dark:hover:brightness-110 shadow-sm"
-              >
-                <Save className="h-3.5 w-3.5" />
-                Save Changes
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0e1622] p-6 sm:p-8 space-y-8 shadow-sm">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#1d2b3c] pb-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Proposal Title</label>
-                <input
-                  type="text"
-                  value={editData.title || ''}
-                  onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
-                />
+                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Edit2 className="h-4 w-4 text-[#00a894] dark:text-[#00e5c9]" />
+                  Edit Quotation Details
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Update any quotation attributes, event scope, client contact, category line items, and pricing.
+                </p>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Venue</label>
-                <input
-                  type="text"
-                  value={editData.venue || ''}
-                  onChange={(e) => setEditData({ ...editData, venue: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
-                />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#141e2b] border border-slate-300 dark:border-[#23354b] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1b293a] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black text-xs font-bold hover:bg-[#008f7e] dark:hover:brightness-110 shadow-sm transition-all"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Save Changes
+                </button>
               </div>
             </div>
 
-            <div className="space-y-3">
+            {/* Section 1: Quotation & Event Info */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] flex items-center gap-2">
+                <Calendar className="h-3.5 w-3.5" />
+                1. Quotation & Event Scope
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Quotation #
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.quotationNumber || ''}
+                    onChange={(e) => setEditData({ ...editData, quotationNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="e.g. 2609-0001"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={editData.status || 'Draft'}
+                    onChange={(e) => setEditData({ ...editData, status: e.target.value as QuotationStatus })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                  >
+                    <option value="Draft">Draft</option>
+                    <option value="Sent">Sent</option>
+                    <option value="Accepted">Accepted</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Expired">Expired</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Scheduled Event Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editData.eventDate || ''}
+                    onChange={(e) => setEditData({ ...editData, eventDate: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Valid Until Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editData.validUntil || ''}
+                    onChange={(e) => setEditData({ ...editData, validUntil: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Proposal Title
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.title || ''}
+                    onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="e.g. Quotation - Live Concert AV Setup"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Event Type / Category
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.eventType || ''}
+                    onChange={(e) => setEditData({ ...editData, eventType: e.target.value })}
+                    list="quotation-event-type-list"
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="e.g. Club / Concert / Live Music"
+                  />
+                  <datalist id="quotation-event-type-list">
+                    <option value="Wedding & Reception" />
+                    <option value="Club / Concert / Live Music" />
+                    <option value="Corporate Event" />
+                    <option value="Birthday & Anniversary" />
+                    <option value="Festival" />
+                    <option value="Private Party" />
+                    <option value="Other" />
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Venue / Location Address
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.venue || ''}
+                    onChange={(e) => setEditData({ ...editData, venue: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="e.g. Shangri-La Colombo, Grand Ballroom"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Client / Customer Details */}
+            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-[#1d2b3c]">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] flex items-center gap-2">
+                <Building className="h-3.5 w-3.5" />
+                2. Client & Customer Details
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Customer Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.customerName || ''}
+                    onChange={(e) => setEditData({ ...editData, customerName: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="Client or contact person name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Company / Organization
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.customerCompany || ''}
+                    onChange={(e) => setEditData({ ...editData, customerCompany: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="e.g. Shangri-La Hotels PLC"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Contact Phone / WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.customerPhone || ''}
+                    onChange={(e) => setEditData({ ...editData, customerPhone: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="e.g. +94 77 123 4567"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editData.customerEmail || ''}
+                    onChange={(e) => setEditData({ ...editData, customerEmail: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="e.g. events@client.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Line Items (Category Wise) */}
+            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-[#1d2b3c]">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9]">
-                  Line Items (Category Wise)
-                </h3>
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] flex items-center gap-2">
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                    3. Items & Services (Category Wise)
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Items are automatically grouped by category on the final proposal.
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={handleAddItem}
-                  className="px-2.5 py-1 text-xs rounded bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black font-semibold hover:brightness-110 flex items-center gap-1 shadow-sm"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black font-semibold hover:brightness-110 flex items-center gap-1.5 shadow-sm transition-all"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Add Item
+                  Add Line Item
                 </button>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {editData.items?.map((item, index) => (
                   <div
                     key={item.id || index}
-                    className="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 dark:bg-[#121c29] p-3 rounded-lg border border-slate-200 dark:border-[#1d2b3c] items-center text-xs"
+                    className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-slate-50 dark:bg-[#121c29] p-3 rounded-xl border border-slate-200 dark:border-[#1d2b3c] items-center text-xs"
                   >
                     <div className="sm:col-span-4">
-                      <label className="block text-[10px] text-slate-400 mb-0.5 sm:hidden">Item Name</label>
+                      <label className="block text-[10px] text-slate-400 mb-0.5 sm:hidden">Description / Item Name</label>
                       <input
                         type="text"
-                        placeholder="Item or service name"
+                        placeholder="Description (e.g. Pioneer DJM A9)"
                         value={item.name}
                         onChange={(e) => handleItemChange(index, 'name', e.target.value)}
-                        className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                        className="w-full px-2.5 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
                       />
                     </div>
                     <div className="sm:col-span-3">
@@ -622,7 +858,7 @@ export default function QuotationDetailPage() {
                         placeholder="Category (e.g. Sound, Lighting)"
                         value={item.category || ''}
                         onChange={(e) => handleItemChange(index, 'category', e.target.value)}
-                        className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-700 dark:text-slate-300 text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                        className="w-full px-2.5 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-700 dark:text-slate-300 text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
                         list="quotation-category-list"
                       />
                     </div>
@@ -633,27 +869,29 @@ export default function QuotationDetailPage() {
                         min="1"
                         value={item.quantity}
                         onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                        className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9] text-center"
+                        className="w-full px-2 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9] text-center"
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="block text-[10px] text-slate-400 mb-0.5 sm:hidden">Rate</label>
+                      <label className="block text-[10px] text-slate-400 mb-0.5 sm:hidden">Unit Rate (LKR)</label>
                       <input
                         type="number"
                         min="0"
                         value={item.unitPrice}
                         onChange={(e) => handleItemChange(index, 'unitPrice', Number(e.target.value))}
-                        className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9] text-right"
+                        className="w-full px-2 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9] text-right"
                       />
                     </div>
-                    <div className="sm:col-span-2 flex items-center justify-between sm:justify-end gap-2">
-                      <span className="font-bold text-[#00897b] dark:text-[#00e5c9] font-mono text-xs">
-                        {formatCurrency(item.totalPrice)}
-                      </span>
+                    <div className="sm:col-span-2 flex items-center justify-between sm:justify-end gap-2.5">
+                      <div className="text-right">
+                        <span className="font-bold text-[#00897b] dark:text-[#00e5c9] font-mono text-xs block">
+                          {formatCurrency(item.totalPrice)}
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(index)}
-                        className="p-1 text-slate-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                         title="Remove item"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -676,30 +914,128 @@ export default function QuotationDetailPage() {
               </datalist>
             </div>
 
-            {/* Terms & Conditions Edit */}
-            <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-[#1d2b3c]">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Terms & Conditions
-              </label>
-              <textarea
-                rows={4}
-                value={editData.termsAndConditions ?? ''}
-                onChange={(e) => setEditData({ ...editData, termsAndConditions: e.target.value })}
-                className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded text-slate-900 dark:text-slate-300 focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
-              />
+            {/* Section 4: Financial Adjustments & Totals */}
+            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-[#1d2b3c]">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] flex items-center gap-2">
+                <DollarSign className="h-3.5 w-3.5" />
+                4. Financial Adjustments & Totals
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50 dark:bg-[#121c29] p-4 rounded-xl border border-slate-200 dark:border-[#1d2b3c]">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Items Subtotal (LKR)
+                  </label>
+                  <div className="px-3 py-2 bg-slate-100 dark:bg-[#162232] border border-slate-200 dark:border-[#213247] rounded-lg text-slate-800 dark:text-slate-200 text-xs font-mono font-bold">
+                    {formatCurrency(editData.subtotal || 0)}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Overall Proposal Discount (LKR)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editData.discount ?? 0}
+                    onChange={(e) => handleFinancialFieldChange('discount', Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Tax Rate (%)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editData.taxRate ?? 0}
+                      onChange={(e) => handleFinancialFieldChange('taxRate', Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    />
+                    <span className="text-[11px] text-slate-500 font-mono whitespace-nowrap">
+                      +{formatCurrency(editData.taxAmount || 0)}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Logistics & Crew Transport (LKR)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editData.additionalCharges ?? 0}
+                    onChange={(e) => handleFinancialFieldChange('additionalCharges', Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between sm:justify-end items-center gap-4 p-4 bg-slate-100/70 dark:bg-[#141e2b] rounded-xl border border-slate-200 dark:border-[#23354b]">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Calculated Grand Total:
+                </span>
+                <span className="text-xl font-black text-[#00897b] dark:text-[#00e5c9] font-mono">
+                  {formatCurrency(editData.totalAmount || 0)}
+                </span>
+              </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-[#1d2b3c]">
+            {/* Section 5: Terms, Conditions & Notes */}
+            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-[#1d2b3c]">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] flex items-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                5. Terms, Conditions & Special Notes
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Terms & Conditions
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={editData.termsAndConditions ?? ''}
+                    onChange={(e) => setEditData({ ...editData, termsAndConditions: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-slate-300 focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="Quotation terms and conditions..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Special Instructions / Notes
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={editData.notes ?? ''}
+                    onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-slate-300 focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="Special instructions or notes for client..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-[#1d2b3c]">
               <button
+                type="button"
                 onClick={() => setIsEditing(false)}
                 className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#141e2b] border border-slate-300 dark:border-[#23354b] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1b293a] transition-colors"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleSaveEdit}
-                className="px-4 py-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black text-xs font-bold hover:bg-[#008f7e] dark:hover:brightness-110 shadow-sm"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black text-xs font-bold hover:bg-[#008f7e] dark:hover:brightness-110 shadow-sm transition-all"
               >
+                <Save className="h-3.5 w-3.5" />
                 Save Changes
               </button>
             </div>
@@ -796,6 +1132,12 @@ export default function QuotationDetailPage() {
                     <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Scheduled Date:</span>{' '}
                     <strong className="text-slate-900 dark:text-white print:text-black">{quotation.eventDate}</strong>
                   </div>
+                  {quotation.validUntil && (
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Valid Until:</span>{' '}
+                      <strong className="text-slate-900 dark:text-white print:text-black">{quotation.validUntil}</strong>
+                    </div>
+                  )}
                   <div>
                     <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Venue / Location:</span>{' '}
                     <strong className="text-slate-900 dark:text-white print:text-black">{quotation.venue || 'TBD'}</strong>

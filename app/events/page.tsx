@@ -164,7 +164,7 @@ export default function EventsPage() {
       key: 'id',
       header: 'ID',
       sortable: true,
-      className: 'w-24 font-mono text-[11px] text-slate-400',
+      className: 'w-40 font-mono text-[11px] text-slate-400',
     },
     {
       key: 'name',
@@ -184,7 +184,7 @@ export default function EventsPage() {
     },
     {
       key: 'eventDate',
-      header: 'Date & Time',
+      header: 'Date',
       sortable: true,
       className: 'w-32',
       render: (evt) => (
@@ -196,15 +196,15 @@ export default function EventsPage() {
         </div>
       ),
     },
-    {
-      key: 'location',
-      header: 'Location / Venue',
-      sortable: true,
-      className: 'max-w-[180px] truncate',
-    },
+    // {
+    //   key: 'location',
+    //   header: 'Location',
+    //   sortable: true,
+    //   className: 'max-w-[120px] truncate',
+    // },
     {
       key: 'eventType',
-      header: 'Event Type',
+      header: 'Type',
       sortable: true,
       className: 'w-28',
       render: (evt) => (
@@ -226,7 +226,7 @@ export default function EventsPage() {
     },
     {
       key: 'totalAmount',
-      header: 'Total Amount',
+      header: 'Amount',
       sortable: true,
       className: 'text-right font-mono font-semibold text-slate-900 dark:text-white w-28',
       render: (evt) => formatCurrency(evt.totalAmount),
@@ -240,7 +240,7 @@ export default function EventsPage() {
     },
     {
       key: 'balance',
-      header: 'Balance Due',
+      header: 'Due',
       sortable: true,
       className: 'text-right font-mono font-bold text-amber-300 w-28',
       render: (evt) => formatCurrency(evt.balance),
@@ -261,7 +261,7 @@ export default function EventsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <PageHeader
           title="Event Management"
           subtitle="Manage audio-visual productions, customer bookings, crew assignments, and invoicing"

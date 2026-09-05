@@ -6,14 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number, compact: boolean = false): string {
-  if (isNaN(amount)) return 'LKR 0'
-  
+  if (isNaN(amount)) return '0'
+
   if (compact) {
     if (Math.abs(amount) >= 1_000_000) {
-      return `LKR ${(amount / 1_000_000).toFixed(2)}M`
+      return `${(amount / 1_000_000).toFixed(2)}M`
     }
     if (Math.abs(amount) >= 1_000) {
-      return `LKR ${(amount / 1_000).toFixed(1)}K`
+      return `${(amount / 1_000).toFixed(1)}K`
     }
   }
 

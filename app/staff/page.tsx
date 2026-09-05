@@ -191,6 +191,7 @@ export default function StaffPage() {
                 <option value="Sound Engineer">Sound Engineer</option>
                 <option value="Lighting Technician">Lighting Technician</option>
                 <option value="LED Technician">LED Technician</option>
+                <option value="Event Crew">Event Crew</option>
                 <option value="Event Manager">Event Manager</option>
                 <option value="Driver">Driver</option>
                 <option value="Assistant">Assistant</option>

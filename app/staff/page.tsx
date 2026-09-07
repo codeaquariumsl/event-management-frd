@@ -9,6 +9,7 @@ import {
   Phone,
   Mail,
   Eye,
+  Edit2,
   Trash2,
   DollarSign,
   Briefcase,
@@ -18,6 +19,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StaffModal } from '@/features/staff/StaffModal';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
 import { staffService } from '@/lib/api/staffService';
@@ -33,6 +35,9 @@ export default function StaffPage() {
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [deleteTargetStaff, setDeleteTargetStaff] = useState<Staff | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [paymentTargetStaff, setPaymentTargetStaff] = useState<Staff | null>(null);
 
   const loadData = async () => {
@@ -47,6 +52,22 @@ export default function StaffPage() {
     window.addEventListener('seekers_store_updated', loadData);
     return () => window.removeEventListener('seekers_store_updated', loadData);
   }, []);
+
+  const handleDeleteStaff = async () => {
+    if (!deleteTargetStaff) return;
+    const target = deleteTargetStaff;
+    setIsDeleting(true);
+    try {
+      await staffService.deleteStaff(target.id);
+      showToast(`Staff member "${target.name}" deleted successfully`, 'success');
+      loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete staff member', 'error');
+    } finally {
+      setIsDeleting(false);
+      setDeleteTargetStaff(null);
+    }
+  };
 
   const filteredStaff = useMemo(() => {
     return staffList.filter((s) => {
@@ -157,7 +178,10 @@ export default function StaffPage() {
           breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Staff' }]}
           actions={
             <button
-              onClick={() => setIsStaffModalOpen(true)}
+              onClick={() => {
+                setEditingStaff(null);
+                setIsStaffModalOpen(true);
+              }}
               className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/25 transition-all"
             >
               <Plus className="h-4 w-4" />
@@ -225,6 +249,17 @@ export default function StaffPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  setEditingStaff(s);
+                  setIsStaffModalOpen(true);
+                }}
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
+                title="Edit Staff Member"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
                   setPaymentTargetStaff(s);
                 }}
                 className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
@@ -232,16 +267,35 @@ export default function StaffPage() {
               >
                 <DollarSign className="h-3.5 w-3.5" />
               </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTargetStaff(s);
+                }}
+                className="rounded p-1 text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                title="Delete Staff Member"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
         />
       </div>
 
-      {/* Add Staff Modal */}
+      {/* Add / Edit Staff Modal */}
       <StaffModal
+        key={editingStaff?.id || 'new'}
         isOpen={isStaffModalOpen}
-        onClose={() => setIsStaffModalOpen(false)}
-        onSuccess={loadData}
+        initialData={editingStaff || undefined}
+        onClose={() => {
+          setIsStaffModalOpen(false);
+          setEditingStaff(null);
+        }}
+        onSuccess={() => {
+          loadData();
+          setIsStaffModalOpen(false);
+          setEditingStaff(null);
+        }}
       />
 
       {/* Staff Payment Modal */}
@@ -253,6 +307,18 @@ export default function StaffPage() {
           onSuccess={loadData}
         />
       )}
+
+      {/* Delete Staff Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deleteTargetStaff}
+        onClose={() => setDeleteTargetStaff(null)}
+        onConfirm={handleDeleteStaff}
+        title="Delete Staff Member"
+        message={`Are you sure you want to delete "${deleteTargetStaff?.name}"? This action cannot be undone and will remove them from the staff roster.`}
+        confirmLabel="Delete Staff"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
     </AppShell>
   );
 }

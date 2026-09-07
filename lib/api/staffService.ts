@@ -10,10 +10,6 @@ export const staffService = {
       }
     } catch (err) {
       console.warn('Backend API /staff unreachable:', err);
-      if (typeof window !== 'undefined') {
-        const cached = localStorage.getItem('seekers_staff');
-        if (cached) return JSON.parse(cached);
-      }
     }
     return [];
   },
@@ -26,13 +22,6 @@ export const staffService = {
       }
     } catch (err) {
       console.warn(`Backend API /staff/${id} unreachable:`, err);
-      if (typeof window !== 'undefined') {
-        const cached = localStorage.getItem('seekers_staff');
-        if (cached) {
-          const list: Staff[] = JSON.parse(cached);
-          return list.find((s) => s.id === id);
-        }
-      }
     }
     return undefined;
   },
@@ -42,6 +31,7 @@ export const staffService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+
     return saved;
   },
 
@@ -57,6 +47,7 @@ export const staffService = {
     await apiClient.request<{ success: boolean }>(`/staff/${id}`, {
       method: 'DELETE',
     });
+
     return true;
   },
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Staff, StaffRole, EmploymentType, StaffStatus } from '@/lib/types';
 import { staffService } from '@/lib/api/staffService';
 import { Modal } from '@/components/ui/Modal';
@@ -26,13 +26,30 @@ export function StaffModal({
   const [role, setRole] = useState<StaffRole>(initialData?.role || 'DJ');
   const [employmentType, setEmploymentType] = useState<EmploymentType>(initialData?.employmentType || 'Freelance');
   const [status, setStatus] = useState<StaffStatus>(initialData?.status || 'Active');
-  const [skills, setSkills] = useState(initialData?.skills.join(', ') || '');
-  const [basicSalary, setBasicSalary] = useState(initialData?.basicSalary || 0);
-  const [defaultRate, setDefaultRate] = useState(initialData?.defaultRatePerEvent || 20000);
+  const [skills, setSkills] = useState(Array.isArray(initialData?.skills) ? initialData.skills.join(', ') : '');
+  const [basicSalary, setBasicSalary] = useState(initialData?.basicSalary ?? 0);
+  const [defaultRate, setDefaultRate] = useState(initialData?.defaultRatePerEvent ?? 20000);
   const [bankName, setBankName] = useState(initialData?.bankDetails?.bankName || 'Commercial Bank');
   const [accountNumber, setAccountNumber] = useState(initialData?.bankDetails?.accountNumber || '');
   const [branch, setBranch] = useState(initialData?.bankDetails?.branch || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setName(initialData?.name || '');
+      setPhone(initialData?.phone || '');
+      setEmail(initialData?.email || '');
+      setRole(initialData?.role || 'DJ');
+      setEmploymentType(initialData?.employmentType || 'Freelance');
+      setStatus(initialData?.status || 'Active');
+      setSkills(Array.isArray(initialData?.skills) ? initialData.skills.join(', ') : '');
+      setBasicSalary(initialData?.basicSalary ?? 0);
+      setDefaultRate(initialData?.defaultRatePerEvent ?? 20000);
+      setBankName(initialData?.bankDetails?.bankName || 'Commercial Bank');
+      setAccountNumber(initialData?.bankDetails?.accountNumber || '');
+      setBranch(initialData?.bankDetails?.branch || '');
+    }
+  }, [initialData, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,9 +265,10 @@ export function StaffModal({
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00a894]/20 dark:shadow-[#00e5c9]/20 transition-all"
+            disabled={isSubmitting}
+            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00a894]/20 dark:shadow-[#00e5c9]/20 transition-all disabled:opacity-50"
           >
-            {initialData ? 'Save Changes' : 'Add Staff Member'}
+            {isSubmitting ? 'Saving...' : initialData ? 'Save Changes' : 'Add Staff Member'}
           </button>
         </div>
       </form>

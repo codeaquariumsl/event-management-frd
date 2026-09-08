@@ -118,6 +118,63 @@ export default function ReportsPage() {
     return unique.length > 0 ? unique : ['Club / Concert', 'Corporate', 'Wedding & Reception'];
   }, [eventTypes, events]);
 
+  // Dynamic Staff Performance & Payroll Calculation respecting dateRange
+  const staffPerformanceData = React.useMemo(() => {
+    return staff.map((member) => {
+      // Filter events assigned to this member in selected date range
+      const memberEvents = filteredEvents.filter((e) =>
+        Array.isArray(e.assignedStaff) && e.assignedStaff.some((as) => as.staffId === member.id)
+      );
+
+      const assignedCount = memberEvents.length;
+      const completedCount = memberEvents.filter((e) => e.status === 'Completed').length;
+
+      // Event earnings for the selected period
+      const eventEarnings = memberEvents.reduce((acc, evt) => {
+        const as = evt.assignedStaff.find((a) => a.staffId === member.id);
+        return acc + (Number(as?.paymentAmount) || 0);
+      }, 0);
+
+      // Direct payments recorded on event assignments
+      const eventDirectPaid = memberEvents.reduce((acc, evt) => {
+        const as = evt.assignedStaff.find((a) => a.staffId === member.id);
+        return acc + (Number(as?.paidAmount) || 0);
+      }, 0);
+
+      // Disbursements recorded in staff payments within date range
+      const memberPayments = filteredStaffPayments.filter((p) => p.staffId === member.id);
+      const paymentDisbursements = memberPayments.reduce((acc, p) => acc + (Number(p.paidAmount) || Number(p.amount) || 0), 0);
+
+      const totalPaid = Math.max(paymentDisbursements, eventDirectPaid);
+      const totalEarnings = eventEarnings;
+      const pendingPay = Math.max(0, totalEarnings - totalPaid);
+
+      const payoutStatus =
+        totalEarnings === 0
+          ? 'No Assignments'
+          : pendingPay === 0
+          ? 'Paid'
+          : totalPaid > 0
+          ? 'Partial'
+          : 'Pending';
+
+      return {
+        ...member,
+        assignedCount,
+        completedCount,
+        totalEarnings,
+        totalPaid,
+        pendingPay,
+        payoutStatus,
+      };
+    });
+  }, [staff, filteredEvents, filteredStaffPayments]);
+
+  const totalStaffAssignedCount = staffPerformanceData.filter((s) => s.assignedCount > 0).length;
+  const totalStaffEarnings = staffPerformanceData.reduce((sum, s) => sum + s.totalEarnings, 0);
+  const totalStaffDisbursed = staffPerformanceData.reduce((sum, s) => sum + s.totalPaid, 0);
+  const totalStaffPendingPay = staffPerformanceData.reduce((sum, s) => sum + s.pendingPay, 0);
+
   const handlePrint = () => {
     window.print();
   };
@@ -142,8 +199,19 @@ export default function ReportsPage() {
       ];
     } else if (reportCategory === 'staff') {
       rows = [
-        ['Staff ID', 'Name', 'Role', 'Employment Type', 'Events Assigned', 'Total Earnings', 'Pending Pay'],
-        ...staff.map((s) => [s.id, s.name, s.role, s.employmentType, s.totalEventsAssigned.toString(), s.totalEarnings.toString(), s.pendingPayments.toString()]),
+        ['Staff ID', 'Name', 'Role', 'Employment Type', 'Assigned Events', 'Completed Events', 'Total Earnings (LKR)', 'Paid Out (LKR)', 'Pending Pay (LKR)', 'Status'],
+        ...staffPerformanceData.map((s) => [
+          s.id,
+          s.name,
+          s.role,
+          s.employmentType,
+          s.assignedCount.toString(),
+          s.completedCount.toString(),
+          s.totalEarnings.toString(),
+          s.totalPaid.toString(),
+          s.pendingPay.toString(),
+          s.payoutStatus,
+        ]),
       ];
     } else {
       rows = [
@@ -372,33 +440,118 @@ export default function ReportsPage() {
 
         {/* REPORT 3: STAFF */}
         {reportCategory === 'staff' && (
-          <div className="space-y-6 text-xs">
+          <div className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <StatCard
+                compact
+                title="Active Crew Assigned"
+                value={`${totalStaffAssignedCount} of ${staff.length}`}
+                change={`${dateRange}`}
+                trend="neutral"
+                icon={Users}
+                accentColor="teal"
+              />
+              <StatCard
+                compact
+                title="Crew Payroll Incurred"
+                value={formatCurrency(totalStaffEarnings, true)}
+                change="Production fees"
+                trend="up"
+                icon={DollarSign}
+                accentColor="purple"
+              />
+              <StatCard
+                compact
+                title="Disbursed to Staff"
+                value={formatCurrency(totalStaffDisbursed, true)}
+                change="Paid out"
+                trend="up"
+                icon={TrendingUp}
+                accentColor="emerald"
+              />
+              <StatCard
+                compact
+                title="Pending Payouts"
+                value={formatCurrency(totalStaffPendingPay, true)}
+                change="Outstanding fee"
+                trend={totalStaffPendingPay > 0 ? 'down' : 'neutral'}
+                icon={PieChart}
+                accentColor="amber"
+              />
+            </div>
+
             <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-6 space-y-4">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Staff Utilization & Payout Audit</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Staff Utilization & Payout Audit ({dateRange})
+                </h2>
+                <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                  Showing {staffPerformanceData.length} crew members
+                </span>
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[#233549] text-slate-400 text-[11px] uppercase">
                       <th className="py-2.5 px-3">Staff Member</th>
-                      <th className="py-2.5 px-3">Role</th>
+                      <th className="py-2.5 px-3">Role & Type</th>
                       <th className="py-2.5 px-3 text-center">Assigned Events</th>
                       <th className="py-2.5 px-3 text-right">Total Earnings</th>
+                      <th className="py-2.5 px-3 text-right">Paid Out</th>
                       <th className="py-2.5 px-3 text-right">Pending Pay</th>
+                      <th className="py-2.5 px-3 text-center">Payout Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#182535]">
-                    {staff.map((s) => (
+                    {staffPerformanceData.map((s) => (
                       <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
-                        <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">{s.name}</td>
-                        <td className="py-3 px-3 text-slate-300">{s.role}</td>
-                        <td className="py-3 px-3 text-center font-mono font-bold text-slate-900 dark:text-white">
-                          {s.totalEventsAssigned}
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#7c5cff] to-[#00e5c9] text-[11px] font-bold text-white">
+                              {s.avatar || s.name.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <span className="font-semibold text-slate-900 dark:text-white block">{s.name}</span>
+                              <span className="text-[10px] text-slate-400 block">{s.id}</span>
+                            </div>
+                          </div>
                         </td>
-                        <td className="py-3 px-3 text-right font-mono font-bold text-emerald-400">
+                        <td className="py-3 px-3">
+                          <span className="font-medium text-slate-800 dark:text-slate-200 block">{s.role}</span>
+                          <span className="text-[10px] text-slate-400 block">{s.employmentType}</span>
+                        </td>
+                        <td className="py-3 px-3 text-center font-mono font-bold text-slate-900 dark:text-white">
+                          <span>{s.assignedCount}</span>
+                          {s.assignedCount > 0 && (
+                            <span className="text-[10px] text-slate-400 block font-normal">
+                              ({s.completedCount} done)
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
                           {formatCurrency(s.totalEarnings)}
                         </td>
+                        <td className="py-3 px-3 text-right font-mono font-bold text-emerald-400">
+                          {formatCurrency(s.totalPaid)}
+                        </td>
                         <td className="py-3 px-3 text-right font-mono font-bold text-amber-300">
-                          {formatCurrency(s.pendingPayments)}
+                          {formatCurrency(s.pendingPay)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              s.payoutStatus === 'Paid'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : s.payoutStatus === 'Partial'
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                : s.payoutStatus === 'Pending'
+                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                            }`}
+                          >
+                            {s.payoutStatus}
+                          </span>
                         </td>
                       </tr>
                     ))}

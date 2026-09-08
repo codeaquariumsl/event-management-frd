@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Printer, Download, CreditCard, Loader2 } from 'lucide-react';
+import { Printer, Download, CreditCard, Loader2, Eye, EyeOff } from 'lucide-react';
 import { EventItem, ServiceItem, CompanyProfile } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Modal } from './Modal';
@@ -20,6 +20,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
   const invoiceRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isPrintingPdf, setIsPrintingPdf] = useState(false);
+  const [hideItemPrices, setHideItemPrices] = useState(false);
 
   const [company, setCompany] = useState<CompanyProfile>({
     name: 'Seekers’s Entertainment (pvt) Ltd',
@@ -429,6 +430,32 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
               </button>
             )}
 
+            {/* Toggle Hide/Show Individual Rates & Totals */}
+            <button
+              onClick={() => setHideItemPrices((prev) => !prev)}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all shadow-sm ${hideItemPrices
+                ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-[#00e5c9] hover:bg-emerald-500/20'
+                : 'border-slate-300 dark:border-[#24374b] bg-slate-100 dark:bg-[#142130] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1b2b3d]'
+                }`}
+              title={
+                hideItemPrices
+                  ? 'Show individual item rates & totals in table'
+                  : 'Hide individual item rates & totals (show only category totals)'
+              }
+            >
+              {hideItemPrices ? (
+                <>
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>Show Item Rates</span>
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-3.5 w-3.5" />
+                  <span>Hide Item Rates</span>
+                </>
+              )}
+            </button>
+
             {/* Download PDF Button */}
             <button
               onClick={handleDownloadPdf}
@@ -580,34 +607,35 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100 dark:bg-[#121d2b] print:bg-slate-100 uppercase tracking-wider font-bold text-slate-700 dark:text-slate-400 print:text-slate-700">
                 <tr className="border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
-                  <th className="px-3 py-1.5 w-10 text-center text-[10.5px]">#</th>
-                  <th className="px-3 py-1.5 text-[10.5px]">Service / Item Description</th>
-                  <th className="px-3 py-1.5 text-center w-16 text-[10.5px]">Qty</th>
-                  <th className="px-3 py-1.5 text-right w-28 text-[10.5px]">Rate (LKR)</th>
-                  <th className="px-3 py-1.5 text-right w-28 text-[10.5px]">Total (LKR)</th>
+                  <th className="px-3 py-1 w-10 text-center text-[10.5px]">#</th>
+                  <th className="px-3 py-1 text-[10.5px]">Service / Item Description</th>
+                  <th className={`px-3 py-1 text-center text-[10.5px] ${hideItemPrices ? 'w-24' : 'w-16'}`}>Qty</th>
+                  {!hideItemPrices && (
+                    <>
+                      <th className="px-3 py-1 text-right w-28 text-[10.5px]">Rate (LKR)</th>
+                      <th className="px-3 py-1 text-right w-28 text-[10.5px]">Total (LKR)</th>
+                    </>
+                  )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#172332] print:divide-slate-200 text-slate-700 dark:text-slate-300 print:text-slate-800">
+              <tbody className="text-slate-700 dark:text-slate-300 print:text-slate-800">
                 {(() => {
                   let globalIdx = 0;
                   return categoryGroups.map((group, gIdx) => (
                     <React.Fragment key={group.category || gIdx}>
                       {/* Category Header Row */}
-                      <tr className="bg-slate-50/90 dark:bg-[#131e2b] print:bg-slate-100/90 font-bold border-t border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 avoid-break">
-                        <td colSpan={5} className="px-3 py-1 text-[10.5px]">
+                      <tr className={`bg-slate-50/90 dark:bg-[#131e2b] print:bg-slate-100/90 font-bold ${gIdx > 0 ? 'border-t border-slate-200 dark:border-[#1d2b3c] print:border-slate-300' : ''} avoid-break`}>
+                        <td colSpan={hideItemPrices ? 3 : 5} className="px-3 py-0.5 text-[10.5px]">
                           <div className="flex items-center justify-between">
                             <span className="font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-black flex items-center gap-1.5">
                               <span className="h-1.5 w-1.5 rounded-full bg-[#00897b] dark:bg-[#00e5c9] print:bg-slate-700 inline-block" />
                               {group.category}
                             </span>
-                            <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400 print:text-slate-600 font-mono">
-                              {group.items.length} {group.items.length === 1 ? 'item' : 'items'}
-                            </span>
                           </div>
                         </td>
                       </tr>
 
-                      {/* Items under Category */}
+                      {/* Items under Category (No border, compact line spacing) */}
                       {group.items.map((srv, itemIdx) => {
                         globalIdx++;
                         return (
@@ -615,29 +643,46 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                             key={srv.id || `${group.category}-${itemIdx}`}
                             className="hover:bg-slate-50/50 dark:hover:bg-[#121c29]/50 transition-colors avoid-break"
                           >
-                            <td className="px-3 py-1.5 text-center font-mono text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-500">{globalIdx}</td>
-                            <td className="px-3 py-1.5">
-                              <div className="font-semibold text-slate-900 dark:text-white print:text-black text-xs">{srv.name}</div>
+                            <td className="px-3 py-0.5 text-center font-mono text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-500 leading-tight">{globalIdx}</td>
+                            <td className="px-3 py-0.5 leading-tight">
+                              <div className="font-medium text-slate-900 dark:text-white print:text-black text-xs leading-tight">{srv.name}</div>
                             </td>
-                            <td className="px-3 py-1.5 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black text-xs">{srv.quantity}</td>
-                            <td className="px-3 py-1.5 text-right font-mono text-slate-800 dark:text-slate-200 print:text-black text-xs">{formatCurrency(srv.unitPrice)}</td>
-                            <td className="px-3 py-1.5 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs">
-                              {formatCurrency(srv.totalPrice)}
-                            </td>
+                            <td className="px-3 py-0.5 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">{srv.quantity}</td>
+                            {!hideItemPrices && (
+                              <>
+                                <td className="px-3 py-0.5 text-right font-mono text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">{formatCurrency(srv.unitPrice)}</td>
+                                <td className="px-3 py-0.5 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs leading-tight">
+                                  {formatCurrency(srv.totalPrice)}
+                                </td>
+                              </>
+                            )}
                           </tr>
                         );
                       })}
 
-                      {/* Category Subtotal (if multiple categories exist) */}
-                      {categoryGroups.length > 1 && (
-                        <tr className="bg-slate-50/40 dark:bg-[#0e1622]/40 print:bg-slate-50 text-[10px] border-b border-slate-200 dark:border-[#172332] print:border-slate-200 avoid-break">
-                          <td colSpan={4} className="px-3 py-1 text-right font-medium text-slate-500 dark:text-slate-400 print:text-slate-600">
-                            Subtotal ({group.category}):
-                          </td>
-                          <td className="px-3 py-1 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 print:text-black">
-                            {formatCurrency(group.subtotal)}
+                      {/* Category Subtotal Row */}
+                      {hideItemPrices ? (
+                        <tr className="bg-slate-50/70 dark:bg-[#0e1622]/70 print:bg-slate-100/80 text-xs border-b border-slate-200 dark:border-[#172332] print:border-slate-300 avoid-break font-bold">
+                          <td colSpan={3} className="px-3 py-0.5 text-right">
+                            <span className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-400 print:text-slate-700 mr-2">
+                              {group.category} Total:
+                            </span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs">
+                              {formatCurrency(group.subtotal)}
+                            </span>
                           </td>
                         </tr>
+                      ) : (
+                        categoryGroups.length > 1 && (
+                          <tr className="bg-slate-50/40 dark:bg-[#0e1622]/40 print:bg-slate-50 text-[10px] border-b border-slate-200 dark:border-[#172332] print:border-slate-200 avoid-break">
+                            <td colSpan={4} className="px-3 py-0.5 text-right font-medium text-slate-500 dark:text-slate-400 print:text-slate-600">
+                              Subtotal ({group.category}):
+                            </td>
+                            <td className="px-3 py-0.5 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 print:text-black">
+                              {formatCurrency(group.subtotal)}
+                            </td>
+                          </tr>
+                        )
                       )}
                     </React.Fragment>
                   ));
@@ -645,7 +690,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
 
                 {(!event.services || event.services.length === 0) && (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
+                    <td colSpan={hideItemPrices ? 3 : 5} className="px-3 py-6 text-center text-slate-400">
                       No line items recorded for this invoice.
                     </td>
                   </tr>

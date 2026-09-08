@@ -38,7 +38,7 @@ export default function StaffPaymentsPage() {
       ]);
       if (Array.isArray(pays)) setPayments(pays);
       if (Array.isArray(payroll)) setPayrollSummary(payroll);
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -195,7 +195,7 @@ export default function StaffPaymentsPage() {
               className="inline-flex items-center gap-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/25 transition-all"
             >
               <Plus className="h-4 w-4" />
-              <span>+ Record Payout</span>
+              <span>Record Payout</span>
             </button>
           }
         />
@@ -241,21 +241,19 @@ export default function StaffPaymentsPage() {
           <div className="flex items-center gap-3 text-xs font-semibold">
             <button
               onClick={() => setActiveTab('payroll')}
-              className={`pb-2 px-1 border-b-2 transition-colors ${
-                activeTab === 'payroll'
+              className={`pb-2 px-1 border-b-2 transition-colors ${activeTab === 'payroll'
                   ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
                   : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                }`}
             >
               Monthly Salary & Payroll Summary
             </button>
             <button
               onClick={() => setActiveTab('transactions')}
-              className={`pb-2 px-1 border-b-2 transition-colors ${
-                activeTab === 'transactions'
+              className={`pb-2 px-1 border-b-2 transition-colors ${activeTab === 'transactions'
                   ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
                   : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                }`}
             >
               All Payment Transactions ({payments.length})
             </button>

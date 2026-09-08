@@ -645,9 +645,18 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                           >
                             <td className="px-3 py-0.5 text-center font-mono text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-500 leading-tight">{globalIdx}</td>
                             <td className="px-3 py-0.5 leading-tight">
-                              <div className="font-medium text-slate-900 dark:text-white print:text-black text-xs leading-tight">{srv.name}</div>
+                              <div className="font-medium text-slate-900 dark:text-white print:text-black text-xs leading-tight flex items-center gap-1.5 flex-wrap">
+                                <span>{srv.name}</span>
+                                {srv.size && (
+                                  <span className="inline-block rounded bg-slate-100 dark:bg-[#1a2636] print:bg-slate-100 border border-slate-300 dark:border-[#283b52] print:border-slate-300 px-1.5 py-0.5 text-[9.5px] font-semibold text-[#00897b] dark:text-[#00e5c9] print:text-slate-800 leading-none">
+                                    {srv.size}
+                                  </span>
+                                )}
+                              </div>
                             </td>
-                            <td className="px-3 py-0.5 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">{srv.quantity}</td>
+                            <td className="px-3 py-0.5 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">
+                              {srv.quantity !== null && srv.quantity !== undefined && srv.quantity > 0 ? srv.quantity : '—'}
+                            </td>
                             {!hideItemPrices && (
                               <>
                                 <td className="px-3 py-0.5 text-right font-mono text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">{formatCurrency(srv.unitPrice)}</td>

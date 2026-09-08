@@ -471,8 +471,17 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                       className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-[#0f1723] border border-slate-200 dark:border-[#1b2837]"
                     >
                       <div>
-                        <span className="font-semibold text-slate-900 dark:text-white block">{s.name}</span>
-                        <span className="text-[11px] text-slate-400">Qty: {s.quantity}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-900 dark:text-white">{s.name}</span>
+                          {s.size && (
+                            <span className="rounded bg-[#00a894]/10 dark:bg-[#00e5c9]/10 border border-[#00a894]/30 dark:border-[#00e5c9]/30 px-1.5 py-0.5 text-[10px] font-semibold text-[#00897b] dark:text-[#00e5c9]">
+                              {s.size}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-400">
+                          {s.quantity ? `Qty: ${s.quantity}` : (s.size ? 'Set / Flat Rate' : 'Qty: —')}
+                        </span>
                       </div>
                       <span className="font-mono font-semibold text-slate-900 dark:text-white">
                         {formatCurrency(s.totalPrice)}
@@ -605,6 +614,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   <tr className="border-b border-[#233549] text-slate-400 text-[11px] uppercase">
                     <th className="py-2.5 px-3">Service Name</th>
                     <th className="py-2.5 px-3">Category</th>
+                    <th className="py-2.5 px-3">Size / Spec</th>
                     <th className="py-2.5 px-3 text-center">Quantity</th>
                     <th className="py-2.5 px-3 text-right">Unit Price (LKR)</th>
                     <th className="py-2.5 px-3 text-right">Total (LKR)</th>
@@ -624,7 +634,18 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                           {s.category}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-center font-bold text-slate-900 dark:text-white">{s.quantity}</td>
+                      <td className="py-3 px-3">
+                        {s.size ? (
+                          <span className="rounded bg-[#00a894]/10 dark:bg-[#00e5c9]/10 border border-[#00a894]/30 dark:border-[#00e5c9]/30 px-2 py-0.5 text-[11px] font-semibold text-[#00897b] dark:text-[#00e5c9]">
+                            {s.size}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-center font-bold text-slate-900 dark:text-white">
+                        {s.quantity !== null && s.quantity !== undefined && s.quantity > 0 ? s.quantity : '—'}
+                      </td>
                       <td className="py-3 px-3 text-right font-mono text-slate-300">
                         {formatCurrency(s.unitPrice)}
                       </td>

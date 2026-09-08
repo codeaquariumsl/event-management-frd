@@ -212,6 +212,7 @@ export function EventForm({ initialData }: EventFormProps) {
       id: `es-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       name: templateService.name,
       category: templateService.category,
+      size: '',
       quantity: 1,
       unitPrice: templateService.unitPrice,
       totalPrice: templateService.unitPrice,
@@ -227,6 +228,7 @@ export function EventForm({ initialData }: EventFormProps) {
       id: `es-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       name: item.name,
       category: item.category || 'Production',
+      size: item.specifications || '',
       quantity: 1,
       unitPrice: rate,
       totalPrice: rate,
@@ -241,7 +243,8 @@ export function EventForm({ initialData }: EventFormProps) {
       id: `es-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       name: '',
       category: 'Production',
-      quantity: 1,
+      size: '',
+      quantity: null,
       unitPrice: 0,
       totalPrice: 0,
       description: '',
@@ -249,21 +252,40 @@ export function EventForm({ initialData }: EventFormProps) {
     setServices((prev) => [...prev, newService]);
   };
 
-  const handleUpdateServiceQuantity = (id: string, qty: number) => {
-    const validQty = Math.max(1, qty);
+  const handleUpdateServiceSize = (id: string, size: string) => {
     setServices((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, quantity: validQty, totalPrice: validQty * s.unitPrice } : s
-      )
+      prev.map((s) => (s.id === id ? { ...s, size } : s))
+    );
+  };
+
+  const handleUpdateServiceQuantity = (id: string, val: string) => {
+    const parsedQty = val.trim() === '' ? null : Number(val);
+    const validQty = parsedQty !== null && !isNaN(parsedQty) ? Math.max(0, parsedQty) : null;
+    setServices((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const multiplier = validQty !== null && validQty > 0 ? validQty : 1;
+        return {
+          ...s,
+          quantity: validQty,
+          totalPrice: multiplier * s.unitPrice,
+        };
+      })
     );
   };
 
   const handleUpdateServicePrice = (id: string, unitPrice: number) => {
     const validPrice = Math.max(0, unitPrice);
     setServices((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, unitPrice: validPrice, totalPrice: s.quantity * validPrice } : s
-      )
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const multiplier = s.quantity !== null && s.quantity !== undefined && s.quantity > 0 ? s.quantity : 1;
+        return {
+          ...s,
+          unitPrice: validPrice,
+          totalPrice: multiplier * validPrice,
+        };
+      })
     );
   };
 
@@ -362,7 +384,7 @@ export function EventForm({ initialData }: EventFormProps) {
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#00a894]/40 dark:border-[#00e5c9]/40 bg-[#00a894]/10 dark:bg-[#00e5c9]/10 px-3 py-1.5 text-xs font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/20 dark:hover:bg-[#00e5c9]/20 transition-colors"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>+ Create New Customer</span>
+              <span>Create New Customer</span>
             </button>
           </div>
 
@@ -570,7 +592,7 @@ export function EventForm({ initialData }: EventFormProps) {
                 className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#142030] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1c2c3e] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>+ Custom Item</span>
+                <span>Custom Item</span>
               </button>
             </div>
           </div>
@@ -634,7 +656,8 @@ export function EventForm({ initialData }: EventFormProps) {
                   <tr className="border-b border-slate-200 dark:border-[#1f2e41] text-slate-500 dark:text-slate-400 text-[11px] uppercase">
                     <th className="py-2.5 px-3">Service / Gear Name & Specs</th>
                     <th className="py-2.5 px-3">Category</th>
-                    <th className="py-2.5 px-3 text-center w-24">Qty</th>
+                    <th className="py-2.5 px-3 w-40">Size / Dimension</th>
+                    <th className="py-2.5 px-3 text-center w-20">Qty</th>
                     <th className="py-2.5 px-3 text-right w-36">Unit Price (LKR)</th>
                     <th className="py-2.5 px-3 text-right w-36">Total (LKR)</th>
                     <th className="py-2.5 px-3 text-right w-12" />
@@ -657,18 +680,6 @@ export function EventForm({ initialData }: EventFormProps) {
                           }}
                           className="w-full rounded bg-transparent font-medium text-slate-900 dark:text-white focus:bg-slate-100 dark:focus:bg-[#131d2b] focus:outline-none p-1"
                         />
-                        <input
-                          type="text"
-                          value={service.description || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setServices((prev) =>
-                              prev.map((s) => (s.id === service.id ? { ...s, description: val } : s))
-                            );
-                          }}
-                          placeholder="Add notes / specs..."
-                          className="w-full rounded bg-transparent text-[11px] text-slate-500 dark:text-slate-400 focus:bg-slate-100 dark:focus:bg-[#131d2b] focus:outline-none p-1 mt-0.5"
-                        />
                       </td>
 
                       <td className="py-3 px-3">
@@ -677,13 +688,26 @@ export function EventForm({ initialData }: EventFormProps) {
                         </span>
                       </td>
 
+                      <td className="py-3 px-3">
+                        <input
+                          type="text"
+                          placeholder="e.g. 12*7 ft, 20 ft"
+                          value={service.size || ''}
+                          onChange={(e) => handleUpdateServiceSize(service.id, e.target.value)}
+                          className="w-full rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
+                          title="Custom size or dimensions (e.g. 12*7 ft, 20 ft, 20*40 ft)"
+                        />
+                      </td>
+
                       <td className="py-3 px-3 text-center">
                         <input
                           type="number"
                           min={1}
-                          value={service.quantity}
-                          onChange={(e) => handleUpdateServiceQuantity(service.id, Number(e.target.value))}
+                          placeholder="—"
+                          value={service.quantity !== null && service.quantity !== undefined ? service.quantity : ''}
+                          onChange={(e) => handleUpdateServiceQuantity(service.id, e.target.value)}
                           className="w-16 rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-1.5 text-center text-slate-900 dark:text-white focus:outline-none focus:border-[#00e5c9]"
+                          title="Optional. Leave blank for flat-rate / set pricing"
                         />
                       </td>
 
@@ -715,6 +739,12 @@ export function EventForm({ initialData }: EventFormProps) {
                   ))}
                 </tbody>
               </table>
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-2.5 px-1">
+                <Sparkles className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9] shrink-0" />
+                <span>
+                  <strong>Tip for custom sizes:</strong> For items like LED screens, truss stands, or platforms, enter the size in <em>Size / Dimension</em> (e.g. <code>12*7 ft</code>, <code>20 ft</code>) and leave <em>Qty</em> empty for flat package pricing.
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -736,7 +766,7 @@ export function EventForm({ initialData }: EventFormProps) {
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#24374b] bg-slate-100 dark:bg-[#14202e] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-[#1c2c3e] transition-colors"
             >
               <Plus className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
-              <span>+ Assign Staff</span>
+              <span>Assign Staff</span>
             </button>
           </div>
 
@@ -880,7 +910,7 @@ export function EventForm({ initialData }: EventFormProps) {
           >
             Cancel
           </button>
-          
+
           {initialData ? (
             <>
               <button

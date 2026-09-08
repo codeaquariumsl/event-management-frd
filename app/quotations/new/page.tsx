@@ -85,7 +85,7 @@ export default function NewQuotationPage() {
   // Notes & Terms
   const [notes, setNotes] = useState('');
   const [termsAndConditions, setTermsAndConditions] = useState(
-`* Payment method can be cash, bank transfer.
+    `* Payment method can be cash, bank transfer.
 * Payment must be made in full without deducting any tax.
 * Transportation, handling, food, labor charges, are included in this rate.
 * Make all checks payable to “ Seekers’s Entertainment (pvt) Ltd”`
@@ -178,7 +178,8 @@ export default function NewQuotationPage() {
       name: s.name,
       category: s.category || 'General',
       description: s.description || '',
-      quantity: Number(s.quantity) || 1,
+      size: s.size || '',
+      quantity: s.quantity !== null && s.quantity !== undefined ? Number(s.quantity) : null,
       unitPrice: Number(s.unitPrice) || 0,
       discount: 0,
       totalPrice: Number(s.totalPrice) || (Number(s.quantity || 1) * Number(s.unitPrice || 0)),
@@ -227,7 +228,8 @@ export default function NewQuotationPage() {
       const item = { ...updated[index], [field]: value };
 
       if (field === 'quantity' || field === 'unitPrice' || field === 'discount') {
-        const qty = Number(field === 'quantity' ? value : item.quantity || 1);
+        const rawQty = field === 'quantity' ? value : item.quantity;
+        const qty = rawQty !== null && rawQty !== undefined && rawQty !== '' && Number(rawQty) > 0 ? Number(rawQty) : 1;
         const price = Number(field === 'unitPrice' ? value : item.unitPrice || 0);
         const disc = Number(field === 'discount' ? value : item.discount || 0);
         item.totalPrice = Math.max(0, qty * price - disc);
@@ -663,85 +665,101 @@ export default function NewQuotationPage() {
                   </div>
                 ) : (
                   items.map((item, index) => (
-                  <div
-                    key={item.id || index}
-                    className="rounded-lg border border-slate-200 dark:border-[#1e2d3e] bg-slate-50 dark:bg-[#121c29] p-3.5 space-y-3 transition-colors hover:border-slate-300 dark:hover:border-[#2b3e55]"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1">
-                        <div className="sm:col-span-2">
-                          <input
-                            type="text"
-                            placeholder="Item name / service description..."
-                            value={item.name}
-                            onChange={(e) => handleItemChange(index, 'name', e.target.value)}
-                            className="w-full px-2.5 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
-                          />
+                    <div
+                      key={item.id || index}
+                      className="rounded-lg border border-slate-200 dark:border-[#1e2d3e] bg-slate-50 dark:bg-[#121c29] p-3.5 space-y-3 transition-colors hover:border-slate-300 dark:hover:border-[#2b3e55]"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1">
+                          <div className="sm:col-span-2">
+                            <input
+                              type="text"
+                              placeholder="Item name / service description..."
+                              value={item.name}
+                              onChange={(e) => handleItemChange(index, 'name', e.target.value)}
+                              className="w-full px-2.5 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                            />
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              placeholder="Category..."
+                              value={item.category}
+                              onChange={(e) => handleItemChange(index, 'category', e.target.value)}
+                              className="w-full px-2.5 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-700 dark:text-slate-300 text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                            />
+                          </div>
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index)}
+                          className="p-1.5 rounded text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          title="Remove item"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-center">
                         <div>
+                          <label className="text-[11px] text-slate-400 block mb-0.5">Size / Spec</label>
                           <input
                             type="text"
-                            placeholder="Category..."
-                            value={item.category}
-                            onChange={(e) => handleItemChange(index, 'category', e.target.value)}
-                            className="w-full px-2.5 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-700 dark:text-slate-300 text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                            placeholder="e.g. 12*7 ft"
+                            value={item.size || ''}
+                            onChange={(e) => handleItemChange(index, 'size', e.target.value)}
+                            className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
                           />
                         </div>
-                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => removeItem(index)}
-                        className="p-1.5 rounded text-rose-400 hover:bg-rose-500/10 transition-colors"
-                        title="Remove item"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-0.5">Quantity</label>
+                          <input
+                            type="number"
+                            min="1"
+                            placeholder="—"
+                            value={item.quantity !== null && item.quantity !== undefined ? item.quantity : ''}
+                            onChange={(e) => {
+                              const val = e.target.value.trim();
+                              handleItemChange(index, 'quantity', val === '' ? null : Number(val));
+                            }}
+                            className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                            title="Optional. Leave blank for set/flat rate"
+                          />
+                        </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-center">
-                      <div>
-                        <label className="text-[11px] text-slate-400 block mb-0.5">Quantity</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                          className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
-                        />
-                      </div>
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-0.5">Unit Rate (LKR)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.unitPrice}
+                            onChange={(e) => handleItemChange(index, 'unitPrice', Number(e.target.value))}
+                            className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                          />
+                        </div>
 
-                      <div>
-                        <label className="text-[11px] text-slate-400 block mb-0.5">Unit Rate (LKR)</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={item.unitPrice}
-                          onChange={(e) => handleItemChange(index, 'unitPrice', Number(e.target.value))}
-                          className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
-                        />
-                      </div>
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-0.5">Item Discount</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.discount}
+                            onChange={(e) => handleItemChange(index, 'discount', Number(e.target.value))}
+                            className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-amber-600 dark:text-amber-400 text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                          />
+                        </div>
 
-                      <div>
-                        <label className="text-[11px] text-slate-400 block mb-0.5">Item Discount</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={item.discount}
-                          onChange={(e) => handleItemChange(index, 'discount', Number(e.target.value))}
-                          className="w-full px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-amber-600 dark:text-amber-400 text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-[11px] text-slate-400 block mb-0.5">Line Total</label>
-                        <div className="px-2 py-1 bg-white dark:bg-[#0b121c] border border-slate-300 dark:border-[#1b2a3a] rounded text-[#00897b] dark:text-[#00e5c9] text-xs font-bold font-mono text-right">
-                          {formatCurrency(item.totalPrice)}
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-0.5">Line Total</label>
+                          <div className="px-2 py-1 bg-white dark:bg-[#0b121c] border border-slate-300 dark:border-[#1b2a3a] rounded text-[#00897b] dark:text-[#00e5c9] text-xs font-bold font-mono text-right">
+                            {formatCurrency(item.totalPrice)}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div>
+                      {/* <div>
                       <input
                         type="text"
                         placeholder="Specifications or scope notes (optional)..."
@@ -749,9 +767,9 @@ export default function NewQuotationPage() {
                         onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                         className="w-full px-2 py-1 text-[11px] bg-white dark:bg-[#141e2b] border border-slate-300 dark:border-[#1d2a3a] rounded text-slate-600 dark:text-slate-400 focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
                       />
+                    </div> */}
                     </div>
-                  </div>
-                )))}
+                  )))}
               </div>
             </div>
           </div>

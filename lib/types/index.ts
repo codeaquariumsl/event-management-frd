@@ -56,7 +56,8 @@ export interface ServiceItem {
   name: string;
   category: 'DJ' | 'Sound' | 'Lighting' | 'LED' | 'Production' | 'Staff' | 'Special FX' | 'Other' | string;
   description?: string;
-  quantity: number;
+  size?: string;
+  quantity?: number | null;
   unitPrice: number;
   totalPrice: number;
 }
@@ -337,7 +338,8 @@ export interface QuotationLineItem {
   name: string;
   category: string;
   description?: string;
-  quantity: number;
+  size?: string;
+  quantity?: number | null;
   unitPrice: number;
   discount: number;
   totalPrice: number;

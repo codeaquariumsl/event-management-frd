@@ -308,7 +308,7 @@ export function RecurringEventModal({
                     key={s.id || idx}
                     className="rounded bg-white dark:bg-[#121f2d] border border-slate-200 dark:border-[#233549] px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-300"
                   >
-                    {s.name} {s.quantity > 1 ? `(x${s.quantity})` : ''}
+                    {s.name} {s.size ? `(${s.size})` : (s.quantity && s.quantity > 1 ? `(x${s.quantity})` : '')}
                   </span>
                 ))}
               </div>

@@ -202,7 +202,7 @@ export default function CustomersPage() {
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#00e5c9] to-[#00b8a2] px-4 py-2.5 text-xs font-bold text-black hover:brightness-110 shadow-lg shadow-[#00e5c9]/20 transition-all"
               >
                 <Plus className="h-4 w-4" />
-                <span>+ Create New Customer</span>
+                <span>Create New Customer</span>
               </button>
             </div>
           }

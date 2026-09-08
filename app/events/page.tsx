@@ -303,7 +303,7 @@ export default function EventsPage() {
               className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/25 transition-all"
             >
               <Plus className="h-4 w-4" />
-              <span>+ Create New Event</span>
+              <span>Create New Event</span>
             </Link>
           }
         />

@@ -38,7 +38,7 @@ export default function UsersPage() {
     try {
       const data = await userService.getUsers();
       if (Array.isArray(data)) setUsers(data);
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -186,7 +186,7 @@ export default function UsersPage() {
               className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/25 transition-all"
             >
               <Plus className="h-4 w-4" />
-              <span>+ Provision New User</span>
+              <span>Provision New User</span>
             </button>
           }
         />
@@ -231,21 +231,19 @@ export default function UsersPage() {
         <div className="border-b border-slate-200 dark:border-[#1c2a3b] flex items-center gap-4 text-xs font-semibold">
           <button
             onClick={() => setActiveTab('users')}
-            className={`pb-3 px-2 border-b-2 transition-colors ${
-              activeTab === 'users'
+            className={`pb-3 px-2 border-b-2 transition-colors ${activeTab === 'users'
                 ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
+              }`}
           >
             Operator Directory ({users.length})
           </button>
           <button
             onClick={() => setActiveTab('matrix')}
-            className={`pb-3 px-2 border-b-2 transition-colors ${
-              activeTab === 'matrix'
+            className={`pb-3 px-2 border-b-2 transition-colors ${activeTab === 'matrix'
                 ? 'border-[#00897b] dark:border-[#00e5c9] text-[#00897b] dark:text-[#00e5c9]'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
+              }`}
           >
             Roles & Permissions Matrix (RBAC)
           </button>

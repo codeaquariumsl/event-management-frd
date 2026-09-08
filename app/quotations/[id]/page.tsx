@@ -116,7 +116,8 @@ export default function QuotationDetailPage() {
     const item = { ...updated[index], [field]: value };
 
     if (field === 'quantity' || field === 'unitPrice' || field === 'discount') {
-      const qty = Number(field === 'quantity' ? value : item.quantity || 1);
+      const rawQty = field === 'quantity' ? value : item.quantity;
+      const qty = rawQty !== null && rawQty !== undefined && rawQty !== '' && Number(rawQty) > 0 ? Number(rawQty) : 1;
       const price = Number(field === 'unitPrice' ? value : item.unitPrice || 0);
       const disc = Number(field === 'discount' ? value : item.discount || 0);
       item.totalPrice = Math.max(0, qty * price - disc);
@@ -137,6 +138,7 @@ export default function QuotationDetailPage() {
       id: `qli-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       name: '',
       category: 'General',
+      size: '',
       quantity: 1,
       unitPrice: 0,
       discount: 0,
@@ -851,7 +853,7 @@ export default function QuotationDetailPage() {
                         className="w-full px-2.5 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
                       />
                     </div>
-                    <div className="sm:col-span-3">
+                    <div className="sm:col-span-2">
                       <label className="block text-[10px] text-slate-400 mb-0.5 sm:hidden">Category</label>
                       <input
                         type="text"
@@ -862,17 +864,32 @@ export default function QuotationDetailPage() {
                         list="quotation-category-list"
                       />
                     </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[10px] text-slate-400 mb-0.5 sm:hidden">Size / Spec</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 12*7 ft"
+                        value={item.size || ''}
+                        onChange={(e) => handleItemChange(index, 'size', e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                      />
+                    </div>
                     <div className="sm:col-span-1">
                       <label className="block text-[10px] text-slate-400 mb-0.5 sm:hidden">Qty</label>
                       <input
                         type="number"
                         min="1"
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                        placeholder="—"
+                        value={item.quantity !== null && item.quantity !== undefined ? item.quantity : ''}
+                        onChange={(e) => {
+                          const val = e.target.value.trim();
+                          handleItemChange(index, 'quantity', val === '' ? null : Number(val));
+                        }}
                         className="w-full px-2 py-1.5 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9] text-center"
+                        title="Optional. Leave blank for flat-rate / set pricing"
                       />
                     </div>
-                    <div className="sm:col-span-2">
+                    <div className="sm:col-span-1">
                       <label className="block text-[10px] text-slate-400 mb-0.5 sm:hidden">Unit Rate (LKR)</label>
                       <input
                         type="number"
@@ -1189,9 +1206,18 @@ export default function QuotationDetailPage() {
                             >
                               <td className="px-4 py-3 font-mono text-slate-500 dark:text-slate-400 print:text-slate-500">{globalIdx}</td>
                               <td className="px-4 py-3">
-                                <div className="font-semibold text-slate-900 dark:text-white print:text-black">{item.name}</div>
+                                <div className="font-semibold text-slate-900 dark:text-white print:text-black flex items-center gap-2 flex-wrap">
+                                  <span>{item.name}</span>
+                                  {item.size && (
+                                    <span className="rounded bg-slate-100 dark:bg-[#1a2636] border border-slate-300 dark:border-[#283b52] px-1.5 py-0.5 text-[10px] font-semibold text-[#00897b] dark:text-[#00e5c9]">
+                                      {item.size}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
-                              <td className="px-4 py-3 text-center font-mono font-medium text-slate-800 dark:text-slate-200">{item.quantity}</td>
+                              <td className="px-4 py-3 text-center font-mono font-medium text-slate-800 dark:text-slate-200">
+                                {item.quantity !== null && item.quantity !== undefined && item.quantity > 0 ? item.quantity : '—'}
+                              </td>
                               <td className="px-4 py-3 text-right font-mono text-slate-800 dark:text-slate-200">{formatCurrency(item.unitPrice)}</td>
                               <td className="px-4 py-3 text-right font-mono text-amber-600 dark:text-amber-400 print:text-amber-700">
                                 {item.discount > 0 ? formatCurrency(item.discount) : '-'}

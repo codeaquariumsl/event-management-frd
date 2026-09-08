@@ -10,6 +10,7 @@ import {
   Users,
   CreditCard,
   Printer,
+  Edit,
   Trash2,
   DollarSign,
   Briefcase,
@@ -267,6 +268,14 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           </Link>
 
           <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`/events/${event.id}/edit`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#121c29] px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors"
+            >
+              <Edit className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
+              <span>Edit Event</span>
+            </Link>
+
             <button
               onClick={() => setIsInvoiceOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#121c29] px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors"

@@ -431,16 +431,16 @@ export default function EventsPage() {
                 <Eye className="h-3.5 w-3.5" />
               </button>
 
-              {/* <button
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setAssignStaffEvent(evt);
+                  router.push(`/events/${evt.id}/edit`);
                 }}
                 className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
-                title="Assign Staff"
+                title="Edit Event"
               >
-                <Users className="h-3.5 w-3.5" />
-              </button> */}
+                <Edit className="h-3.5 w-3.5" />
+              </button>
 
               <button
                 onClick={(e) => {

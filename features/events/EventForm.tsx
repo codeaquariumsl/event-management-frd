@@ -37,6 +37,7 @@ import {
 import { useToast } from '@/components/ui/Toast';
 import { CustomerModal } from '../customers/CustomerModal';
 import { StaffAssignmentModal } from './StaffAssignmentModal';
+import { SearchableSelect, SearchableOption } from '@/components/ui/SearchableSelect';
 
 interface EventFormProps {
   initialData?: EventItem;
@@ -50,8 +51,6 @@ export function EventForm({ initialData }: EventFormProps) {
   const [dynamicEventTypes, setDynamicEventTypes] = useState<EventTypeItem[]>([]);
   const [servicesCatalog, setServicesCatalog] = useState<ServiceCatalogItem[]>([]);
   const [inventoryGear, setInventoryGear] = useState<InventoryItem[]>([]);
-  const [selectedCatalogId, setSelectedCatalogId] = useState<string>('');
-  const [selectedGearId, setSelectedGearId] = useState<string>('');
 
   useEffect(() => {
     customerService.getCustomers().then((c) => {
@@ -108,6 +107,7 @@ export function EventForm({ initialData }: EventFormProps) {
   // Handle customer selection and auto-load address into Venue / Location
   const handleCustomerChange = (newCustomerId: string, customerObj?: Customer) => {
     setCustomerId(newCustomerId);
+    if (!newCustomerId) return;
     const selected = customerObj || customers.find((c) => c.id === newCustomerId);
     if (selected) {
       // Auto-load customer address to Venue / Location and Street Address
@@ -123,6 +123,43 @@ export function EventForm({ initialData }: EventFormProps) {
     }
   };
 
+  // Searchable Options for Customer, Gear, and Catalog Packages
+  const customerOptions = useMemo<SearchableOption[]>(() => {
+    return customers.map((c) => ({
+      value: c.id,
+      label: c.name,
+      sublabel: [c.company, c.phone, c.address].filter(Boolean).join(' • '),
+      badge: c.company || c.customerType,
+      category: c.customerType,
+      extraInfo: c.phone,
+      raw: c,
+    }));
+  }, [customers]);
+
+  const gearOptions = useMemo<SearchableOption[]>(() => {
+    return inventoryGear.map((gear) => ({
+      value: gear.id,
+      label: gear.name,
+      sublabel: `SKU: ${gear.sku} • In Stock: ${gear.availableQuantity ?? gear.totalStock ?? 0} ${gear.unit || 'units'}`,
+      badge: gear.category,
+      category: gear.category,
+      extraInfo: `Rs. ${(gear.rentalRate || gear.unitPrice || 0).toLocaleString()}/day`,
+      raw: gear,
+    }));
+  }, [inventoryGear]);
+
+  const catalogOptions = useMemo<SearchableOption[]>(() => {
+    return servicesCatalog.map((pkg) => ({
+      value: pkg.id,
+      label: pkg.name,
+      sublabel: pkg.description || `Category: ${pkg.category}`,
+      badge: pkg.category,
+      category: pkg.category,
+      extraInfo: `Rs. ${pkg.unitPrice.toLocaleString()}`,
+      raw: pkg,
+    }));
+  }, [servicesCatalog]);
+
   // 3. Services & Production Equipment
   const [services, setServices] = useState<ServiceItem[]>(initialData?.services || []);
 
@@ -133,6 +170,28 @@ export function EventForm({ initialData }: EventFormProps) {
   const [discount, setDiscount] = useState<number>(initialData?.discount || 0);
   const [additionalCharges, setAdditionalCharges] = useState<number>(initialData?.additionalCharges || 0);
   const [paidAmount, setPaidAmount] = useState<number>(initialData?.paidAmount || 0);
+
+  // Sync initialData if loaded or updated
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.customerId) setCustomerId(initialData.customerId);
+      if (initialData.name) setName(initialData.name);
+      if (initialData.eventType) setEventType(initialData.eventType);
+      if (initialData.eventDate) setEventDate(initialData.eventDate);
+      if (initialData.startTime) setStartTime(initialData.startTime);
+      if (initialData.endTime) setEndTime(initialData.endTime);
+      if (initialData.location) setLocation(initialData.location);
+      if (initialData.address !== undefined) setAddress(initialData.address);
+      if (initialData.description !== undefined) setDescription(initialData.description);
+      if (initialData.notes !== undefined) setNotes(initialData.notes);
+      if (initialData.status) setStatus(initialData.status);
+      if (initialData.services) setServices(initialData.services);
+      if (initialData.assignedStaff) setAssignedStaff(initialData.assignedStaff);
+      if (initialData.discount !== undefined) setDiscount(initialData.discount);
+      if (initialData.additionalCharges !== undefined) setAdditionalCharges(initialData.additionalCharges);
+      if (initialData.paidAmount !== undefined) setPaidAmount(initialData.paidAmount);
+    }
+  }, [initialData]);
 
   // Computed Financials
   const subtotal = useMemo(() => {
@@ -244,10 +303,10 @@ export function EventForm({ initialData }: EventFormProps) {
       id: initialData?.id,
       name,
       customerId,
-      customerName: selectedCustomer?.name || 'Customer',
-      customerCompany: selectedCustomer?.company,
-      customerPhone: selectedCustomer?.phone,
-      customerEmail: selectedCustomer?.email,
+      customerName: selectedCustomer?.name || initialData?.customerName || 'Customer',
+      customerCompany: selectedCustomer?.company || initialData?.customerCompany,
+      customerPhone: selectedCustomer?.phone || initialData?.customerPhone,
+      customerEmail: selectedCustomer?.email || initialData?.customerEmail,
       eventType,
       eventDate,
       startTime,
@@ -310,19 +369,16 @@ export function EventForm({ initialData }: EventFormProps) {
           <div className="text-xs space-y-3">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Customer / Client *</label>
-              <select
+              <SearchableSelect
+                options={customerOptions}
                 value={customerId}
-                onChange={(e) => handleCustomerChange(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-medium focus:border-[#00e5c9] focus:outline-none"
-                required
-              >
-                <option value="">-- Choose a Customer ({customers.length} available) * --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.company ? `(${c.company})` : ''} • {c.phone} {c.address ? `• ${c.address}` : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={(val, opt) => handleCustomerChange(val, opt?.raw)}
+                placeholder={`-- Choose a Customer (${customers.length} available) * --`}
+                searchPlaceholder="Search client by name, company, phone, address..."
+                clearable={true}
+                required={true}
+                emptyMessage="No matching customers found"
+              />
             </div>
 
             {selectedCustomer && (
@@ -521,30 +577,24 @@ export function EventForm({ initialData }: EventFormProps) {
 
           {/* Real Backend Data Selectors */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-[#1b2a3d] bg-slate-50 dark:bg-[#0f1826]">
-            {/* Service Catalog Selector */}
+            {/* Standard Service Catalog */}
             <div>
               <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
-                <Sparkles className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" /> Add From Service Catalog ({servicesCatalog.length} packages)
+                <Sparkles className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" /> Add Pre-configured Package ({servicesCatalog.length} packages)
               </label>
-              <select
-                value={selectedCatalogId}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val) {
-                    const catItem = servicesCatalog.find((s) => s.id === val);
-                    if (catItem) handleAddService(catItem);
-                    setSelectedCatalogId('');
+              <SearchableSelect
+                options={catalogOptions}
+                value=""
+                resetOnSelect={true}
+                onChange={(val, opt) => {
+                  if (opt?.raw) {
+                    handleAddService(opt.raw);
                   }
                 }}
-                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-xs text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
-              >
-                <option value="">-- Choose package to add to event --</option>
-                {servicesCatalog.map((pkg) => (
-                  <option key={pkg.id} value={pkg.id}>
-                    [{pkg.category}] {pkg.name} — Rs. {pkg.unitPrice.toLocaleString()}
-                  </option>
-                ))}
-              </select>
+                placeholder={`-- Search & select package to add to event (${servicesCatalog.length} packages) --`}
+                searchPlaceholder="Search packages by title or category..."
+                emptyMessage="No packages match your search"
+              />
             </div>
 
             {/* Inventory Gear Selector */}
@@ -552,25 +602,19 @@ export function EventForm({ initialData }: EventFormProps) {
               <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
                 <Boxes className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" /> Add From Inventory Gear ({inventoryGear.length} units)
               </label>
-              <select
-                value={selectedGearId}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val) {
-                    const gearItem = inventoryGear.find((g) => g.id === val);
-                    if (gearItem) handleAddInventoryGear(gearItem);
-                    setSelectedGearId('');
+              <SearchableSelect
+                options={gearOptions}
+                value=""
+                resetOnSelect={true}
+                onChange={(val, opt) => {
+                  if (opt?.raw) {
+                    handleAddInventoryGear(opt.raw);
                   }
                 }}
-                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2 text-xs text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
-              >
-                <option value="">-- Choose gear to add to event --</option>
-                {inventoryGear.map((gear) => (
-                  <option key={gear.id} value={gear.id}>
-                    [{gear.category}] {gear.name} ({gear.sku}) — Rs. {(gear.rentalRate || gear.unitPrice || 0).toLocaleString()}/day
-                  </option>
-                ))}
-              </select>
+                placeholder={`-- Search & select gear to add to event (${inventoryGear.length} items) --`}
+                searchPlaceholder="Search gear by name, SKU, or category..."
+                emptyMessage="No inventory gear matches your search"
+              />
             </div>
           </div>
 

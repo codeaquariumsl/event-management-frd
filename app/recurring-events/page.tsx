@@ -42,7 +42,7 @@ export default function RecurringEventsPage() {
     try {
       const data = await recurringService.getRecurringEvents();
       if (Array.isArray(data)) setRecurringList(data);
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -264,6 +264,7 @@ export default function RecurringEventsPage() {
                 onChange={(e) => setGenerateCount(Number(e.target.value))}
                 className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
               >
+                <option value={1}>Generate Next 1 Event</option>
                 <option value={2}>Generate Next 2 Events</option>
                 <option value={4}>Generate Next 4 Events (1 Month)</option>
                 <option value={8}>Generate Next 8 Events (2 Months)</option>

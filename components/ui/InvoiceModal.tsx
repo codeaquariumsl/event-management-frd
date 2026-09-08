@@ -140,7 +140,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
       classesToRemove.forEach((cls) => htmlEl.classList.remove(cls));
     });
 
-    // 2. Enforce explicit Light Theme root styles
+    // 2. Enforce explicit Light Theme root styles matching A4 format
     clone.style.width = '794px'; // 210mm standard A4 width at 96 DPI
     clone.style.minWidth = '794px';
     clone.style.maxWidth = '794px';
@@ -148,7 +148,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
     clone.style.color = '#0f172a';
     clone.style.boxShadow = 'none';
     clone.style.border = 'none';
-    clone.style.padding = '36px 32px';
+    clone.style.padding = '20px 24px';
     clone.style.margin = '0';
     clone.style.boxSizing = 'border-box';
 
@@ -212,6 +212,42 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
     offscreen.appendChild(clone);
     document.body.appendChild(offscreen);
 
+    // Intelligently insert page-break spacers for multi-page documents to prevent splitting rows
+    const A4_HEIGHT_PX = 1123; // Standard 297mm height at 96 DPI
+    const cloneRect = clone.getBoundingClientRect();
+    const breakables = Array.from(clone.querySelectorAll('tr, .avoid-break')) as HTMLElement[];
+
+    breakables.forEach((el) => {
+      const elRect = el.getBoundingClientRect();
+      const relTop = elRect.top - cloneRect.top;
+      const relBottom = elRect.bottom - cloneRect.top;
+      const pageIndex = Math.floor(relTop / A4_HEIGHT_PX);
+      const pageBottomLimit = (pageIndex + 1) * A4_HEIGHT_PX - 28;
+
+      if (relTop < pageBottomLimit && relBottom > pageBottomLimit) {
+        const spacerHeight = ((pageIndex + 1) * A4_HEIGHT_PX) - relTop;
+        if (el.tagName.toLowerCase() === 'tr') {
+          const spacerTr = document.createElement('tr');
+          spacerTr.className = 'pdf-page-spacer';
+          const spacerTd = document.createElement('td');
+          spacerTd.colSpan = 10;
+          spacerTd.style.height = `${spacerHeight}px`;
+          spacerTd.style.border = 'none';
+          spacerTd.style.padding = '0';
+          spacerTd.style.background = 'transparent';
+          spacerTr.appendChild(spacerTd);
+          el.parentNode?.insertBefore(spacerTr, el);
+        } else {
+          const spacerDiv = document.createElement('div');
+          spacerDiv.className = 'pdf-page-spacer';
+          spacerDiv.style.height = `${spacerHeight}px`;
+          spacerDiv.style.width = '100%';
+          spacerDiv.style.background = 'transparent';
+          el.parentNode?.insertBefore(spacerDiv, el);
+        }
+      }
+    });
+
     let canvas;
     try {
       canvas = await html2canvas(clone, {
@@ -242,20 +278,29 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
     const imgWidth = pdfWidth;
     const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-    let heightLeft = imgHeight;
-    let page = 0;
+    const totalPages = Math.max(1, Math.ceil(imgHeight / pdfHeight));
 
-    // First page
-    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight, '', 'FAST');
-    heightLeft -= pdfHeight;
-
-    // Additional pages (if invoice spans multiple A4 pages)
-    while (heightLeft > 0) {
-      page++;
+    for (let page = 0; page < totalPages; page++) {
+      if (page > 0) {
+        pdf.addPage();
+      }
       const yOffset = -(page * pdfHeight);
-      pdf.addPage();
       pdf.addImage(imgData, 'JPEG', 0, yOffset, imgWidth, imgHeight, '', 'FAST');
-      heightLeft -= pdfHeight;
+
+      // Add clean professional footer pagination on every page
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(140, 140, 140);
+      pdf.text(
+        `Page ${page + 1} of ${totalPages} • Invoice ${invoiceNumber}`,
+        pdfWidth - 12,
+        pdfHeight - 5,
+        { align: 'right' }
+      );
+      pdf.text(
+        `${company.name || 'Seekers Entertainment (Pvt) Ltd'} • ${company.email || 'ops@seekersentertainment.lk'}`,
+        12,
+        pdfHeight - 5
+      );
     }
 
     return pdf;
@@ -324,7 +369,47 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Invoice & Billing" maxWidth="4xl">
-      <div className="flex flex-col gap-6">
+      {/* Print CSS for native A4 pagination */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @media print {
+              @page {
+                size: A4 portrait;
+                margin: 8mm 10mm 8mm 10mm;
+              }
+              html, body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .no-print, nav, header, aside, .modal-backdrop, button {
+                display: none !important;
+              }
+              #event-invoice-view {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+              }
+              tr, .avoid-break {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+              }
+              thead {
+                display: table-header-group !important;
+              }
+            }
+          `,
+        }}
+      />
+
+      <div className="flex flex-col gap-4">
         {/* Actions Bar */}
         <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-[#1c2a3a]">
           <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -349,7 +434,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
               onClick={handleDownloadPdf}
               disabled={isGeneratingPdf || isPrintingPdf}
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3 py-1.5 text-xs font-bold text-white dark:text-black hover:brightness-110 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Download Invoice as clean Light Theme PDF file"
+              title="Download Invoice as clean Light Theme A4 PDF file"
             >
               {isGeneratingPdf ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -364,7 +449,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
               onClick={handlePrintPdf}
               disabled={isGeneratingPdf || isPrintingPdf}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#24374b] bg-slate-100 dark:bg-[#142130] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1b2b3d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Print only the clean Light Theme PDF document"
+              title="Print clean A4 document"
             >
               {isPrintingPdf ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -376,92 +461,92 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
           </div>
         </div>
 
-        {/* Printable Invoice Card (Mirrors Quotation Proposal Format) */}
+        {/* Printable Invoice Card (Compact A4 Layout) */}
         <div
           ref={invoiceRef}
           id="event-invoice-view"
-          className="printable-invoice rounded-2xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c131d] p-8 sm:p-12 shadow-2xl space-y-8 print:border-none print:p-0 print:bg-white print:text-black"
+          className="printable-invoice rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c131d] p-5 sm:p-7 shadow-xl space-y-3.5 print:border-none print:p-0 print:bg-white print:text-black"
         >
           {/* Header Row: Company Brand + Invoice Meta */}
-          <div className="flex flex-col sm:flex-row justify-between gap-6 pb-6 border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
+          <div className="flex flex-col sm:flex-row justify-between gap-4 pb-3.5 border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 avoid-break">
             <div>
               <div className="flex items-center gap-3">
-                <div className="flex h-18 items-center justify-center rounded-xl">
-                  <img src="/whitelogo.jpg" alt="Seekers Entertainment" className="h-full w-full object-cover rounded-lg" />
+                <div className="flex h-12 w-auto items-center justify-center rounded-lg overflow-hidden shrink-0">
+                  <img src="/whitelogo.jpg" alt="Seekers Entertainment" className="h-12 w-auto object-contain rounded-md" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white print:text-black">
+                  <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white print:text-black">
                     {company?.name || 'SEEKERS ENTERTAINMENT'}
                   </h2>
-                  <p className="text-xs text-[#00897b] dark:text-[#00e5c9] print:text-slate-600 font-medium">
+                  <p className="text-[11px] text-[#00897b] dark:text-[#00e5c9] print:text-slate-600 font-semibold">
                     {company?.tagline || 'Premier Audio-Visual Production, DJ & Event Technology'}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-2 text-xs text-slate-500 dark:text-slate-300 print:text-black space-y-1">
+              <div className="mt-1.5 text-[10px] text-slate-600 dark:text-slate-300 print:text-slate-700 leading-tight space-y-0.5">
                 <div>{company?.address}</div>
-                <div className="font-mono text-[11px] text-slate-700 dark:text-slate-300 print:text-black">
-                  <div>+94 71 035 87 23 (Voice / WhatsApp)</div>
-                  <div>+94 76 468 00 00</div>
-                  <div>+971 54 544 66 09 (UAE)</div>
+                <div>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200 print:text-black">Tel:</span> +94 71 035 8723 / +94 76 468 0000 / +971 54 544 6609
                 </div>
-                <div>Email: {company?.email || 'ops@seekersentertainment.lk'}</div>
+                <div>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200 print:text-black">Email:</span> {company?.email || 'ops@seekersentertainment.lk'}
+                </div>
               </div>
             </div>
 
-            <div className="sm:text-right space-y-1.5">
-              <div className="text-2xl font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
+            <div className="sm:text-right space-y-1">
+              <div className="text-xl font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono tracking-wider">
                 INVOICE
               </div>
-              <div className="text-sm font-bold text-slate-900 dark:text-white print:text-black font-mono">
+              <div className="text-xs font-bold text-slate-900 dark:text-white print:text-black font-mono">
                 {invoiceNumber}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 print:text-slate-600">
+              <div className="text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-600">
                 Invoice Date: <strong className="text-slate-800 dark:text-slate-200 print:text-black">{formatDate(event.createdAt || new Date().toISOString())}</strong>
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 print:text-slate-600">
+              <div className="text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-600">
                 Event Date: <strong className="text-slate-800 dark:text-slate-200 print:text-black">{event.eventDate}</strong>
               </div>
             </div>
           </div>
 
           {/* Client & Event Scope Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-50 dark:bg-[#0f1824] print:bg-slate-50 p-5 rounded-xl border border-slate-200 dark:border-[#1d2b3c] print:border-slate-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 dark:bg-[#0f1824] print:bg-slate-50 p-3 rounded-lg border border-slate-200 dark:border-[#1d2b3c] print:border-slate-200 avoid-break text-xs">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-slate-700 block mb-2">
+              <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-slate-700 block mb-1">
                 Invoice Prepared For
               </span>
-              <div className="text-base font-bold text-slate-900 dark:text-white print:text-black">
+              <div className="text-sm font-bold text-slate-900 dark:text-white print:text-black">
                 {event.customerName}
               </div>
               {event.customerCompany && (
-                <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 print:text-slate-700">
+                <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300 print:text-slate-700">
                   {event.customerCompany}
                 </div>
               )}
               {event.customerPhone && (
-                <div className="text-xs text-slate-600 dark:text-slate-400 print:text-slate-600 mt-1">
+                <div className="text-[10.5px] text-slate-600 dark:text-slate-400 print:text-slate-600">
                   Phone: {event.customerPhone}
                 </div>
               )}
               {event.customerEmail && (
-                <div className="text-xs text-slate-600 dark:text-slate-400 print:text-slate-600">
+                <div className="text-[10.5px] text-slate-600 dark:text-slate-400 print:text-slate-600">
                   Email: {event.customerEmail}
                 </div>
               )}
               {event.address && (
-                <div className="text-xs text-slate-600 dark:text-slate-400 print:text-slate-600">
+                <div className="text-[10.5px] text-slate-600 dark:text-slate-400 print:text-slate-600 truncate">
                   Address: {event.address}
                 </div>
               )}
             </div>
 
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-slate-700 block mb-2">
+              <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-slate-700 block mb-1">
                 Event Specifications
               </span>
-              <div className="text-xs space-y-1 text-slate-600 dark:text-slate-300 print:text-slate-700">
+              <div className="text-[10.5px] space-y-0.5 text-slate-600 dark:text-slate-300 print:text-slate-700">
                 <div>
                   <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Event Title:</span>{' '}
                   <strong className="text-slate-900 dark:text-white print:text-black">{event.name}</strong>
@@ -471,7 +556,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                   <strong className="text-slate-900 dark:text-white print:text-black">{event.eventType}</strong>
                 </div>
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Scheduled Date:</span>{' '}
+                  <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Event Date:</span>{' '}
                   <strong className="text-slate-900 dark:text-white print:text-black">{event.eventDate}</strong>
                 </div>
                 {(event.startTime || event.endTime) && (
@@ -491,31 +576,31 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
           </div>
 
           {/* Line Items Table (Category Wise) */}
-          <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
+          <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 dark:bg-[#121d2b] print:bg-slate-100 uppercase tracking-wider font-bold text-slate-700 dark:text-slate-400 print:text-slate-700 border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
-                <tr>
-                  <th className="px-4 py-3 w-12">#</th>
-                  <th className="px-4 py-3">Service / Item Description</th>
-                  <th className="px-4 py-3 text-center w-20">Qty</th>
-                  <th className="px-4 py-3 text-right w-36">Unit Rate (LKR)</th>
-                  <th className="px-4 py-3 text-right w-36">Total (LKR)</th>
+              <thead className="bg-slate-100 dark:bg-[#121d2b] print:bg-slate-100 uppercase tracking-wider font-bold text-slate-700 dark:text-slate-400 print:text-slate-700">
+                <tr className="border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
+                  <th className="px-3 py-1.5 w-10 text-center text-[10.5px]">#</th>
+                  <th className="px-3 py-1.5 text-[10.5px]">Service / Item Description</th>
+                  <th className="px-3 py-1.5 text-center w-16 text-[10.5px]">Qty</th>
+                  <th className="px-3 py-1.5 text-right w-28 text-[10.5px]">Rate (LKR)</th>
+                  <th className="px-3 py-1.5 text-right w-28 text-[10.5px]">Total (LKR)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-[#172332] print:divide-slate-200 text-slate-700 dark:text-slate-300 print:text-slate-800">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#172332] print:divide-slate-200 text-slate-700 dark:text-slate-300 print:text-slate-800">
                 {(() => {
                   let globalIdx = 0;
                   return categoryGroups.map((group, gIdx) => (
                     <React.Fragment key={group.category || gIdx}>
                       {/* Category Header Row */}
-                      <tr className="bg-slate-100/80 dark:bg-[#131e2b] print:bg-slate-100 font-bold border-t border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
-                        <td colSpan={5} className="px-4 py-2 text-xs">
+                      <tr className="bg-slate-50/90 dark:bg-[#131e2b] print:bg-slate-100/90 font-bold border-t border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 avoid-break">
+                        <td colSpan={5} className="px-3 py-1 text-[10.5px]">
                           <div className="flex items-center justify-between">
-                            <span className="font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-black flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-[#00897b] dark:bg-[#00e5c9] print:bg-slate-700 inline-block" />
+                            <span className="font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-black flex items-center gap-1.5">
+                              <span className="h-1.5 w-1.5 rounded-full bg-[#00897b] dark:bg-[#00e5c9] print:bg-slate-700 inline-block" />
                               {group.category}
                             </span>
-                            <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400 print:text-slate-600 font-mono">
+                            <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400 print:text-slate-600 font-mono">
                               {group.items.length} {group.items.length === 1 ? 'item' : 'items'}
                             </span>
                           </div>
@@ -528,20 +613,15 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                         return (
                           <tr
                             key={srv.id || `${group.category}-${itemIdx}`}
-                            className="hover:bg-slate-50/50 dark:hover:bg-[#121c29]/50 transition-colors"
+                            className="hover:bg-slate-50/50 dark:hover:bg-[#121c29]/50 transition-colors avoid-break"
                           >
-                            <td className="px-4 py-3 font-mono text-slate-500 dark:text-slate-400 print:text-slate-500">{globalIdx}</td>
-                            <td className="px-4 py-3">
-                              <div className="font-semibold text-slate-900 dark:text-white print:text-black">{srv.name}</div>
-                              {srv.description && (
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-0.5">
-                                  {srv.description}
-                                </p>
-                              )}
+                            <td className="px-3 py-1.5 text-center font-mono text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-500">{globalIdx}</td>
+                            <td className="px-3 py-1.5">
+                              <div className="font-semibold text-slate-900 dark:text-white print:text-black text-xs">{srv.name}</div>
                             </td>
-                            <td className="px-4 py-3 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black">{srv.quantity}</td>
-                            <td className="px-4 py-3 text-right font-mono text-slate-800 dark:text-slate-200 print:text-black">{formatCurrency(srv.unitPrice)}</td>
-                            <td className="px-4 py-3 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black">
+                            <td className="px-3 py-1.5 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black text-xs">{srv.quantity}</td>
+                            <td className="px-3 py-1.5 text-right font-mono text-slate-800 dark:text-slate-200 print:text-black text-xs">{formatCurrency(srv.unitPrice)}</td>
+                            <td className="px-3 py-1.5 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs">
                               {formatCurrency(srv.totalPrice)}
                             </td>
                           </tr>
@@ -550,11 +630,11 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
 
                       {/* Category Subtotal (if multiple categories exist) */}
                       {categoryGroups.length > 1 && (
-                        <tr className="bg-slate-50/40 dark:bg-[#0e1622]/40 print:bg-slate-50 text-[11px] border-b border-slate-200 dark:border-[#172332] print:border-slate-200">
-                          <td colSpan={4} className="px-4 py-1.5 text-right font-medium text-slate-500 dark:text-slate-400 print:text-slate-600">
+                        <tr className="bg-slate-50/40 dark:bg-[#0e1622]/40 print:bg-slate-50 text-[10px] border-b border-slate-200 dark:border-[#172332] print:border-slate-200 avoid-break">
+                          <td colSpan={4} className="px-3 py-1 text-right font-medium text-slate-500 dark:text-slate-400 print:text-slate-600">
                             Subtotal ({group.category}):
                           </td>
-                          <td className="px-4 py-1.5 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 print:text-black">
+                          <td className="px-3 py-1 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 print:text-black">
                             {formatCurrency(group.subtotal)}
                           </td>
                         </tr>
@@ -565,7 +645,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
 
                 {(!event.services || event.services.length === 0) && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
                       No line items recorded for this invoice.
                     </td>
                   </tr>
@@ -575,27 +655,23 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
           </div>
 
           {/* Financial Calculation & Bank Info Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-            <div className="text-xs text-slate-600 dark:text-slate-400 print:text-slate-600 space-y-3">
-              <div>
-                <span className="font-bold text-slate-900 dark:text-white print:text-black block mb-1">
-                  Bank Details:
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1.5 avoid-break">
+            <div className="text-xs text-slate-600 dark:text-slate-400 print:text-slate-600 space-y-2">
+              <div className="p-2.5 rounded-lg border border-slate-200 dark:border-[#1d2b3c] bg-slate-50/60 dark:bg-[#0f1824]/60 print:bg-slate-50/60 space-y-0.5 text-[10px]">
+                <span className="font-bold text-slate-900 dark:text-white print:text-black uppercase tracking-wider text-[9.5px] block mb-0.5">
+                  Bank Settlement Details:
                 </span>
-                <div className="space-y-0.5 font-mono text-[11px]">
-                  <div className="font-semibold text-slate-800 dark:text-slate-200 print:text-black">
-                    {company.name || 'Seekers’s Entertainment (pvt) Ltd'}
-                  </div>
-                  <div className="text-slate-700 dark:text-slate-300">Account: {company.bankAccount || '94630427'}</div>
-                  <div className="text-slate-700 dark:text-slate-300">Bank: {company.bankName || 'BOC bank'}</div>
-                  <div className="text-slate-700 dark:text-slate-300">Branch: {company.bankBranch || 'Walgama'}</div>
+                <div className="font-mono text-slate-700 dark:text-slate-300 print:text-black">
+                  <div><strong>Beneficiary:</strong> {company.name || 'Seekers’s Entertainment (pvt) Ltd'}</div>
+                  <div><strong>Account:</strong> {company.bankAccount || '94630427'} • <strong>Bank:</strong> {company.bankName || 'BOC bank'} ({company.bankBranch || 'Walgama'})</div>
                 </div>
               </div>
 
               <div>
-                <span className="font-bold text-slate-900 dark:text-white print:text-black block mb-1">
-                  Terms & Conditions:
+                <span className="font-bold text-slate-900 dark:text-white print:text-black uppercase tracking-wider text-[9.5px] block mb-0.5">
+                  Terms & Payment Conditions:
                 </span>
-                <p className="text-[11px] leading-relaxed whitespace-pre-line text-slate-600 dark:text-slate-300">
+                <p className="text-[9.5px] leading-snug whitespace-pre-line text-slate-500 dark:text-slate-400 print:text-slate-700">
                   {company.invoiceTerms || `* Payment method can be cash, bank transfer.
 * Payment must be made in full without deducting any tax.
 * Transportation, handling, food, labor charges, are included in this rate.
@@ -605,16 +681,16 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
 
               {event.notes && (
                 <div>
-                  <span className="font-bold text-slate-900 dark:text-white print:text-black block mb-1">
-                    Special Instructions / Notes:
+                  <span className="font-bold text-slate-900 dark:text-white print:text-black uppercase tracking-wider text-[9.5px] block mb-0.5">
+                    Special Notes:
                   </span>
-                  <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">{event.notes}</p>
+                  <p className="text-[9.5px] leading-snug text-slate-500 dark:text-slate-400 print:text-slate-700">{event.notes}</p>
                 </div>
               )}
             </div>
 
             {/* Calculations Box */}
-            <div className="bg-slate-50 dark:bg-[#0f1824] print:bg-slate-50 p-5 rounded-xl border border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 space-y-2.5 text-xs">
+            <div className="bg-slate-50 dark:bg-[#0f1824] print:bg-slate-50 p-3.5 rounded-lg border border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 space-y-1.5 text-xs self-start">
               <div className="flex justify-between text-slate-600 dark:text-slate-400 print:text-slate-600">
                 <span>Services Subtotal:</span>
                 <span className="font-mono font-bold text-slate-900 dark:text-white print:text-black">
@@ -631,16 +707,16 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
 
               {event.additionalCharges > 0 && (
                 <div className="flex justify-between text-slate-600 dark:text-slate-400 print:text-slate-600">
-                  <span>Logistics & Crew Transport:</span>
+                  <span>Logistics & Transport:</span>
                   <span className="font-mono font-bold text-slate-900 dark:text-white print:text-black">
                     +{formatCurrency(event.additionalCharges)}
                   </span>
                 </div>
               )}
 
-              <div className="pt-2 border-t border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 flex justify-between items-baseline">
+              <div className="pt-1.5 border-t border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 flex justify-between items-baseline">
                 <span className="font-semibold text-slate-900 dark:text-white print:text-black">
-                  Total Amount:
+                  Total Contract Amount:
                 </span>
                 <span className="font-mono font-bold text-slate-900 dark:text-white print:text-black">
                   {formatCurrency(event.totalAmount)}
@@ -648,15 +724,15 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
               </div>
 
               <div className="flex justify-between text-emerald-600 dark:text-emerald-400 print:text-emerald-700">
-                <span>Total Paid:</span>
+                <span>Total Paid / Advance:</span>
                 <span className="font-mono font-bold">{formatCurrency(event.paidAmount)}</span>
               </div>
 
-              <div className="pt-2 border-t border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 flex justify-between items-baseline">
-                <span className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white print:text-black">
-                  Balance Due
+              <div className="pt-1.5 border-t border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 flex justify-between items-baseline">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white print:text-black">
+                  Balance Due:
                 </span>
-                <span className="text-2xl font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
+                <span className="text-lg font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
                   {formatCurrency(event.balance)}
                 </span>
               </div>
@@ -664,17 +740,17 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
           </div>
 
           {/* Footer Signature Row */}
-          <div className="pt-12 grid grid-cols-2 gap-8 text-center text-xs text-slate-500 dark:text-slate-400 print:text-slate-600">
-            <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-2 text-slate-600 dark:text-slate-400">
+          <div className="pt-5 grid grid-cols-2 gap-8 text-center text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-600 avoid-break">
+            <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-1.5 text-slate-600 dark:text-slate-400">
               Authorized Signature (Seekers Entertainment)
             </div>
-            <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-2 text-slate-600 dark:text-slate-400">
+            <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-1.5 text-slate-600 dark:text-slate-400">
               Client Acceptance & Confirmation Stamp
             </div>
           </div>
 
           {/* Footer Note */}
-          <div className="mt-8 pt-4 border-t border-slate-200 dark:border-[#1a2636] text-center text-[11px] text-slate-400 dark:text-slate-500">
+          <div className="mt-3 pt-1.5 border-t border-slate-200 dark:border-[#1a2636] text-center text-[9.5px] text-slate-400 dark:text-slate-500 avoid-break">
             Thank you for choosing Seekers Entertainment. For inquiries regarding this invoice, contact {company.email}.
           </div>
         </div>

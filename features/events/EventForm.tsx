@@ -111,9 +111,7 @@ export function EventForm({ initialData }: EventFormProps) {
     const selected = customerObj || customers.find((c) => c.id === newCustomerId);
     if (selected) {
       // Auto-load customer address to Venue / Location and Street Address
-      const venueStr = selected.company && selected.address
-        ? `${selected.company}, ${selected.address}`
-        : (selected.address || selected.company || '');
+      const venueStr = selected.address || '';
 
       setLocation(venueStr);
       if (selected.address) {

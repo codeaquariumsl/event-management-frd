@@ -74,7 +74,7 @@ export function RecurringEventModal({
           if (initialData) {
             // Edit mode: find existing event if any or initialize from initialData
             const matched = evtList.find(
-              (e) => e.customerId === initialData.customerId && e.name === initialData.seriesName.replace(/ \(Residency\)$/, '')
+              (e) => e.customerId === initialData.customerId && e.name === initialData.seriesName
             );
             if (matched) {
               setSelectedEventId(matched.id);
@@ -95,7 +95,7 @@ export function RecurringEventModal({
         const d = new Date(startDate);
         d.setMonth(d.getMonth() + 6);
         setEndDate(d.toISOString().split('T')[0]);
-      } catch {}
+      } catch { }
     }
   }, [startDate, endDate]);
 
@@ -117,10 +117,10 @@ export function RecurringEventModal({
       if (!isNaN(parsedDate.getTime())) {
         dayName = `Every ${DAYS_OF_WEEK[parsedDate.getDay()]}`;
       }
-    } catch {}
+    } catch { }
 
-    // Prefill all editable event & residency fields from selected event
-    setSeriesName(`${evt.name} (Residency)`);
+    // Prefill all editable event & fields from selected event
+    setSeriesName(evt.name);
     setStartDate(evt.eventDate || new Date().toISOString().split('T')[0]);
     setEventDay(dayName);
     setStartTime(evt.startTime || '21:00');
@@ -133,7 +133,7 @@ export function RecurringEventModal({
       const endD = new Date(evt.eventDate || Date.now());
       endD.setMonth(endD.getMonth() + 6);
       setEndDate(endD.toISOString().split('T')[0]);
-    } catch {}
+    } catch { }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -454,8 +454,8 @@ export function RecurringEventModal({
             {isSubmitting
               ? 'Saving...'
               : initialData
-              ? 'Save Changes'
-              : 'Create Recurring Series'}
+                ? 'Save Changes'
+                : 'Create Recurring Series'}
           </button>
         </div>
       </form>

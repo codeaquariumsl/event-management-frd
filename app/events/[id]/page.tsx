@@ -192,7 +192,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           assignedDate: event.eventDate,
           startTime: event.startTime,
           endTime: event.endTime,
-          paymentAmount: s.defaultRatePerEvent || 20000,
+          paymentAmount: 0, // default set 0 need to updated in  UI 
           paidAmount: 0,
           status: 'Assigned',
         }));
@@ -203,9 +203,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
       }
 
       const updatedAssignments = [...event.assignedStaff, ...newCrew];
-      await eventService.updateEvent(event.id, { assignedStaff: updatedAssignments });
       setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedAssignments } : prev));
-      showToast(`✓ Loaded ${newCrew.length} staff members into production crew`);
+      showToast(`✓ Loaded ${newCrew.length} staff members (enter payment amount to assign to event)`);
     } catch {
       showToast('Failed to load all staff members', 'error');
     }
@@ -216,7 +215,10 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     const updatedStaff = event.assignedStaff.map((a) =>
       a.id === assignmentId ? { ...a, role: newRole } : a
     );
-    await eventService.updateEvent(event.id, { assignedStaff: updatedStaff });
+    const staffToPersist = updatedStaff.filter((a) => a.paymentAmount > 0);
+    if (staffToPersist.length > 0) {
+      await eventService.updateEvent(event.id, { assignedStaff: staffToPersist });
+    }
     setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedStaff } : prev));
     showToast(`✓ Updated role to ${newRole}`);
   };
@@ -224,12 +226,27 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   const handleUpdateStaffPaymentAmount = async (assignmentId: string, newAmount: number) => {
     if (!event) return;
     const validAmount = Math.max(0, newAmount);
+    const targetStaff = event.assignedStaff.find((a) => a.id === assignmentId);
+    const wasAssigned = targetStaff && targetStaff.paymentAmount > 0;
+
     const updatedStaff = event.assignedStaff.map((a) =>
       a.id === assignmentId ? { ...a, paymentAmount: validAmount } : a
     );
-    await eventService.updateEvent(event.id, { assignedStaff: updatedStaff });
+
+    // Only staff with paymentAmount > 0 are assigned to the event in backend
+    const staffToPersist = updatedStaff.filter((a) => a.paymentAmount > 0);
+    await eventService.updateEvent(event.id, { assignedStaff: staffToPersist });
     setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedStaff } : prev));
-    showToast(`✓ Updated agreed payment to ${formatCurrency(validAmount)}`);
+
+    if (validAmount > 0) {
+      if (!wasAssigned) {
+        showToast(`✓ Assigned ${targetStaff?.staffName || 'staff member'} with agreed payment of ${formatCurrency(validAmount)}`);
+      } else {
+        showToast(`✓ Updated agreed payment to ${formatCurrency(validAmount)}`);
+      }
+    } else {
+      showToast(`Agreed payment set to 0. Staff member not assigned to event.`);
+    }
   };
 
   const handleSaveEditedStaffAssignment = async (
@@ -240,7 +257,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     const updatedStaff = event.assignedStaff.map((a) =>
       a.id === assignmentId ? { ...a, ...updatedData } : a
     );
-    await eventService.updateEvent(event.id, { assignedStaff: updatedStaff });
+    const staffToPersist = updatedStaff.filter((a) => a.paymentAmount > 0);
+    await eventService.updateEvent(event.id, { assignedStaff: staffToPersist });
     setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedStaff } : prev));
     showToast(`✓ Updated payment & crew details`);
   };
@@ -249,7 +267,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     if (!event) return;
     if (!confirm(`Remove ${staffName} from this event's production crew?`)) return;
     const updatedStaff = event.assignedStaff.filter((a) => a.id !== assignmentId);
-    await eventService.updateEvent(event.id, { assignedStaff: updatedStaff });
+    const staffToPersist = updatedStaff.filter((a) => a.paymentAmount > 0);
+    await eventService.updateEvent(event.id, { assignedStaff: staffToPersist });
     setEvent((prev) => (prev ? { ...prev, assignedStaff: updatedStaff } : prev));
     showToast(`✓ Removed ${staffName} from crew`);
   };
@@ -395,7 +414,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             <strong className="text-slate-900 dark:text-white font-mono text-sm">{formatCurrency(event.totalAmount)}</strong>
           </div>
           <div>
-            <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Crew Staff Costs ({event.assignedStaff.length})</span>
+            <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Crew Staff Costs ({event.assignedStaff.filter((a) => a.paymentAmount > 0).length})</span>
             <strong className="text-slate-700 dark:text-slate-200 font-mono text-sm">{formatCurrency(totalStaffCost)}</strong>
           </div>
           <div>
@@ -529,7 +548,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {event.assignedStaff.map((as) => (
+                  {event.assignedStaff.filter((as) => as.paymentAmount > 0).map((as) => (
                     <div
                       key={as.id}
                       className="flex justify-between items-center p-2 rounded-lg bg-slate-50 dark:bg-[#0e1622]"
@@ -543,6 +562,9 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                       </span>
                     </div>
                   ))}
+                  {event.assignedStaff.filter((as) => as.paymentAmount > 0).length === 0 && (
+                    <p className="text-xs text-slate-400 italic py-2">No production crew assigned yet</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -805,15 +827,18 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                             {formatCurrency(balanceDue)}
                           </td>
                           <td className="py-3 px-3 text-center">
-                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${as.status === 'Completed'
-                              ? 'bg-indigo-950/60 text-indigo-400 border border-indigo-800/60'
-                              : as.status === 'Confirmed'
-                                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
-                                : as.status === 'Cancelled'
-                                  ? 'bg-rose-950/60 text-rose-400 border border-rose-800/60'
-                                  : 'bg-slate-800/80 text-slate-300 border border-slate-700/80'
+                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                              as.paymentAmount === 0
+                                ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60'
+                                : as.status === 'Completed'
+                                  ? 'bg-indigo-950/60 text-indigo-400 border border-indigo-800/60'
+                                  : as.status === 'Confirmed'
+                                    ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
+                                    : as.status === 'Cancelled'
+                                      ? 'bg-rose-950/60 text-rose-400 border border-rose-800/60'
+                                      : 'bg-slate-800/80 text-slate-300 border border-slate-700/80'
                               }`}>
-                              {as.status || 'Assigned'}
+                              {as.paymentAmount === 0 ? 'Pending Rate' : (as.status || 'Assigned')}
                             </span>
                           </td>
                           <td className="py-3 px-3 text-right">
@@ -829,9 +854,14 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                               </button>
                               <button
                                 type="button"
+                                disabled={as.paymentAmount <= 0}
                                 onClick={() => setStaffPaymentTarget(as)}
-                                className="rounded bg-[#00a894]/15 dark:bg-[#00e5c9]/15 border border-[#00a894]/30 dark:border-[#00e5c9]/30 px-2.5 py-1 text-[11px] font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/25 dark:hover:bg-[#00e5c9]/25 transition-colors"
-                                title="Record staff payout transaction"
+                                className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                                  as.paymentAmount <= 0
+                                    ? 'opacity-40 cursor-not-allowed border border-slate-300 dark:border-[#233549] text-slate-400'
+                                    : 'bg-[#00a894]/15 dark:bg-[#00e5c9]/15 border border-[#00a894]/30 dark:border-[#00e5c9]/30 text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/25 dark:hover:bg-[#00e5c9]/25'
+                                }`}
+                                title={as.paymentAmount <= 0 ? 'Set agreed pay (> 0) to assign and pay staff' : 'Record staff payout transaction'}
                               >
                                 Pay Staff
                               </button>
@@ -1019,8 +1049,9 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         existingAssignments={event.assignedStaff}
         onAssign={async (as) => {
           const updatedStaff = [...event.assignedStaff, as];
+          const staffToPersist = updatedStaff.filter((a) => a.paymentAmount > 0);
           await eventService.updateEvent(event.id, {
-            assignedStaff: updatedStaff,
+            assignedStaff: staffToPersist,
           });
           loadData();
         }}
@@ -1040,7 +1071,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             const updated = event.assignedStaff.map((a) =>
               a.id === targetId ? { ...a, paidAmount: a.paymentAmount } : a
             );
-            eventService.updateEvent(event.id, { assignedStaff: updated }).then(() => {
+            const staffToPersist = updated.filter((a) => a.paymentAmount > 0);
+            eventService.updateEvent(event.id, { assignedStaff: staffToPersist }).then(() => {
               setEvent((prev) => (prev ? { ...prev, assignedStaff: updated } : prev));
               loadData();
             });

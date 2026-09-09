@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   CalendarDays,
@@ -24,7 +24,8 @@ import { eventService } from '@/lib/api/eventService';
 import { recurringService } from '@/lib/api/recurringService';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, toDDMMYYYY, toYYYYMMDD, getTodayDDMMYYYY } from '@/lib/utils';
+import { SearchableSelect, SearchableOption } from '@/components/ui/SearchableSelect';
 
 interface RecurringEventModalProps {
   isOpen: boolean;
@@ -47,10 +48,12 @@ export function RecurringEventModal({
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
+  const newDatePickerRef = useRef<HTMLInputElement>(null);
 
   // Editable Event & Recurring Details
   const [seriesName, setSeriesName] = useState(initialData?.seriesName || '');
-  const [frequency, setFrequency] = useState<RecurringFrequency>(initialData?.frequency || 'Weekly');
+  const [frequency, setFrequency] = useState<RecurringFrequency>(initialData?.frequency || 'Custom');
+  const [newEventDate, setNewEventDate] = useState(getTodayDDMMYYYY());
   const [startDate, setStartDate] = useState(initialData?.startDate || new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(initialData?.endDate || '');
   const [eventDay, setEventDay] = useState(initialData?.eventDay || '');
@@ -59,6 +62,19 @@ export function RecurringEventModal({
   const [location, setLocation] = useState(initialData?.location || '');
   const [defaultPrice, setDefaultPrice] = useState<number>(initialData?.defaultPrice || 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Searchable event options
+  const eventOptions = useMemo<SearchableOption[]>(() => {
+    return events.map((evt) => ({
+      value: evt.id,
+      label: evt.name,
+      sublabel: [evt.customerName, evt.location, formatDate(evt.eventDate)].filter(Boolean).join(' • '),
+      badge: evt.eventType || 'Event',
+      category: evt.eventType,
+      extraInfo: formatCurrency(evt.totalAmount || evt.subtotal || 0),
+      raw: evt,
+    }));
+  }, [events]);
 
   // Load real events from database
   useEffect(() => {
@@ -100,9 +116,9 @@ export function RecurringEventModal({
   }, [startDate, endDate]);
 
   // Handle Event Selection
-  const handleSelectEvent = (eventId: string) => {
+  const handleSelectEvent = (eventId: string, eventObj?: EventItem) => {
     setSelectedEventId(eventId);
-    const evt = events.find((e) => e.id === eventId);
+    const evt = eventObj || events.find((e) => e.id === eventId);
     if (!evt) {
       setSelectedEvent(null);
       return;
@@ -121,6 +137,7 @@ export function RecurringEventModal({
 
     // Prefill all editable event & fields from selected event
     setSeriesName(evt.name);
+    setNewEventDate(toDDMMYYYY(evt.eventDate));
     setStartDate(evt.eventDate || new Date().toISOString().split('T')[0]);
     setEventDay(dayName);
     setStartTime(evt.startTime || '21:00');
@@ -157,6 +174,53 @@ export function RecurringEventModal({
       const services = selectedEvent?.services || initialData?.services || [];
       const assignedStaffIds =
         selectedEvent?.assignedStaff?.map((s) => s.staffId) || initialData?.assignedStaffIds || [];
+
+      // If frequency is 'Custom' and creating new: Create a standalone Event, NOT a recurring series!
+      if (frequency === 'Custom' && !initialData) {
+        const isoEventDate = toYYYYMMDD(newEventDate);
+        if (!isoEventDate || isNaN(new Date(isoEventDate).getTime())) {
+          showToast('Please enter a valid Event Date in DD/MM/YYYY format', 'error');
+          setIsSubmitting(false);
+          return;
+        }
+        const eventPrice = Number(defaultPrice) || selectedEvent?.totalAmount || selectedEvent?.subtotal || 0;
+
+        const newEventPayload = {
+          name: seriesName.trim(),
+          customerId,
+          customerName,
+          customerCompany: selectedEvent?.customerCompany || '',
+          customerPhone: selectedEvent?.customerPhone || '',
+          customerEmail: selectedEvent?.customerEmail || '',
+          eventType,
+          eventDate: isoEventDate,
+          startTime,
+          endTime,
+          location,
+          address: selectedEvent?.address || '',
+          description: selectedEvent?.description || '',
+          notes: selectedEvent?.notes || '',
+          status: 'Confirmed' as const,
+          services: selectedEvent?.services || [],
+          assignedStaff: selectedEvent?.assignedStaff || [],
+          expenses: [],
+          subtotal: eventPrice,
+          additionalCharges: selectedEvent?.additionalCharges || 0,
+          discount: selectedEvent?.discount || 0,
+          totalAmount: eventPrice + (selectedEvent?.additionalCharges || 0) - (selectedEvent?.discount || 0),
+          paidAmount: 0,
+          balance: eventPrice + (selectedEvent?.additionalCharges || 0) - (selectedEvent?.discount || 0),
+        };
+
+        const createdEvent = await eventService.createEvent(newEventPayload);
+        showToast(`✓ New event "${createdEvent.name}" created successfully`);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('seekers_events_updated'));
+        }
+        if (onSuccess) onSuccess();
+        onClose();
+        return;
+      }
 
       const payload = {
         seriesName: seriesName.trim(),
@@ -197,14 +261,27 @@ export function RecurringEventModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Edit Recurring Event Series' : 'Create Recurring Event Series'}
-      subtitle="Select a base event to automatically pull details, then edit recurring residency specs"
+      title={
+        initialData
+          ? 'Edit Recurring Event Series'
+          : frequency === 'Custom'
+            ? 'Create New Event from Blueprint'
+            : 'Create Recurring Event Series'
+      }
+      subtitle={
+        frequency === 'Custom'
+          ? 'Clone and configure a new standalone event based on the selected blueprint'
+          : 'Select a base event to automatically pull details, then edit recurring residency specs'
+      }
       maxWidth="lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-5 text-xs">
+      <form
+        onSubmit={handleSubmit}
+        className={`space-y-5 text-xs ${!selectedEvent && !initialData ? 'min-h-[460px] flex flex-col' : ''}`}
+      >
         {/* STEP 1: Select Event (Only required when creating new) */}
         {!initialData && (
-          <div className="rounded-xl border border-slate-200 dark:border-[#1f2f42] bg-slate-50/70 dark:bg-[#0c1420] p-4 space-y-3">
+          <div className="rounded-xl border border-slate-200 dark:border-[#1f2f42] bg-slate-50/70 dark:bg-[#0c1420] p-4 space-y-3 relative z-30">
             <div className="flex items-center justify-between">
               <label className="block font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
                 <CalendarDays className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9]" />
@@ -235,20 +312,30 @@ export function RecurringEventModal({
                 </Link>
               </div>
             ) : (
-              <select
+              <SearchableSelect
+                options={eventOptions}
                 value={selectedEventId}
-                onChange={(e) => handleSelectEvent(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-medium focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
-                required
-              >
-                <option value="">-- Choose an event to make recurring --</option>
-                {events.map((evt) => (
-                  <option key={evt.id} value={evt.id}>
-                    {evt.name} • {evt.customerName} • {evt.eventDate} ({formatCurrency(evt.totalAmount)})
-                  </option>
-                ))}
-              </select>
+                onChange={(val, opt) => handleSelectEvent(val, opt?.raw)}
+                placeholder={`-- Choose an event to make recurring (${events.length} available) * --`}
+                searchPlaceholder="Search events by name, client, venue, date..."
+                clearable={true}
+                required={true}
+                emptyMessage="No matching events found"
+              />
             )}
+          </div>
+        )}
+
+        {/* Helpful blueprint guide placeholder when no event selected yet */}
+        {!selectedEvent && !initialData && (
+          <div className="rounded-xl border border-dashed border-slate-200 dark:border-[#1d2b3c] bg-slate-50/50 dark:bg-[#0c1420]/40 p-6 text-center space-y-2 my-auto">
+            <Sparkles className="h-6 w-6 text-[#00897b] dark:text-[#00e5c9] mx-auto opacity-60" />
+            <h4 className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
+              Select a Base Event Above to Get Started
+            </h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+              Choose an existing booking from the dropdown. Its client details, equipment packages, pricing, and timing will be loaded as your recurring series blueprint.
+            </p>
           </div>
         )}
 
@@ -316,30 +403,31 @@ export function RecurringEventModal({
           </div>
         )}
 
-        {/* STEP 3: Edit Event Details for the Recurring Series */}
+        {/* STEP 3: Edit Event Details */}
         {(selectedEvent || initialData) && (
           <div className="space-y-4 pt-1">
-            <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Recurring Series Name *
-              </label>
-              <input
-                type="text"
-                value={seriesName}
-                onChange={(e) => setSeriesName(e.target.value)}
-                placeholder="e.g. Friday Night Residency — Colombo"
-                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-semibold focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
-                required
-              />
-            </div>
+            {/* Top row: Name & Frequency */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-2">
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {frequency === 'Custom' ? 'Event Name *' : 'Recurring Series Name *'}
+                </label>
+                <input
+                  type="text"
+                  value={seriesName}
+                  onChange={(e) => setSeriesName(e.target.value)}
+                  placeholder={frequency === 'Custom' ? 'e.g. Saturday Night Special' : 'e.g. Friday Night Residency — Colombo'}
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white font-semibold focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                  required
+                />
+              </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Recurrence Frequency</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Frequency *</label>
                 <select
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
-                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none font-medium"
                 >
                   <option value="Weekly">Weekly</option>
                   <option value="Biweekly">Biweekly</option>
@@ -348,64 +436,138 @@ export function RecurringEventModal({
                   <option value="Custom">Custom</option>
                 </select>
               </div>
-
-              <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Schedule Day</label>
-                <input
-                  type="text"
-                  value={eventDay}
-                  onChange={(e) => setEventDay(e.target.value)}
-                  placeholder="e.g. Every Friday"
-                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Start Date *</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">End Date *</label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
-                  required
-                />
-              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Session Start Time</label>
-                <input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
-                />
+            {frequency === 'Custom' && !initialData && (
+              <div className="rounded-lg border border-sky-200 dark:border-sky-900/40 bg-sky-50/70 dark:bg-sky-950/20 p-3 flex items-center gap-2.5 text-sky-800 dark:text-sky-300 text-xs">
+                <Sparkles className="h-4 w-4 shrink-0 text-sky-500" />
+                <span>
+                  <strong>Custom Mode:</strong> Clones details from the selected base event to create a single new standalone event.
+                </span>
               </div>
+            )}
 
-              <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Session End Time</label>
-                <input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
-                />
+            {frequency === 'Custom' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    New Event Date *
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      value={newEventDate}
+                      onChange={(e) => setNewEventDate(e.target.value)}
+                      onBlur={() => {
+                        if (newEventDate) {
+                          setNewEventDate(toDDMMYYYY(newEventDate));
+                        }
+                      }}
+                      placeholder="DD/MM/YYYY"
+                      className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 pr-10 text-slate-900 dark:text-white font-medium focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                      required
+                    />
+                    <input
+                      type="date"
+                      ref={newDatePickerRef}
+                      value={toYYYYMMDD(newEventDate)}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setNewEventDate(toDDMMYYYY(e.target.value));
+                        }
+                      }}
+                      className="sr-only pointer-events-none absolute opacity-0"
+                      tabIndex={-1}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newDatePickerRef.current) {
+                          if (typeof newDatePickerRef.current.showPicker === 'function') {
+                            newDatePickerRef.current.showPicker();
+                          } else {
+                            newDatePickerRef.current.click();
+                          }
+                        }
+                      }}
+                      className="absolute right-2 p-1.5 text-slate-400 hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-[#162232]"
+                      title="Choose from calendar"
+                    >
+                      <CalendarDays className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Start Time</label>
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">End Time</label>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                  />
+                </div>
               </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Start Date *</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                    required
+                  />
+                </div>
 
+                <div>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">End Date *</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Session Start Time</label>
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Session End Time</label>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Bottom row: Venue & Price */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Venue / Location</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Venue / Location *</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
@@ -418,27 +580,27 @@ export function RecurringEventModal({
                   />
                 </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Rate Per Session (LKR)
-              </label>
-              <input
-                type="number"
-                min={0}
-                value={defaultPrice}
-                onChange={(e) => setDefaultPrice(Number(e.target.value))}
-                placeholder="Rate per recurring session"
-                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 font-mono text-sm text-slate-900 dark:text-white font-bold focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
-                required
-              />
+              <div>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {frequency === 'Custom' ? 'Event Total Price (LKR) *' : 'Rate Per Session (LKR) *'}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={defaultPrice}
+                  onChange={(e) => setDefaultPrice(Number(e.target.value))}
+                  placeholder={frequency === 'Custom' ? 'Total price for new event' : 'Rate per recurring session'}
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 font-mono text-sm text-slate-900 dark:text-white font-bold focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+                  required
+                />
+              </div>
             </div>
           </div>
         )}
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-[#1c2a3a]">
+        <div className={`flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-[#1c2a3a] ${!selectedEvent && !initialData ? 'mt-auto' : ''}`}>
           <button
             type="button"
             onClick={onClose}
@@ -455,7 +617,9 @@ export function RecurringEventModal({
               ? 'Saving...'
               : initialData
                 ? 'Save Changes'
-                : 'Create Recurring Series'}
+                : frequency === 'Custom'
+                  ? 'Create New Event'
+                  : 'Create Recurring Series'}
           </button>
         </div>
       </form>

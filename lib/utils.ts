@@ -67,3 +67,38 @@ export function calculateProfit(totalAmount: number, staffPayments: number, expe
   const margin = totalAmount > 0 ? Math.round((profit / totalAmount) * 100) : 0
   return { profit, margin }
 }
+
+export function getTodayDDMMYYYY(): string {
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = now.getFullYear();
+  return `${d}/${m}/${y}`;
+}
+
+export function toDDMMYYYY(dateStr?: string): string {
+  if (!dateStr) return getTodayDDMMYYYY();
+  const trimmed = dateStr.trim();
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+    const parts = trimmed.split('/');
+    return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+  }
+  if (/^\d{4}-\d{1,2}-\d{1,2}/.test(trimmed)) {
+    const [y, m, d] = trimmed.split('T')[0].split('-');
+    return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+  }
+  return trimmed;
+}
+
+export function toYYYYMMDD(dateStr?: string): string {
+  if (!dateStr) return new Date().toISOString().split('T')[0];
+  const trimmed = dateStr.trim();
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+    const [d, m, y] = trimmed.split('/');
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  if (/^\d{4}-\d{1,2}-\d{1,2}/.test(trimmed)) {
+    return trimmed.split('T')[0];
+  }
+  return trimmed;
+}

@@ -42,8 +42,8 @@ export function Header({ onOpenMobile }: HeaderProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
       id: 'n-1',
-      title: 'Real Backend Connected',
-      message: 'MongoDB Atlas live database operational.',
+      title: 'Backend Connected',
+      message: 'MongoDB Atlas database operational.',
       type: 'success',
       timestamp: 'Just now',
       read: false,

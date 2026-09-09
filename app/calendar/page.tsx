@@ -32,7 +32,7 @@ interface CalendarCell {
 export default function CalendarPage() {
   const router = useRouter();
   const [events, setEvents] = useState<EventItem[]>([]);
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'year'>('month');
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
 
@@ -61,7 +61,9 @@ export default function CalendarPage() {
   // Navigation handlers
   const handlePrev = () => {
     setCurrentDate((prev) => {
-      if (viewMode === 'month') {
+      if (viewMode === 'year') {
+        return new Date(prev.getFullYear() - 1, prev.getMonth(), 1);
+      } else if (viewMode === 'month') {
         return new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
       } else if (viewMode === 'week') {
         const next = new Date(prev);
@@ -77,7 +79,9 @@ export default function CalendarPage() {
 
   const handleNext = () => {
     setCurrentDate((prev) => {
-      if (viewMode === 'month') {
+      if (viewMode === 'year') {
+        return new Date(prev.getFullYear() + 1, prev.getMonth(), 1);
+      } else if (viewMode === 'month') {
         return new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
       } else if (viewMode === 'week') {
         const next = new Date(prev);
@@ -97,7 +101,9 @@ export default function CalendarPage() {
 
   // Header Title
   const headerTitle = useMemo(() => {
-    if (viewMode === 'month') {
+    if (viewMode === 'year') {
+      return `${currentDate.getFullYear()}`;
+    } else if (viewMode === 'month') {
       return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     } else if (viewMode === 'week') {
       const startOfWeek = new Date(currentDate);
@@ -185,22 +191,66 @@ export default function CalendarPage() {
     return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
   }, [currentDate]);
 
+  // Map of events by dateStr for fast O(1) lookups
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, EventItem[]>();
+    for (const evt of events) {
+      if (!evt.eventDate) continue;
+      let dStr = evt.eventDate;
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(evt.eventDate.trim())) {
+        const [d, m, y] = evt.eventDate.trim().split('/');
+        dStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+      const list = map.get(dStr) || [];
+      list.push(evt);
+      map.set(dStr, list);
+    }
+    return map;
+  }, [events]);
+
   // Active period events count
   const activeEventsCount = useMemo(() => {
-    if (viewMode === 'month') {
+    if (viewMode === 'year') {
+      const yearStr = `${year}-`;
+      return events.filter((e) => {
+        if (!e.eventDate) return false;
+        let dStr = e.eventDate;
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(e.eventDate.trim())) {
+          const [d, m, y] = e.eventDate.trim().split('/');
+          dStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        }
+        return dStr.startsWith(yearStr);
+      }).length;
+    } else if (viewMode === 'month') {
       const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-      return events.filter((e) => e.eventDate && e.eventDate.startsWith(prefix)).length;
+      return events.filter((e) => {
+        if (!e.eventDate) return false;
+        let dStr = e.eventDate;
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(e.eventDate.trim())) {
+          const [d, m, y] = e.eventDate.trim().split('/');
+          dStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        }
+        return dStr.startsWith(prefix);
+      }).length;
     } else if (viewMode === 'week') {
       const weekDateStrs = new Set(weekDays.map((w) => w.dateStr));
-      return events.filter((e) => weekDateStrs.has(e.eventDate)).length;
+      return events.filter((e) => {
+        if (!e.eventDate) return false;
+        let dStr = e.eventDate;
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(e.eventDate.trim())) {
+          const [d, m, y] = e.eventDate.trim().split('/');
+          dStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        }
+        return weekDateStrs.has(dStr);
+      }).length;
     } else {
-      return events.filter((e) => e.eventDate === currentDayDateStr).length;
+      return (eventsByDate.get(currentDayDateStr) || []).length;
     }
-  }, [events, viewMode, year, month, weekDays, currentDayDateStr]);
+  }, [events, viewMode, year, month, weekDays, currentDayDateStr, eventsByDate]);
 
   // Helper to fetch events for a date string
   const getEventsForDate = (dateStr: string) => {
-    return events.filter((e) => e.eventDate === dateStr);
+    return eventsByDate.get(dateStr) || [];
   };
 
   return (
@@ -213,13 +263,12 @@ export default function CalendarPage() {
           actions={
             <div className="flex items-center gap-2">
               <div className="flex rounded-lg border border-slate-200 dark:border-[#233549] bg-slate-100 dark:bg-[#111c29] p-1 text-xs">
-                {(['month', 'week', 'day'] as const).map((m) => (
+                {(['month', 'week', 'day', 'year'] as const).map((m) => (
                   <button
                     key={m}
                     onClick={() => setViewMode(m)}
-                    className={`rounded px-3 py-1 font-semibold uppercase tracking-wider transition-colors ${
-                      viewMode === m ? 'bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
+                    className={`rounded px-3 py-1 font-semibold uppercase tracking-wider transition-colors ${viewMode === m ? 'bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
                   >
                     {m}
                   </button>
@@ -231,7 +280,7 @@ export default function CalendarPage() {
                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-2 text-xs font-bold text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
               >
                 <Plus className="h-4 w-4" />
-                <span>+ Book Event</span>
+                <span>Book Event</span>
               </Link>
             </div>
           }
@@ -248,7 +297,7 @@ export default function CalendarPage() {
                   type="button"
                   onClick={handlePrev}
                   className="p-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-50 dark:bg-[#111c29] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-[#00e5c9] transition-colors"
-                  title="Previous Month"
+                  title={viewMode === 'year' ? 'Previous Year' : viewMode === 'month' ? 'Previous Month' : viewMode === 'week' ? 'Previous Week' : 'Previous Day'}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -256,7 +305,7 @@ export default function CalendarPage() {
                   type="button"
                   onClick={handleNext}
                   className="p-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-50 dark:bg-[#111c29] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-[#00e5c9] transition-colors"
-                  title="Next Month"
+                  title={viewMode === 'year' ? 'Next Year' : viewMode === 'month' ? 'Next Month' : viewMode === 'week' ? 'Next Week' : 'Next Day'}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -301,7 +350,7 @@ export default function CalendarPage() {
             <div className="overflow-x-auto">
               <div className="min-w-[700px]">
                 {/* Weekdays */}
-                <div className="grid grid-cols-7 border-b border-[#1c2a3a] text-center text-xs font-bold uppercase tracking-wider text-slate-400 py-2.5">
+                <div className="grid grid-cols-7 border-b border-[#1c2a3a] text-center text-xs font-bold uppercase tracking-wider text-slate-400 py-2">
                   <span>Sun</span>
                   <span>Mon</span>
                   <span>Tue</span>
@@ -311,64 +360,86 @@ export default function CalendarPage() {
                   <span>Sat</span>
                 </div>
 
-                {/* Month Days Grid */}
-                <div className="grid grid-cols-7 border-l border-t border-[#1a2636]">
+                {/* Month Days Grid - Compact height with +N more event indicator */}
+                <div className="grid grid-cols-7 border-l border-t border-slate-200 dark:border-[#1a2636]">
                   {calendarCells.map((cell) => {
                     const dayEvents = getEventsForDate(cell.dateStr);
+                    const hasMore = dayEvents.length > 2;
+                    const displayedEvents = dayEvents.slice(0, 2);
+                    const extraCount = dayEvents.length - 2;
 
                     return (
                       <div
                         key={cell.dateStr}
-                        className={`min-h-[110px] p-2 border-r border-b border-slate-200 dark:border-[#1a2636] flex flex-col justify-between transition-colors ${
-                          cell.isToday
-                            ? 'bg-teal-50/70 dark:bg-[#0f212c]/80 ring-1 ring-inset ring-[#00a894] dark:ring-[#00e5c9]/60'
-                            : !cell.isCurrentMonth
+                        onClick={() => {
+                          setCurrentDate(new Date(cell.dateStr + 'T00:00:00'));
+                          setViewMode('day');
+                        }}
+                        className={`min-h-[72px] sm:min-h-[80px] p-1.5 border-r border-b border-slate-200 dark:border-[#1a2636] flex flex-col justify-between transition-colors cursor-pointer group ${cell.isToday
+                          ? 'bg-teal-50/70 dark:bg-[#0f212c]/80 ring-1 ring-inset ring-[#00a894] dark:ring-[#00e5c9]/60'
+                          : !cell.isCurrentMonth
                             ? 'bg-slate-50/60 dark:bg-[#080d15]/50 opacity-40 hover:opacity-80'
                             : 'hover:bg-slate-50 dark:hover:bg-[#0f1722]'
-                        }`}
+                          }`}
                       >
-                        <div className="flex justify-between items-center text-xs">
+                        <div className="flex justify-between items-center text-xs leading-none">
                           <span
-                            className={`font-bold ${
-                              cell.isToday
-                                ? 'text-[#00897b] dark:text-[#00e5c9]'
-                                : cell.isCurrentMonth
-                                ? 'text-slate-800 dark:text-slate-300'
+                            className={`font-bold transition-colors ${cell.isToday
+                              ? 'text-[#00897b] dark:text-[#00e5c9]'
+                              : cell.isCurrentMonth
+                                ? 'text-slate-800 dark:text-slate-300 group-hover:text-[#00897b] dark:group-hover:text-[#00e5c9]'
                                 : 'text-slate-400 dark:text-slate-600'
-                            }`}
+                              }`}
                           >
                             {cell.dayNumber}
                           </span>
                           {cell.isToday && (
-                            <span className="rounded bg-[#00e5c9] px-1.5 py-0.2 text-[9px] font-bold text-black uppercase">
+                            <span className="rounded bg-[#00a894] dark:bg-[#00e5c9] px-1 py-0.2 text-[8px] font-bold text-white dark:text-black uppercase">
                               Today
                             </span>
                           )}
                         </div>
 
                         {/* Event chips */}
-                        <div className="mt-1 space-y-1 overflow-y-auto max-h-20">
-                          {dayEvents.map((evt) => {
+                        <div className="mt-1 space-y-1">
+                          {displayedEvents.map((evt) => {
                             const isConfirmed = evt.status === 'Confirmed';
                             const isPending = evt.status === 'Pending';
                             return (
                               <div
                                 key={evt.id}
-                                onClick={() => setSelectedEvent(evt)}
-                                className={`p-1.5 rounded text-[11px] font-medium truncate cursor-pointer transition-all border ${
-                                  isConfirmed
-                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
-                                    : isPending
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEvent(evt);
+                                }}
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-medium truncate cursor-pointer transition-all border flex items-center justify-between gap-1 shadow-xs ${isConfirmed
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                                  : isPending
                                     ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60'
                                     : 'bg-teal-50 dark:bg-[#00e5c9]/10 border-teal-200 dark:border-[#00e5c9]/30 text-teal-800 dark:text-[#00e5c9] hover:bg-teal-100 dark:hover:bg-[#00e5c9]/20'
-                                }`}
+                                  }`}
                                 title={`${evt.name} (${evt.startTime} - ${evt.endTime})`}
                               >
-                                <span className="block font-semibold truncate">{evt.name}</span>
-                                <span className="block text-[10px] opacity-75 font-mono">{evt.startTime}</span>
+                                <span className="block font-semibold truncate leading-tight">{evt.name}</span>
+                                <span className="shrink-0 text-[9px] opacity-75 font-mono leading-tight">{evt.startTime}</span>
                               </div>
                             );
                           })}
+
+                          {hasMore && (
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentDate(new Date(cell.dateStr + 'T00:00:00'));
+                                setViewMode('day');
+                              }}
+                              className="px-1.5 py-0.5 rounded text-[9px] font-bold text-[#00897b] dark:text-[#00e5c9] bg-teal-50 dark:bg-[#00e5c9]/10 hover:bg-teal-100 dark:hover:bg-[#00e5c9]/20 transition-colors flex items-center justify-between border border-teal-200/50 dark:border-[#00e5c9]/20 cursor-pointer"
+                              title={dayEvents.slice(2).map((e) => `• ${e.name} (${e.startTime} - ${e.endTime})`).join('\n')}
+                            >
+                              <span>+{extraCount} more</span>
+                              <span className="text-[8px] opacity-70">View day →</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -388,11 +459,10 @@ export default function CalendarPage() {
                   return (
                     <div
                       key={w.dateStr}
-                      className={`rounded-xl border p-3 min-h-[280px] flex flex-col justify-between ${
-                        w.isToday
-                          ? 'border-[#00a894]/40 dark:border-[#00e5c9]/40 bg-teal-50/50 dark:bg-[#0f212c]/50'
-                          : 'border-slate-200 dark:border-[#1b2a3b] bg-white dark:bg-[#0c1420]'
-                      }`}
+                      className={`rounded-xl border p-3 min-h-[280px] flex flex-col justify-between ${w.isToday
+                        ? 'border-[#00a894]/40 dark:border-[#00e5c9]/40 bg-teal-50/50 dark:bg-[#0f212c]/50'
+                        : 'border-slate-200 dark:border-[#1b2a3b] bg-white dark:bg-[#0c1420]'
+                        }`}
                     >
                       <div>
                         <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-[#1b2a3b]">
@@ -400,9 +470,8 @@ export default function CalendarPage() {
                             {w.dayName}
                           </span>
                           <span
-                            className={`text-sm font-bold ${
-                              w.isToday ? 'text-[#00897b] dark:text-[#00e5c9]' : 'text-slate-900 dark:text-white'
-                            }`}
+                            className={`text-sm font-bold ${w.isToday ? 'text-[#00897b] dark:text-[#00e5c9]' : 'text-slate-900 dark:text-white'
+                              }`}
                           >
                             {w.dayNumber}
                           </span>
@@ -511,6 +580,126 @@ export default function CalendarPage() {
                   </div>
                 );
               })()}
+            </div>
+          )}
+
+          {/* VIEW: YEAR */}
+          {viewMode === 'year' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 12 }, (_, mIdx) => {
+                const monthDate = new Date(year, mIdx, 1);
+                const monthName = monthDate.toLocaleDateString('en-US', { month: 'long' });
+                const firstDayOfWeek = new Date(year, mIdx, 1).getDay(); // 0-6
+                const daysInMonth = new Date(year, mIdx + 1, 0).getDate();
+
+                // Events in this month
+                const monthPrefix = `${year}-${String(mIdx + 1).padStart(2, '0')}`;
+                const monthEvents = events.filter((e) => {
+                  if (!e.eventDate) return false;
+                  let dStr = e.eventDate;
+                  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(e.eventDate.trim())) {
+                    const [d, m, y] = e.eventDate.trim().split('/');
+                    dStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                  }
+                  return dStr.startsWith(monthPrefix);
+                });
+
+                return (
+                  <div
+                    key={mIdx}
+                    className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c1420] p-3 flex flex-col justify-between hover:border-[#00897b]/50 dark:hover:border-[#00e5c9]/40 transition-all shadow-xs"
+                  >
+                    <div>
+                      {/* Month Header */}
+                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-[#1a2636]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCurrentDate(new Date(year, mIdx, 1));
+                            setViewMode('month');
+                          }}
+                          className="text-xs font-bold text-slate-900 dark:text-white hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors flex items-center gap-1 group"
+                          title={`Open ${monthName} in month view`}
+                        >
+                          <span>{monthName}</span>
+                          <span className="opacity-0 group-hover:opacity-100 text-[10px] text-[#00897b] dark:text-[#00e5c9] transition-opacity">→</span>
+                        </button>
+
+                        {monthEvents.length > 0 ? (
+                          <span className="rounded-full bg-teal-50 dark:bg-[#00e5c9]/15 border border-teal-200 dark:border-[#00e5c9]/30 px-2 py-0.5 text-[9px] font-semibold text-[#00897b] dark:text-[#00e5c9]">
+                            {monthEvents.length} {monthEvents.length === 1 ? 'event' : 'events'}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-slate-400 dark:text-slate-600">0 events</span>
+                        )}
+                      </div>
+
+                      {/* Weekday headers */}
+                      <div className="grid grid-cols-7 text-center text-[9px] font-bold text-slate-400 dark:text-slate-500 mb-1">
+                        <span>S</span>
+                        <span>M</span>
+                        <span>T</span>
+                        <span>W</span>
+                        <span>T</span>
+                        <span>F</span>
+                        <span>S</span>
+                      </div>
+
+                      {/* Mini month grid */}
+                      <div className="grid grid-cols-7 gap-0.5 text-center text-[10px]">
+                        {/* Padding days before month starts */}
+                        {Array.from({ length: firstDayOfWeek }).map((_, pIdx) => (
+                          <div key={`pad-${pIdx}`} className="h-6" />
+                        ))}
+
+                        {/* Month days */}
+                        {Array.from({ length: daysInMonth }, (_, dIdx) => {
+                          const dayNum = dIdx + 1;
+                          const dateStr = `${year}-${String(mIdx + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+                          const dayEvts = getEventsForDate(dateStr);
+                          const hasEvents = dayEvts.length > 0;
+                          const isToday = dateStr === todayStr;
+
+                          const hasConfirmed = dayEvts.some((e) => e.status === 'Confirmed');
+
+                          return (
+                            <button
+                              key={dayNum}
+                              type="button"
+                              onClick={() => {
+                                setCurrentDate(new Date(year, mIdx, dayNum));
+                                setViewMode('day');
+                              }}
+                              title={
+                                hasEvents
+                                  ? `${dayEvts.length} event(s) on ${formatDate(dateStr)}:\n` +
+                                  dayEvts.map((e) => `• ${e.name} (${e.startTime})`).join('\n')
+                                  : formatDate(dateStr)
+                              }
+                              className={`h-6 w-full rounded flex flex-col items-center justify-center relative transition-all ${isToday
+                                  ? 'bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black font-bold ring-1 ring-teal-300 shadow-xs'
+                                  : hasEvents
+                                    ? hasConfirmed
+                                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 font-bold hover:bg-emerald-200 dark:hover:bg-emerald-900'
+                                      : 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-bold hover:bg-amber-200 dark:hover:bg-amber-900'
+                                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1a2738]'
+                                }`}
+                            >
+                              <span className="leading-none">{dayNum}</span>
+                              {hasEvents && !isToday && (
+                                <span
+                                  className={`absolute bottom-0.5 h-1 w-1 rounded-full ${hasConfirmed ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-amber-500 dark:bg-amber-400'
+                                    }`}
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

@@ -8,6 +8,7 @@ export interface SearchableOption {
   label: string;
   sublabel?: string;
   badge?: string;
+  badgeClassName?: string;
   category?: string;
   extraInfo?: string;
   disabled?: boolean;
@@ -27,6 +28,10 @@ export interface SearchableSelectProps {
   clearable?: boolean;
   icon?: React.ReactNode;
   emptyMessage?: string;
+  align?: 'left' | 'right';
+  dropdownClassName?: string;
+  placeholderClassName?: string;
+  triggerClassName?: string;
 }
 
 export function SearchableSelect({
@@ -42,6 +47,10 @@ export function SearchableSelect({
   clearable = false,
   icon,
   emptyMessage = 'No matching options found',
+  align = 'left',
+  dropdownClassName = '',
+  placeholderClassName = '',
+  triggerClassName = '',
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -139,10 +148,10 @@ export function SearchableSelect({
           isOpen
             ? 'border-[#00897b] dark:border-[#00e5c9] ring-2 ring-[#00e5c9]/20 bg-white dark:bg-[#111c29]'
             : 'border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] hover:border-slate-400 dark:hover:border-[#304763]'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${triggerClassName}`}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          {icon && <span className="shrink-0 text-slate-400">{icon}</span>}
+          {icon && <span className="shrink-0 flex items-center text-slate-400">{icon}</span>}
           {selectedOption ? (
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-slate-900 dark:text-white truncate">
@@ -155,7 +164,9 @@ export function SearchableSelect({
               )}
             </div>
           ) : (
-            <span className="text-slate-400 dark:text-slate-500 truncate">{placeholder}</span>
+            <span className={`truncate ${placeholderClassName || 'text-slate-400 dark:text-slate-500'}`}>
+              {placeholder}
+            </span>
           )}
         </div>
 
@@ -184,7 +195,11 @@ export function SearchableSelect({
 
       {/* Dropdown Popover */}
       {isOpen && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-xl border border-slate-200 dark:border-[#1e2f42] bg-white dark:bg-[#0c1420] shadow-2xl overflow-hidden animate-in fade-in-50 duration-150">
+        <div
+          className={`absolute ${
+            align === 'right' ? 'right-0' : 'left-0'
+          } top-full z-50 mt-1 w-full rounded-xl border border-slate-200 dark:border-[#1e2f42] bg-white dark:bg-[#0c1420] shadow-2xl overflow-hidden animate-in fade-in-50 duration-150 ${dropdownClassName}`}
+        >
           {/* Search Box */}
           <div className="p-2 border-b border-slate-100 dark:border-[#192737] bg-slate-50/70 dark:bg-[#0f1826]">
             <div className="relative">
@@ -255,7 +270,12 @@ export function SearchableSelect({
                         </span>
                       )}
                       {opt.badge && (
-                        <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-[#182637] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-[#22354c]">
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-medium border ${
+                            opt.badgeClassName ||
+                            'bg-slate-100 dark:bg-[#182637] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#22354c]'
+                          }`}
+                        >
                           {opt.badge}
                         </span>
                       )}

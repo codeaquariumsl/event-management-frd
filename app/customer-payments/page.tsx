@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   CreditCard,
@@ -17,6 +17,7 @@ import { DataTable, Column } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
 import { InvoiceModal } from '@/components/ui/InvoiceModal';
+import { SearchableSelect, SearchableOption } from '@/components/ui/SearchableSelect';
 import { RecordPaymentModal } from '@/features/events/RecordPaymentModal';
 import { paymentService } from '@/lib/api/paymentService';
 import { eventService } from '@/lib/api/eventService';
@@ -52,6 +53,27 @@ export default function CustomerPaymentsPage() {
     totalCollected + totalOutstanding > 0
       ? Math.round((totalCollected / (totalCollected + totalOutstanding)) * 100)
       : 100;
+
+  const eventPaymentOptions: SearchableOption[] = useMemo(() => {
+    return events
+      .filter((e) => (e.balance ?? 0) > 0)
+      .map((e) => ({
+        value: e.id,
+        label: e.name,
+        sublabel: [
+          e.customerName,
+          e.customerCompany,
+          e.eventDate ? formatDate(e.eventDate) : '',
+        ]
+          .filter(Boolean)
+          .join(' • '),
+        extraInfo: formatCurrency(e.balance),
+        badge: 'Due',
+        badgeClassName: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25 font-semibold',
+        category: e.eventType,
+        raw: e,
+      }));
+  }, [events]);
 
   const columns: Column<CustomerPayment>[] = [
     {
@@ -123,25 +145,22 @@ export default function CustomerPaymentsPage() {
           breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Customer Payments' }]}
           actions={
             <div className="flex items-center gap-2">
-              <select
-                onChange={(e) => {
-                  const ev = events.find((item) => item.id === e.target.value);
+              <SearchableSelect
+                options={eventPaymentOptions}
+                value=""
+                resetOnSelect={true}
+                onChange={(val, opt) => {
+                  const ev = opt?.raw || events.find((item) => item.id === val);
                   if (ev) setSelectedPaymentEvent(ev);
                 }}
-                defaultValue=""
-                className="rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00a894] dark:focus:ring-[#00e5c9]"
-              >
-                <option value="" disabled>
-                  + Select Event to Pay...
-                </option>
-                {events
-                  .filter((e) => e.balance > 0)
-                  .map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name} (Due: {formatCurrency(e.balance)})
-                    </option>
-                  ))}
-              </select>
+                placeholder="+ Select Event to Pay..."
+                placeholderClassName="font-semibold text-slate-800 dark:text-slate-100"
+                searchPlaceholder="Search event, client, date, due amount..."
+                emptyMessage="No events with outstanding balance"
+                align="right"
+                className="w-64 sm:w-72"
+                dropdownClassName="sm:w-96 sm:min-w-[340px]"
+              />
             </div>
           }
         />

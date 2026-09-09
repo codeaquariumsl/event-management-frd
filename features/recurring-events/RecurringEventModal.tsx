@@ -172,8 +172,8 @@ export function RecurringEventModal({
       const customerName = selectedEvent?.customerName || initialData?.customerName || 'Customer';
       const eventType = selectedEvent?.eventType || initialData?.eventType || 'Club / Concert';
       const services = selectedEvent?.services || initialData?.services || [];
-      const assignedStaffIds =
-        selectedEvent?.assignedStaff?.map((s) => s.staffId) || initialData?.assignedStaffIds || [];
+      // Do not inherit staff from base event - keep staff assignments completely separate and independent
+      const assignedStaffIds = initialData?.assignedStaffIds || [];
 
       // If frequency is 'Custom' and creating new: Create a standalone Event, NOT a recurring series!
       if (frequency === 'Custom' && !initialData) {
@@ -202,7 +202,7 @@ export function RecurringEventModal({
           notes: selectedEvent?.notes || '',
           status: 'Confirmed' as const,
           services: selectedEvent?.services || [],
-          assignedStaff: selectedEvent?.assignedStaff || [],
+          assignedStaff: [], // Independent staff assignment (do not link from base event)
           expenses: [],
           subtotal: eventPrice,
           additionalCharges: selectedEvent?.additionalCharges || 0,

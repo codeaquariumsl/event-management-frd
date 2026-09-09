@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { userService } from '@/lib/api/userService';
 import { ROLE_PERMISSIONS_MATRIX } from '@/lib/auth/permissions';
 import { useToast } from '@/components/ui/Toast';
-import { ShieldCheck, Lock, UserCheck, KeyRound } from 'lucide-react';
+import { ShieldCheck, Lock, UserCheck, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -49,6 +49,9 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
   const [status, setStatus] = useState<'Active' | 'Inactive' | 'Suspended'>('Active');
   const [permissions, setPermissions] = useState<string[]>([]);
   const [password, setPassword] = useState('');
+  const [changePassword, setChangePassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -59,6 +62,9 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
       setStatus(user.status);
       setPermissions(user.permissions || []);
       setPassword('');
+      setChangePassword(false);
+      setNewPassword('');
+      setShowNewPassword(false);
     } else {
       setName('');
       setEmail('');
@@ -67,6 +73,9 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
       setStatus('Active');
       setPermissions(ROLE_PERMISSIONS_MATRIX['Event Director']);
       setPassword('seekers2026');
+      setChangePassword(false);
+      setNewPassword('');
+      setShowNewPassword(false);
     }
   }, [user, isOpen]);
 
@@ -85,6 +94,11 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
     e.preventDefault();
 
     if (user) {
+      if (changePassword && newPassword && newPassword.length < 6) {
+        showToast('Password must be at least 6 characters');
+        return;
+      }
+
       await userService.updateUser(user.id, {
         name,
         email,
@@ -92,6 +106,7 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
         role,
         status,
         permissions,
+        ...(changePassword && newPassword ? { password: newPassword } : {}),
       });
     } else {
       await userService.createUser({
@@ -101,6 +116,7 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
         role,
         status,
         permissions,
+        password: password || 'seekers2026',
       });
     }
 
@@ -188,7 +204,54 @@ export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) 
           </div>
         </div>
 
-        {!user && (
+        {user ? (
+          <div className="rounded-xl border border-slate-200 dark:border-[#203246] p-3.5 space-y-2.5 bg-slate-50/70 dark:bg-[#0c1420]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <KeyRound className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9]" />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  Reset Operator Password
+                </span>
+              </div>
+              <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={changePassword}
+                  onChange={(e) => {
+                    setChangePassword(e.target.checked);
+                    if (!e.target.checked) setNewPassword('');
+                  }}
+                  className="rounded border-slate-300 dark:border-[#243549] text-[#00897b] dark:text-[#00e5c9] accent-[#00897b] dark:accent-[#00e5c9]"
+                />
+                <span>Update Password</span>
+              </label>
+            </div>
+            {changePassword && (
+              <div className="pt-1.5 space-y-1.5">
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new operator password (min 6 chars)"
+                    className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 pr-10 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-[#00897b] dark:focus:border-[#00e5c9]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Directly sets a new access credential for this operator account.
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
           <div>
             <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Password</label>
             <div className="relative">

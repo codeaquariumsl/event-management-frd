@@ -289,6 +289,7 @@ export interface UserAccount {
   permissions: string[];
   lastLogin?: string;
   createdAt: string;
+  password?: string;
 }
 
 export interface EventTypeItem {

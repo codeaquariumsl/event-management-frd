@@ -21,6 +21,7 @@ import { DataTable, Column } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
 import { UserModal } from '@/features/users/UserModal';
+import { ChangePasswordModal } from '@/features/users/ChangePasswordModal';
 import { userService } from '@/lib/api/userService';
 import { ROLE_PERMISSIONS_MATRIX } from '@/lib/auth/permissions';
 import { UserAccount, UserRole } from '@/lib/types';
@@ -33,6 +34,8 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [passwordTargetUser, setPasswordTargetUser] = useState<UserAccount | null>(null);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const loadData = async () => {
     try {
@@ -266,19 +269,32 @@ export default function UsersPage() {
               <div className="flex items-center justify-end gap-1">
                 <button
                   onClick={() => {
+                    setPasswordTargetUser(u);
+                    setIsPasswordModalOpen(true);
+                  }}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
+                  title="Change Password"
+                  aria-label={`Change password for ${u.name}`}
+                >
+                  <KeyRound className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => {
                     setSelectedUser(u);
                     setIsModalOpen(true);
                   }}
-                  className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9]"
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
                   title="Edit User & Permissions"
+                  aria-label={`Edit ${u.name}`}
                 >
                   <Edit2 className="h-3.5 w-3.5" />
                 </button>
                 {u.id !== 'USR-001' && (
                   <button
                     onClick={() => handleDelete(u.id, u.name)}
-                    className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-rose-400"
+                    className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-rose-400 transition-colors"
                     title="Delete Account"
+                    aria-label={`Delete ${u.name}`}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -396,6 +412,19 @@ export default function UsersPage() {
             setSelectedUser(null);
           }}
           user={selectedUser}
+          onSuccess={loadData}
+        />
+      )}
+
+      {/* Change Password Modal */}
+      {isPasswordModalOpen && (
+        <ChangePasswordModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => {
+            setIsPasswordModalOpen(false);
+            setPasswordTargetUser(null);
+          }}
+          user={passwordTargetUser}
           onSuccess={loadData}
         />
       )}

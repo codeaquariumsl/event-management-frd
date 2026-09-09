@@ -609,13 +609,11 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                 <tr className="border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
                   <th className="px-3 py-1 w-10 text-center text-[10.5px]">#</th>
                   <th className="px-3 py-1 text-[10.5px]">Service / Item Description</th>
-                  <th className={`px-3 py-1 text-center text-[10.5px] ${hideItemPrices ? 'w-24' : 'w-16'}`}>Qty</th>
+                  <th className="px-3 py-1 text-center text-[10.5px] w-16">Qty</th>
                   {!hideItemPrices && (
-                    <>
-                      <th className="px-3 py-1 text-right w-28 text-[10.5px]">Rate (LKR)</th>
-                      <th className="px-3 py-1 text-right w-28 text-[10.5px]">Total (LKR)</th>
-                    </>
+                    <th className="px-3 py-1 text-right w-28 text-[10.5px]">Rate (LKR)</th>
                   )}
+                  <th className="px-3 py-1 text-right w-28 text-[10.5px]">Total (LKR)</th>
                 </tr>
               </thead>
               <tbody className="text-slate-700 dark:text-slate-300 print:text-slate-800">
@@ -625,7 +623,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                     <React.Fragment key={group.category || gIdx}>
                       {/* Category Header Row */}
                       <tr className={`bg-slate-50/90 dark:bg-[#131e2b] print:bg-slate-100/90 font-bold ${gIdx > 0 ? 'border-t border-slate-200 dark:border-[#1d2b3c] print:border-slate-300' : ''} avoid-break`}>
-                        <td colSpan={hideItemPrices ? 3 : 5} className="px-3 py-0.5 text-[10.5px]">
+                        <td colSpan={hideItemPrices ? 4 : 5} className="px-3 py-0.5 text-[10.5px]">
                           <div className="flex items-center justify-between">
                             <span className="font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-black flex items-center gap-1.5">
                               <span className="h-1.5 w-1.5 rounded-full bg-[#00897b] dark:bg-[#00e5c9] print:bg-slate-700 inline-block" />
@@ -657,13 +655,15 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                             <td className="px-3 py-0.5 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">
                               {srv.quantity !== null && srv.quantity !== undefined && srv.quantity > 0 ? srv.quantity : '—'}
                             </td>
-                            {!hideItemPrices && (
+                            {!hideItemPrices ? (
                               <>
                                 <td className="px-3 py-0.5 text-right font-mono text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">{formatCurrency(srv.unitPrice)}</td>
                                 <td className="px-3 py-0.5 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs leading-tight">
                                   {formatCurrency(srv.totalPrice)}
                                 </td>
                               </>
+                            ) : (
+                              <td className="px-3 py-0.5"></td>
                             )}
                           </tr>
                         );
@@ -676,9 +676,9 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                             <span className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-400 print:text-slate-700 mr-2">
                               {group.category} Total:
                             </span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs">
-                              {formatCurrency(group.subtotal)}
-                            </span>
+                          </td>
+                          <td className="px-3 py-0.5 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs">
+                            {formatCurrency(group.subtotal)}
                           </td>
                         </tr>
                       ) : (
@@ -699,7 +699,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
 
                 {(!event.services || event.services.length === 0) && (
                   <tr>
-                    <td colSpan={hideItemPrices ? 3 : 5} className="px-3 py-6 text-center text-slate-400">
+                    <td colSpan={hideItemPrices ? 4 : 5} className="px-3 py-6 text-center text-slate-400">
                       No line items recorded for this invoice.
                     </td>
                   </tr>

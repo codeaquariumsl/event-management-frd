@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   CalendarDays,
@@ -38,6 +38,42 @@ import { useToast } from '@/components/ui/Toast';
 import { CustomerModal } from '../customers/CustomerModal';
 import { StaffAssignmentModal } from './StaffAssignmentModal';
 import { SearchableSelect, SearchableOption } from '@/components/ui/SearchableSelect';
+
+// Helper functions for DD/MM/YYYY date formatting
+const getTodayDDMMYYYY = (): string => {
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = now.getFullYear();
+  return `${d}/${m}/${y}`;
+};
+
+const toDDMMYYYY = (dateStr?: string): string => {
+  if (!dateStr) return getTodayDDMMYYYY();
+  const trimmed = dateStr.trim();
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+    const parts = trimmed.split('/');
+    return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+  }
+  if (/^\d{4}-\d{1,2}-\d{1,2}/.test(trimmed)) {
+    const [y, m, d] = trimmed.split('T')[0].split('-');
+    return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+  }
+  return trimmed;
+};
+
+const toYYYYMMDD = (dateStr?: string): string => {
+  if (!dateStr) return new Date().toISOString().split('T')[0];
+  const trimmed = dateStr.trim();
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+    const [d, m, y] = trimmed.split('/');
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  if (/^\d{4}-\d{1,2}-\d{1,2}/.test(trimmed)) {
+    return trimmed.split('T')[0];
+  }
+  return trimmed;
+};
 
 interface EventFormProps {
   initialData?: EventItem;
@@ -83,6 +119,7 @@ export function EventForm({ initialData }: EventFormProps) {
   // Modals state
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const datePickerRef = useRef<HTMLInputElement>(null);
 
   // 1. Customer Selection (Selected first)
   const [customerId, setCustomerId] = useState(initialData?.customerId || '');
@@ -90,7 +127,9 @@ export function EventForm({ initialData }: EventFormProps) {
   // 2. Event Information
   const [name, setName] = useState(initialData?.name || '');
   const [eventType, setEventType] = useState<string>(initialData?.eventType || '');
-  const [eventDate, setEventDate] = useState(initialData?.eventDate || new Date().toISOString().split('T')[0]);
+  const [eventDate, setEventDate] = useState(
+    initialData?.eventDate ? toDDMMYYYY(initialData.eventDate) : getTodayDDMMYYYY()
+  );
   const [startTime, setStartTime] = useState(initialData?.startTime || '18:00');
   const [endTime, setEndTime] = useState(initialData?.endTime || '23:30');
   const [location, setLocation] = useState(initialData?.location || '');
@@ -175,7 +214,7 @@ export function EventForm({ initialData }: EventFormProps) {
       if (initialData.customerId) setCustomerId(initialData.customerId);
       if (initialData.name) setName(initialData.name);
       if (initialData.eventType) setEventType(initialData.eventType);
-      if (initialData.eventDate) setEventDate(initialData.eventDate);
+      if (initialData.eventDate) setEventDate(toDDMMYYYY(initialData.eventDate));
       if (initialData.startTime) setStartTime(initialData.startTime);
       if (initialData.endTime) setEndTime(initialData.endTime);
       if (initialData.location) setLocation(initialData.location);
@@ -319,6 +358,12 @@ export function EventForm({ initialData }: EventFormProps) {
     const selectedCustomer = customers.find((c) => c.id === customerId);
     const finalStatus: EventStatus = overrideStatus || (status as EventStatus) || (initialData ? initialData.status : 'Confirmed');
 
+    const isoEventDate = toYYYYMMDD(eventDate);
+    if (!isoEventDate || isNaN(new Date(isoEventDate).getTime())) {
+      alert('Please enter a valid Event Date in DD/MM/YYYY format');
+      return;
+    }
+
     const eventPayload = {
       id: initialData?.id,
       name,
@@ -328,7 +373,7 @@ export function EventForm({ initialData }: EventFormProps) {
       customerPhone: selectedCustomer?.phone || initialData?.customerPhone,
       customerEmail: selectedCustomer?.email || initialData?.customerEmail,
       eventType,
-      eventDate,
+      eventDate: isoEventDate,
       startTime,
       endTime,
       location,
@@ -487,14 +532,52 @@ export function EventForm({ initialData }: EventFormProps) {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Event Date *</label>
-              <input
-                type="date"
-                value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00e5c9] focus:outline-none"
-                required
-              />
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Event Date (DD/MM/YYYY) *
+              </label>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                  onBlur={() => {
+                    if (eventDate) {
+                      setEventDate(toDDMMYYYY(eventDate));
+                    }
+                  }}
+                  placeholder="DD/MM/YYYY"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 pr-10 text-slate-900 dark:text-white font-medium focus:border-[#00e5c9] focus:outline-none"
+                  required
+                />
+                <input
+                  type="date"
+                  ref={datePickerRef}
+                  value={toYYYYMMDD(eventDate)}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setEventDate(toDDMMYYYY(e.target.value));
+                    }
+                  }}
+                  className="sr-only pointer-events-none absolute opacity-0"
+                  tabIndex={-1}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (datePickerRef.current) {
+                      if (typeof datePickerRef.current.showPicker === 'function') {
+                        datePickerRef.current.showPicker();
+                      } else {
+                        datePickerRef.current.click();
+                      }
+                    }
+                  }}
+                  className="absolute right-2 p-1.5 text-slate-400 hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-[#162232]"
+                  title="Choose from calendar"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             <div>
@@ -962,7 +1045,7 @@ export function EventForm({ initialData }: EventFormProps) {
       <StaffAssignmentModal
         isOpen={isStaffModalOpen}
         onClose={() => setIsStaffModalOpen(false)}
-        eventDate={eventDate}
+        eventDate={toYYYYMMDD(eventDate)}
         startTime={startTime}
         endTime={endTime}
         currentEventId={initialData?.id}

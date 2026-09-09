@@ -28,7 +28,12 @@ export function formatCurrency(amount: number, compact: boolean = false): string
 export function formatDate(dateString: string): string {
   if (!dateString) return '—'
   try {
-    const d = new Date(dateString)
+    let parsedString = dateString
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString.trim())) {
+      const [d, m, y] = dateString.trim().split('/')
+      parsedString = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+    }
+    const d = new Date(parsedString)
     if (isNaN(d.getTime())) return dateString
     return d.toLocaleDateString('en-US', {
       month: 'short',

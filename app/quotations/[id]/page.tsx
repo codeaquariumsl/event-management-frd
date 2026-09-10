@@ -642,21 +642,25 @@ export default function QuotationDetailPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5">
-            {quotation.convertedEventId ? (
+            {quotation.convertedEventId && (
               <Link
                 href={`/events/${quotation.convertedEventId}`}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#00e5c9]/10 text-[#00e5c9] border border-[#00e5c9]/30 text-xs font-semibold hover:bg-[#00e5c9]/20 transition-colors"
+                title="View the latest converted event"
               >
-                <span>View Converted Event</span>
+                <span>View Linked Event</span>
                 <ExternalLink className="h-3.5 w-3.5" />
               </Link>
-            ) : (
+            )}
+
+            {quotation.status !== 'Rejected' && (
               <button
                 onClick={handleConvertToEvent}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#00e5c9] to-[#00b8a2] text-black text-xs font-bold hover:brightness-110 shadow-md shadow-[#00e5c9]/20 transition-all"
+                title="Convert this quotation to an active Event"
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                Convert to Live Event
+                <span>{quotation.convertedEventId ? 'Convert to Another Event' : 'Convert to Live Event'}</span>
               </button>
             )}
 

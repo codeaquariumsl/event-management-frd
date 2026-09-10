@@ -370,6 +370,7 @@ export interface Quotation {
   notes?: string;
   termsAndConditions?: string;
   convertedEventId?: string | null;
+  convertedEventIds?: string[];
   createdAt?: string;
   updatedAt?: string;
 }

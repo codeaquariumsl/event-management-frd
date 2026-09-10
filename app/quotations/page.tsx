@@ -300,8 +300,9 @@ export default function QuotationsPage() {
                         <Link
                           href={`/events/${q.convertedEventId}`}
                           className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#00897b] dark:text-[#00e5c9] hover:underline"
+                          title={q.convertedEventIds && q.convertedEventIds.length > 1 ? `${q.convertedEventIds.length} events created from this quotation. Click to view latest.` : 'View linked event'}
                         >
-                          <span>Event Linked</span>
+                          <span>{q.convertedEventIds && q.convertedEventIds.length > 1 ? `${q.convertedEventIds.length} Events Linked` : 'Event Linked'}</span>
                           <ExternalLink className="h-2.5 w-2.5" />
                         </Link>
                       </div>
@@ -311,8 +312,8 @@ export default function QuotationsPage() {
                   {/* Actions */}
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      {/* Convert to Event Button */}
-                      {!q.convertedEventId && q.status !== 'Rejected' && (
+                      {/* Convert to Event Button - allows creating multiple events from one quotation */}
+                      {q.status !== 'Rejected' && (
                         <button
                           onClick={() => handleConvertToEvent(q)}
                           className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#00a894]/10 dark:bg-[#00e5c9]/10 text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/20 dark:hover:bg-[#00e5c9]/20 border border-[#00a894]/30 dark:border-[#00e5c9]/30 text-xs font-semibold transition-colors"

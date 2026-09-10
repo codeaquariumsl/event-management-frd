@@ -73,6 +73,7 @@ export default function NewQuotationPage() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerCompany, setCustomerCompany] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
 
   // Items
   const [items, setItems] = useState<QuotationLineItem[]>([]);
@@ -142,21 +143,32 @@ export default function NewQuotationPage() {
           setCustomerEmail(first.email);
           setCustomerPhone(first.phone);
           setCustomerCompany(first.company || '');
+          setCustomerAddress(first.address || '');
           setClientEvents(eventsList.filter((e) => e.customerId === first.id));
         }
       }
     });
   }, []);
 
-  const handleCustomerSelect = (id: string) => {
+  const handleCustomerSelect = (id: string, customerObj?: Customer) => {
     setCustomerId(id);
     setSelectedEventId('');
-    const selected = customers.find((c) => c.id === id);
+    if (!id) {
+      setCustomerName('');
+      setCustomerEmail('');
+      setCustomerPhone('');
+      setCustomerCompany('');
+      setCustomerAddress('');
+      setClientEvents([]);
+      return;
+    }
+    const selected = customerObj || customers.find((c) => c.id === id);
     if (selected) {
       setCustomerName(selected.name);
       setCustomerEmail(selected.email);
       setCustomerPhone(selected.phone);
       setCustomerCompany(selected.company || '');
+      setCustomerAddress(selected.address || '');
     }
     const filteredEvents = allEvents.filter((e) => e.customerId === id);
     setClientEvents(filteredEvents);
@@ -276,6 +288,18 @@ export default function NewQuotationPage() {
     showToast(`✓ Added package "${templateService.name}"`, 'success');
   };
 
+  const customerOptions = useMemo<SearchableOption[]>(() => {
+    return customers.map((c) => ({
+      value: c.id,
+      label: c.name,
+      sublabel: [c.company, c.phone, c.address].filter(Boolean).join(' • '),
+      badge: c.company || c.customerType,
+      category: c.customerType,
+      extraInfo: c.phone,
+      raw: c,
+    }));
+  }, [customers]);
+
   const gearOptions = useMemo<SearchableOption[]>(() => {
     return inventoryItems.map((gear) => ({
       value: gear.id,
@@ -342,6 +366,7 @@ export default function NewQuotationPage() {
       customerEmail: customerEmail.trim(),
       customerPhone: customerPhone.trim(),
       customerCompany: customerCompany.trim(),
+      customerAddress: customerAddress.trim(),
       eventType: eventType || 'Wedding & Reception',
       eventDate,
       validUntil,
@@ -460,22 +485,20 @@ export default function NewQuotationPage() {
                   </button>
                 </div>
 
-                <select
+                <SearchableSelect
+                  options={customerOptions}
                   value={customerId}
-                  onChange={(e) => handleCustomerSelect(e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
-                >
-                  <option value="">-- Choose an Existing Client --</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} {c.company ? `(${c.company})` : ''} - {c.phone}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val, opt) => handleCustomerSelect(val, opt?.raw)}
+                  placeholder={`-- Search & Select a Customer (${customers.length} available) * --`}
+                  searchPlaceholder="Search client by name, company, phone, address..."
+                  clearable={true}
+                  required={true}
+                  emptyMessage="No matching clients found"
+                />
               </div>
 
               {/* Auto-filled client info */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 dark:bg-[#121c29] p-3 rounded-lg border border-slate-200 dark:border-[#1b2a3a] text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-[#121c29] p-3 rounded-lg border border-slate-200 dark:border-[#1b2a3a] text-xs">
                 <div>
                   <span className="text-slate-500 dark:text-slate-400 block">Contact Person:</span>
                   <span className="text-slate-900 dark:text-white font-medium">{customerName || 'None'}</span>
@@ -487,6 +510,16 @@ export default function NewQuotationPage() {
                 <div>
                   <span className="text-slate-500 dark:text-slate-400 block">Email:</span>
                   <span className="text-slate-900 dark:text-white font-medium">{customerEmail || 'None'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400 block">Client Address:</span>
+                  <input
+                    type="text"
+                    value={customerAddress}
+                    onChange={(e) => setCustomerAddress(e.target.value)}
+                    placeholder="Client address..."
+                    className="w-full mt-0.5 px-2 py-1 bg-white dark:bg-[#162232] border border-slate-300 dark:border-[#213247] rounded text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                  />
                 </div>
               </div>
 
@@ -991,6 +1024,7 @@ export default function NewQuotationPage() {
               if (Array.isArray(c)) setCustomers(c);
             });
             handleCustomerSelect(newCust.id);
+            setCustomerAddress(newCust.address || '');
             setIsCustomerModalOpen(false);
             showToast(`Client ${newCust.name} added!`, 'success');
           }}

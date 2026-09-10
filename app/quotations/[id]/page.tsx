@@ -583,6 +583,7 @@ export default function QuotationDetailPage() {
         customerCompany: editData.customerCompany ?? quotation.customerCompany,
         customerPhone: editData.customerPhone ?? quotation.customerPhone,
         customerEmail: editData.customerEmail ?? quotation.customerEmail,
+        customerAddress: editData.customerAddress ?? quotation.customerAddress,
         eventType: editData.eventType || quotation.eventType,
         eventDate: editData.eventDate || quotation.eventDate,
         validUntil: editData.validUntil || quotation.validUntil,
@@ -1024,6 +1025,19 @@ export default function QuotationDetailPage() {
                     placeholder="e.g. events@client.com"
                   />
                 </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Client Address
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.customerAddress || ''}
+                    onChange={(e) => setEditData({ ...editData, customerAddress: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
+                    placeholder="e.g. No. 45, Galle Road, Colombo 03"
+                  />
+                </div>
               </div>
             </div>
 
@@ -1392,9 +1406,9 @@ export default function QuotationDetailPage() {
                     Email: {quotation.customerEmail}
                   </div>
                 )}
-                {quotation.venue && (
+                {quotation.customerAddress && (
                   <div className="text-[10.5px] text-slate-600 dark:text-slate-400 print:text-slate-600 truncate">
-                    Address: {quotation.venue}
+                    Address: {quotation.customerAddress}
                   </div>
                 )}
               </div>

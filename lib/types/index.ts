@@ -355,6 +355,7 @@ export interface Quotation {
   customerEmail?: string;
   customerPhone?: string;
   customerCompany?: string;
+  customerAddress?: string;
   eventType: string;
   eventDate: string;
   validUntil: string;

@@ -24,17 +24,18 @@ import {
   History,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
-import { Quotation, QuotationLineItem, QuotationStatus, Customer, InventoryItem, EventTypeItem, EventItem } from '@/lib/types';
+import { Quotation, QuotationLineItem, QuotationStatus, Customer, InventoryItem, EventTypeItem, EventItem, ServiceCatalogItem } from '@/lib/types';
 import { quotationService } from '@/lib/api/quotationService';
 import { customerService } from '@/lib/api/customerService';
 import { eventTypeService } from '@/lib/api/eventTypeService';
 import { inventoryService } from '@/lib/api/inventoryService';
+import { serviceService } from '@/lib/api/serviceService';
 import { eventService } from '@/lib/api/eventService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { CustomerModal } from '@/features/customers/CustomerModal';
+import { SearchableSelect, SearchableOption } from '@/components/ui/SearchableSelect';
 
 export default function NewQuotationPage() {
   const router = useRouter();
@@ -43,14 +44,13 @@ export default function NewQuotationPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [eventTypes, setEventTypes] = useState<EventTypeItem[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [servicesCatalog, setServicesCatalog] = useState<ServiceCatalogItem[]>([]);
   const [allEvents, setAllEvents] = useState<EventItem[]>([]);
   const [clientEvents, setClientEvents] = useState<EventItem[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
 
   // Modals
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
-  const [isInventoryPickerOpen, setIsInventoryPickerOpen] = useState(false);
-  const [pickerSearch, setPickerSearch] = useState('');
 
   // Form State: quotationNumber in YYMM-4-digit sequence format (e.g. 2609-0001)
   const getInitialQuotationNumber = () => {
@@ -98,7 +98,8 @@ export default function NewQuotationPage() {
       inventoryService.getItems(),
       eventService.getEvents(),
       quotationService.getAll(),
-    ]).then(([custs, types, inv, evts, quotes]) => {
+      serviceService.getServices(),
+    ]).then(([custs, types, inv, evts, quotes, svcs]) => {
       // Auto-generate YYMM-4-digit sequence based on existing quotations for the current month
       const now = new Date();
       const yy = String(now.getFullYear()).slice(-2);
@@ -127,6 +128,7 @@ export default function NewQuotationPage() {
       }
 
       if (Array.isArray(inv)) setInventoryItems(inv);
+      if (Array.isArray(svcs)) setServicesCatalog(svcs);
 
       const eventsList = Array.isArray(evts) ? evts : [];
       setAllEvents(eventsList);
@@ -241,21 +243,62 @@ export default function NewQuotationPage() {
   };
 
   const addItemFromInventory = (invItem: InventoryItem) => {
+    const rate = invItem.rentalRate || invItem.unitPrice || 0;
     const newItem: QuotationLineItem = {
       id: `qli-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       itemId: invItem.id,
       name: invItem.name,
-      category: invItem.category,
-      description: invItem.description || invItem.specifications || '',
+      category: invItem.category || 'Production',
+      size: invItem.specifications || '',
+      description: `Gear Item (SKU: ${invItem.sku})`,
       quantity: 1,
-      unitPrice: invItem.rentalRate || invItem.unitPrice,
+      unitPrice: rate,
       discount: 0,
-      totalPrice: invItem.rentalRate || invItem.unitPrice,
+      totalPrice: rate,
     };
     setItems((prev) => [...prev, newItem]);
-    showToast(`Added "${invItem.name}" to quotation`, 'info');
-    setIsInventoryPickerOpen(false);
+    showToast(`✓ Added gear "${invItem.name}"`, 'success');
   };
+
+  const handleAddService = (templateService: ServiceCatalogItem) => {
+    const newItem: QuotationLineItem = {
+      id: `qli-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: templateService.name,
+      category: templateService.category || 'Production',
+      size: '',
+      description: templateService.description || '',
+      quantity: 1,
+      unitPrice: templateService.unitPrice,
+      discount: 0,
+      totalPrice: templateService.unitPrice,
+    };
+    setItems((prev) => [...prev, newItem]);
+    showToast(`✓ Added package "${templateService.name}"`, 'success');
+  };
+
+  const gearOptions = useMemo<SearchableOption[]>(() => {
+    return inventoryItems.map((gear) => ({
+      value: gear.id,
+      label: gear.name,
+      sublabel: `SKU: ${gear.sku} • In Stock: ${gear.availableQuantity ?? gear.totalStock ?? 0} ${gear.unit || 'units'}`,
+      badge: gear.category,
+      category: gear.category,
+      extraInfo: `Rs. ${(gear.rentalRate || gear.unitPrice || 0).toLocaleString()}/day`,
+      raw: gear,
+    }));
+  }, [inventoryItems]);
+
+  const catalogOptions = useMemo<SearchableOption[]>(() => {
+    return servicesCatalog.map((pkg) => ({
+      value: pkg.id,
+      label: pkg.name,
+      sublabel: pkg.description || `Category: ${pkg.category}`,
+      badge: pkg.category,
+      category: pkg.category,
+      extraInfo: `Rs. ${pkg.unitPrice.toLocaleString()}`,
+      raw: pkg,
+    }));
+  }, [servicesCatalog]);
 
   const addCustomItem = () => {
     const newItem: QuotationLineItem = {
@@ -319,14 +362,7 @@ export default function NewQuotationPage() {
     router.push(`/quotations/${newQuote.id}`);
   };
 
-  const filteredPickerItems = useMemo(() => {
-    return inventoryItems.filter(
-      (i) =>
-        i.name.toLowerCase().includes(pickerSearch.toLowerCase()) ||
-        i.category.toLowerCase().includes(pickerSearch.toLowerCase()) ||
-        i.sku.toLowerCase().includes(pickerSearch.toLowerCase())
-    );
-  }, [inventoryItems, pickerSearch]);
+
 
   return (
     <AppShell>
@@ -578,7 +614,7 @@ export default function NewQuotationPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Venue / Event Location</label>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Event Location</label>
                 <input
                   type="text"
                   placeholder="e.g. Cinnamon Grand Colombo, Grand Ballroom"
@@ -619,20 +655,55 @@ export default function NewQuotationPage() {
                   )}
                   <button
                     type="button"
-                    onClick={() => setIsInventoryPickerOpen(true)}
-                    className="flex items-center gap-1.5 rounded-lg bg-[#00a894]/15 dark:bg-[#00e5c9]/15 border border-[#00a894]/40 dark:border-[#00e5c9]/40 px-3 py-1.5 text-xs font-semibold text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/25 dark:hover:bg-[#00e5c9]/25 transition-colors"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Pick from Inventory
-                  </button>
-                  <button
-                    type="button"
                     onClick={addCustomItem}
                     className="flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-[#162333] border border-slate-300 dark:border-[#23354c] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#1c2c40] transition-colors"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Custom Item
                   </button>
+                </div>
+              </div>
+
+              {/* Real Backend Data Selectors */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-[#1b2a3d] bg-slate-50 dark:bg-[#0f1826]">
+                {/* Standard Service Catalog */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                    <Sparkles className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" /> Add Pre-configured Package ({servicesCatalog.length} packages)
+                  </label>
+                  <SearchableSelect
+                    options={catalogOptions}
+                    value=""
+                    resetOnSelect={true}
+                    onChange={(val, opt) => {
+                      if (opt?.raw) {
+                        handleAddService(opt.raw);
+                      }
+                    }}
+                    placeholder={`-- Search & select package to add (${servicesCatalog.length} packages) --`}
+                    searchPlaceholder="Search packages by title or category..."
+                    emptyMessage="No packages match your search"
+                  />
+                </div>
+
+                {/* Inventory Gear Selector */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                    <Boxes className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" /> Add From Inventory Gear ({inventoryItems.length} units)
+                  </label>
+                  <SearchableSelect
+                    options={gearOptions}
+                    value=""
+                    resetOnSelect={true}
+                    onChange={(val, opt) => {
+                      if (opt?.raw) {
+                        addItemFromInventory(opt.raw);
+                      }
+                    }}
+                    placeholder={`-- Search & select gear to add (${inventoryItems.length} items) --`}
+                    searchPlaceholder="Search gear by name, SKU, or category..."
+                    emptyMessage="No inventory gear matches your search"
+                  />
                 </div>
               </div>
 
@@ -909,64 +980,7 @@ export default function NewQuotationPage() {
           </div>
         </div>
 
-        {/* Inventory Picker Modal */}
-        <Modal
-          isOpen={isInventoryPickerOpen}
-          onClose={() => setIsInventoryPickerOpen(false)}
-          title="Select Gear from Inventory"
-        >
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Search equipment by name, category, or SKU..."
-              value={pickerSearch}
-              onChange={(e) => setPickerSearch(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-white dark:bg-[#131d2a] border border-slate-300 dark:border-[#1f2f42] rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-[#00a894] dark:focus:border-[#00e5c9]"
-            />
 
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-200 dark:divide-[#1a2636] border border-slate-200 dark:border-[#1f2f42] rounded-lg">
-              {filteredPickerItems.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-[#141f2d] transition-colors"
-                >
-                  <div>
-                    <div className="font-semibold text-xs text-slate-900 dark:text-white">{inv.name}</div>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
-                      <span className="font-mono">{inv.sku}</span>
-                      <span>•</span>
-                      <span>{inv.category}</span>
-                      <span>•</span>
-                      <span className="text-emerald-400 font-semibold">{inv.availableQuantity} available</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div className="text-xs font-bold text-[#00e5c9]">
-                        {formatCurrency(inv.rentalRate || inv.unitPrice)}
-                      </div>
-                      <div className="text-[10px] text-slate-500">per event</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => addItemFromInventory(inv)}
-                      className="px-2.5 py-1 rounded bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black text-xs font-bold hover:bg-[#008f7e] dark:hover:brightness-110 shadow-sm"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {filteredPickerItems.length === 0 && (
-                <div className="text-center py-8 text-xs text-slate-400">
-                  No matching inventory items found.
-                </div>
-              )}
-            </div>
-          </div>
-        </Modal>
 
         {/* Quick Add Customer Modal */}
         <CustomerModal

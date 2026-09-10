@@ -26,14 +26,18 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  Boxes,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useToast } from '@/components/ui/Toast';
 import { AppShell } from '@/components/layout/AppShell';
 import { quotationService } from '@/lib/api/quotationService';
 import { settingsService } from '@/lib/api/reportService';
-import { Quotation, QuotationLineItem, QuotationStatus, CompanyProfile } from '@/lib/types';
+import { inventoryService } from '@/lib/api/inventoryService';
+import { serviceService } from '@/lib/api/serviceService';
+import { Quotation, QuotationLineItem, QuotationStatus, CompanyProfile, InventoryItem, ServiceCatalogItem } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { SearchableSelect, SearchableOption } from '@/components/ui/SearchableSelect';
 
 export default function QuotationDetailPage() {
   const params = useParams();
@@ -54,12 +58,16 @@ export default function QuotationDetailPage() {
 
   // Edit form state
   const [editData, setEditData] = useState<Partial<Quotation>>({});
+  const [inventoryGear, setInventoryGear] = useState<InventoryItem[]>([]);
+  const [servicesCatalog, setServicesCatalog] = useState<ServiceCatalogItem[]>([]);
 
   const loadData = async () => {
     try {
-      const [q, p] = await Promise.all([
+      const [q, p, inv, svcs] = await Promise.all([
         quotationService.getById(id),
         settingsService.getCompanyProfile(),
+        inventoryService.getItems(),
+        serviceService.getServices(),
       ]);
       if (q) {
         setQuotation(q);
@@ -72,6 +80,8 @@ export default function QuotationDetailPage() {
         });
       }
       if (p) setProfile(p);
+      if (Array.isArray(inv)) setInventoryGear(inv);
+      if (Array.isArray(svcs)) setServicesCatalog(svcs);
     } catch (err) {
       console.warn('Error loading quotation:', err);
     }
@@ -155,6 +165,76 @@ export default function QuotationDetailPage() {
       ...totals,
     }));
   };
+
+  const handleAddInventoryGear = (item: InventoryItem) => {
+    const rate = item.rentalRate || item.unitPrice || 0;
+    const newItem: QuotationLineItem = {
+      id: `qli-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      itemId: item.id,
+      name: item.name,
+      category: item.category || 'Production',
+      size: item.specifications || '',
+      description: `Gear Item (SKU: ${item.sku})`,
+      quantity: 1,
+      unitPrice: rate,
+      discount: 0,
+      totalPrice: rate,
+    };
+    const updated = [...(editData.items || []), newItem];
+    const totals = recalculateTotals(updated);
+    setEditData((prev) => ({
+      ...prev,
+      items: updated,
+      ...totals,
+    }));
+    showToast(`✓ Added gear "${item.name}"`, 'success');
+  };
+
+  const handleAddService = (templateService: ServiceCatalogItem) => {
+    const newItem: QuotationLineItem = {
+      id: `qli-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: templateService.name,
+      category: templateService.category || 'Production',
+      size: '',
+      description: templateService.description || '',
+      quantity: 1,
+      unitPrice: templateService.unitPrice,
+      discount: 0,
+      totalPrice: templateService.unitPrice,
+    };
+    const updated = [...(editData.items || []), newItem];
+    const totals = recalculateTotals(updated);
+    setEditData((prev) => ({
+      ...prev,
+      items: updated,
+      ...totals,
+    }));
+    showToast(`✓ Added package "${templateService.name}"`, 'success');
+  };
+
+  const gearOptions = useMemo<SearchableOption[]>(() => {
+    return inventoryGear.map((gear) => ({
+      value: gear.id,
+      label: gear.name,
+      sublabel: `SKU: ${gear.sku} • In Stock: ${gear.availableQuantity ?? gear.totalStock ?? 0} ${gear.unit || 'units'}`,
+      badge: gear.category,
+      category: gear.category,
+      extraInfo: `Rs. ${(gear.rentalRate || gear.unitPrice || 0).toLocaleString()}/day`,
+      raw: gear,
+    }));
+  }, [inventoryGear]);
+
+  const catalogOptions = useMemo<SearchableOption[]>(() => {
+    return servicesCatalog.map((pkg) => ({
+      value: pkg.id,
+      label: pkg.name,
+      sublabel: pkg.description || `Category: ${pkg.category}`,
+      badge: pkg.category,
+      category: pkg.category,
+      extraInfo: `Rs. ${pkg.unitPrice.toLocaleString()}`,
+      raw: pkg,
+    }));
+  }, [servicesCatalog]);
 
   const handleRemoveItem = (index: number) => {
     if (!editData.items) return;
@@ -873,7 +953,7 @@ export default function QuotationDetailPage() {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Venue / Location Address
+                    Location Address
                   </label>
                   <input
                     type="text"
@@ -962,11 +1042,54 @@ export default function QuotationDetailPage() {
                 <button
                   type="button"
                   onClick={handleAddItem}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black font-semibold hover:brightness-110 flex items-center gap-1.5 shadow-sm transition-all"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-[#162333] border border-slate-300 dark:border-[#23354c] text-slate-700 dark:text-slate-200 font-semibold hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#1c2c40] flex items-center gap-1.5 shadow-sm transition-all"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Add Line Item
+                  Custom Item
                 </button>
+              </div>
+
+              {/* Real Backend Data Selectors: Pre-configured Packages & Inventory Gear */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-slate-200 dark:border-[#1b2a3d] bg-slate-50 dark:bg-[#0f1826]">
+                {/* Standard Service Catalog */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                    <Sparkles className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" /> Add Pre-configured Package ({servicesCatalog.length} packages)
+                  </label>
+                  <SearchableSelect
+                    options={catalogOptions}
+                    value=""
+                    resetOnSelect={true}
+                    onChange={(val, opt) => {
+                      if (opt?.raw) {
+                        handleAddService(opt.raw);
+                      }
+                    }}
+                    placeholder={`-- Search & select package to add (${servicesCatalog.length} packages) --`}
+                    searchPlaceholder="Search packages by title or category..."
+                    emptyMessage="No packages match your search"
+                  />
+                </div>
+
+                {/* Inventory Gear Selector */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                    <Boxes className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" /> Add From Inventory Gear ({inventoryGear.length} units)
+                  </label>
+                  <SearchableSelect
+                    options={gearOptions}
+                    value=""
+                    resetOnSelect={true}
+                    onChange={(val, opt) => {
+                      if (opt?.raw) {
+                        handleAddInventoryGear(opt.raw);
+                      }
+                    }}
+                    placeholder={`-- Search & select gear to add (${inventoryGear.length} items) --`}
+                    searchPlaceholder="Search gear by name, SKU, or category..."
+                    emptyMessage="No inventory gear matches your search"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2.5">
@@ -1271,7 +1394,7 @@ export default function QuotationDetailPage() {
                 )}
                 {quotation.venue && (
                   <div className="text-[10.5px] text-slate-600 dark:text-slate-400 print:text-slate-600 truncate">
-                    Venue: {quotation.venue}
+                    Address: {quotation.venue}
                   </div>
                 )}
               </div>
@@ -1300,7 +1423,7 @@ export default function QuotationDetailPage() {
                     </div>
                   )}
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Venue / Location:</span>{' '}
+                    <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Location:</span>{' '}
                     <strong className="text-slate-900 dark:text-white print:text-black">{quotation.venue || 'TBD'}</strong>
                   </div>
                 </div>
@@ -1499,7 +1622,7 @@ export default function QuotationDetailPage() {
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white print:text-black">
                     Grand Total:
                   </span>
-                  <span className="text-lg font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
+                  <span className="text-sm font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
                     {formatCurrency(quotation.totalAmount)}
                   </span>
                 </div>

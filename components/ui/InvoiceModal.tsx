@@ -603,7 +603,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                   </div>
                 )}
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Venue / Location:</span>{' '}
+                  <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Location:</span>{' '}
                   <strong className="text-slate-900 dark:text-white print:text-black">{event.location || 'TBD'}</strong>
                 </div>
               </div>
@@ -794,7 +794,7 @@ export function InvoiceModal({ isOpen, onClose, event, onAddPayment }: InvoiceMo
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white print:text-black">
                   Balance Due:
                 </span>
-                <span className="text-lg font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
+                <span className="text-sm font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
                   {formatCurrency(event.balance)}
                 </span>
               </div>

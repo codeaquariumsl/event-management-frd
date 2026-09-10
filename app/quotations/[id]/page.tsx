@@ -24,6 +24,8 @@ import {
   Check,
   Download,
   Loader2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useToast } from '@/components/ui/Toast';
@@ -31,7 +33,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { quotationService } from '@/lib/api/quotationService';
 import { settingsService } from '@/lib/api/reportService';
 import { Quotation, QuotationLineItem, QuotationStatus, CompanyProfile } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 
 export default function QuotationDetailPage() {
   const params = useParams();
@@ -47,6 +49,7 @@ export default function QuotationDetailPage() {
   const [isEditing, setIsEditing] = useState(initialEdit);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isPrintingPdf, setIsPrintingPdf] = useState(false);
+  const [hideItemPrices, setHideItemPrices] = useState(false);
   const proposalRef = useRef<HTMLDivElement>(null);
 
   // Edit form state
@@ -184,6 +187,10 @@ export default function QuotationDetailPage() {
     }));
   }, [quotation?.items]);
 
+  const hasAnyItemDiscount = useMemo(() => {
+    return quotation?.items?.some((it) => (it.discount || 0) > 0) ?? false;
+  }, [quotation?.items]);
+
   // PDF Generation and Print Utilities using html2canvas-pro (with lab/oklch support) & jsPDF
   const loadPdfLibraries = async (): Promise<{ html2canvas: any; jsPDF: any }> => {
     if (typeof window === 'undefined') throw new Error('Browser only');
@@ -221,7 +228,7 @@ export default function QuotationDetailPage() {
     return { html2canvas, jsPDF };
   };
 
-  // Generates a strictly Light-Themed A4 PDF document regardless of user's active screen theme
+  // Generates a strictly Light-Themed A4 PDF document matching Invoice print standards
   const generateQuotationPdfDocument = async (sourceElement: HTMLElement) => {
     const { html2canvas, jsPDF } = await loadPdfLibraries();
     if (!html2canvas || !jsPDF) {
@@ -244,7 +251,7 @@ export default function QuotationDetailPage() {
       classesToRemove.forEach((cls) => htmlEl.classList.remove(cls));
     });
 
-    // 2. Enforce explicit Light Theme root styles
+    // 2. Enforce explicit Light Theme root styles matching A4 format (210mm x 297mm)
     clone.style.width = '794px'; // 210mm standard A4 width at 96 DPI
     clone.style.minWidth = '794px';
     clone.style.maxWidth = '794px';
@@ -252,7 +259,7 @@ export default function QuotationDetailPage() {
     clone.style.color = '#0f172a';
     clone.style.boxShadow = 'none';
     clone.style.border = 'none';
-    clone.style.padding = '36px 32px';
+    clone.style.padding = '20px 24px';
     clone.style.margin = '0';
     clone.style.boxSizing = 'border-box';
 
@@ -295,7 +302,9 @@ export default function QuotationDetailPage() {
         classList.includes('bg-[#121d2b]') ||
         classList.includes('bg-[#131e2b]') ||
         classList.includes('bg-[#141e2b]') ||
-        classList.includes('bg-[#121c29]')
+        classList.includes('bg-[#121c29]') ||
+        classList.includes('bg-[#0b121b]') ||
+        classList.includes('bg-[#0e1622]')
       )) {
         htmlEl.style.setProperty('background-color', '#f8fafc', 'important');
       }
@@ -314,6 +323,42 @@ export default function QuotationDetailPage() {
     offscreen.style.overflow = 'visible';
     offscreen.appendChild(clone);
     document.body.appendChild(offscreen);
+
+    // Intelligently insert page-break spacers for multi-page documents to prevent splitting rows
+    const A4_HEIGHT_PX = 1123; // Standard 297mm height at 96 DPI
+    const cloneRect = clone.getBoundingClientRect();
+    const breakables = Array.from(clone.querySelectorAll('tr, .avoid-break')) as HTMLElement[];
+
+    breakables.forEach((el) => {
+      const elRect = el.getBoundingClientRect();
+      const relTop = elRect.top - cloneRect.top;
+      const relBottom = elRect.bottom - cloneRect.top;
+      const pageIndex = Math.floor(relTop / A4_HEIGHT_PX);
+      const pageBottomLimit = (pageIndex + 1) * A4_HEIGHT_PX - 28;
+
+      if (relTop < pageBottomLimit && relBottom > pageBottomLimit) {
+        const spacerHeight = ((pageIndex + 1) * A4_HEIGHT_PX) - relTop;
+        if (el.tagName.toLowerCase() === 'tr') {
+          const spacerTr = document.createElement('tr');
+          spacerTr.className = 'pdf-page-spacer';
+          const spacerTd = document.createElement('td');
+          spacerTd.colSpan = 10;
+          spacerTd.style.height = `${spacerHeight}px`;
+          spacerTd.style.border = 'none';
+          spacerTd.style.padding = '0';
+          spacerTd.style.background = 'transparent';
+          spacerTr.appendChild(spacerTd);
+          el.parentNode?.insertBefore(spacerTr, el);
+        } else {
+          const spacerDiv = document.createElement('div');
+          spacerDiv.className = 'pdf-page-spacer';
+          spacerDiv.style.height = `${spacerHeight}px`;
+          spacerDiv.style.width = '100%';
+          spacerDiv.style.background = 'transparent';
+          el.parentNode?.insertBefore(spacerDiv, el);
+        }
+      }
+    });
 
     let canvas;
     try {
@@ -345,20 +390,29 @@ export default function QuotationDetailPage() {
     const imgWidth = pdfWidth;
     const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-    let heightLeft = imgHeight;
-    let page = 0;
+    const totalPages = Math.max(1, Math.ceil(imgHeight / pdfHeight));
 
-    // First page
-    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight, '', 'FAST');
-    heightLeft -= pdfHeight;
-
-    // Additional pages (if quotation spans multiple A4 pages)
-    while (heightLeft > 0) {
-      page++;
+    for (let page = 0; page < totalPages; page++) {
+      if (page > 0) {
+        pdf.addPage();
+      }
       const yOffset = -(page * pdfHeight);
-      pdf.addPage();
       pdf.addImage(imgData, 'JPEG', 0, yOffset, imgWidth, imgHeight, '', 'FAST');
-      heightLeft -= pdfHeight;
+
+      // Add clean professional footer pagination on every page matching Invoice standards
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(140, 140, 140);
+      pdf.text(
+        `Page ${page + 1} of ${totalPages} • Quotation ${quotation.quotationNumber}`,
+        pdfWidth - 12,
+        pdfHeight - 5,
+        { align: 'right' }
+      );
+      pdf.text(
+        `${profile?.name || 'Seekers Entertainment (Pvt) Ltd'} • ${profile?.email || 'ops@seekersentertainment.lk'}`,
+        12,
+        pdfHeight - 5
+      );
     }
 
     return pdf;
@@ -508,9 +562,49 @@ export default function QuotationDetailPage() {
 
   return (
     <AppShell>
+      {/* Print CSS for native A4 pagination matching Invoice */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @media print {
+              @page {
+                size: A4 portrait;
+                margin: 8mm 10mm 8mm 10mm;
+              }
+              html, body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .no-print, nav, header, aside, .modal-backdrop, button {
+                display: none !important;
+              }
+              #quotation-proposal-view {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+              }
+              tr, .avoid-break {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+              }
+              thead {
+                display: table-header-group !important;
+              }
+            }
+          `,
+        }}
+      />
+
       <div className="space-y-6 max-w-5xl mx-auto">
         {/* Top Bar (Hidden on Print) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden border-b border-slate-200 dark:border-[#1d2b3c] pb-5">
+        <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden border-b border-slate-200 dark:border-[#1d2b3c] pb-5">
           <div>
             <Link
               href="/quotations"
@@ -577,12 +671,38 @@ export default function QuotationDetailPage() {
               {isEditing ? 'Cancel Edit' : 'Edit Quotation'}
             </button>
 
+            {/* Toggle Hide/Show Individual Rates & Totals (like Invoice) */}
+            <button
+              onClick={() => setHideItemPrices((prev) => !prev)}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-all shadow-sm ${hideItemPrices
+                ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-[#00e5c9] hover:bg-emerald-500/20'
+                : 'border-slate-300 dark:border-[#23354b] bg-slate-100 dark:bg-[#141e2b] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1c2c40]'
+              }`}
+              title={
+                hideItemPrices
+                  ? 'Show individual item rates & totals in table'
+                  : 'Hide individual item rates & totals (show only category totals)'
+              }
+            >
+              {hideItemPrices ? (
+                <>
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>Show Item Rates</span>
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-3.5 w-3.5" />
+                  <span>Hide Item Rates</span>
+                </>
+              )}
+            </button>
+
             {/* Download PDF Button */}
             <button
               onClick={handleDownloadPdf}
               disabled={isGeneratingPdf || isPrintingPdf}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-black text-xs font-bold hover:brightness-110 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Download Quotation as clean PDF file"
+              title="Download Quotation as clean A4 PDF file"
             >
               {isGeneratingPdf ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -597,7 +717,7 @@ export default function QuotationDetailPage() {
               onClick={handlePrintPdf}
               disabled={isGeneratingPdf || isPrintingPdf}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 dark:bg-[#141e2b] border border-slate-300 dark:border-[#23354b] text-slate-700 dark:text-slate-200 text-xs font-semibold hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#1c2c40] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Print only the clean PDF document"
+              title="Print clean A4 document"
             >
               {isPrintingPdf ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1058,85 +1178,97 @@ export default function QuotationDetailPage() {
             </div>
           </div>
         ) : (
-          /* PRINTABLE PROPOSAL VIEW */
+          /* PRINTABLE PROPOSAL VIEW (COMPACT A4 SIZING MATCHING INVOICE) */
           <div
             ref={proposalRef}
             id="quotation-proposal-view"
-            className="rounded-2xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c131d] p-8 sm:p-12 shadow-2xl space-y-8 print:border-none print:p-0 print:bg-white print:text-black"
+            className="printable-quotation rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c131d] p-5 sm:p-7 shadow-xl space-y-3.5 print:border-none print:p-0 print:bg-white print:text-black"
           >
             {/* Header Row: Company Brand + Quote Meta */}
-            <div className="flex flex-col sm:flex-row justify-between gap-6 pb-6 border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
+            <div className="flex flex-col sm:flex-row justify-between gap-4 pb-3.5 border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 avoid-break">
               <div>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-18 items-center justify-center rounded-xl">
-                    <img src="/whitelogo.jpg" alt="Logo" className="h-full w-full object-cover rounded-lg" />
+                  <div className="flex h-12 w-auto items-center justify-center rounded-lg overflow-hidden shrink-0">
+                    <img src="/whitelogo.jpg" alt="Seekers Entertainment" className="h-12 w-auto object-contain rounded-md" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white print:text-black">
+                    <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white print:text-black">
                       {profile?.name || 'SEEKERS ENTERTAINMENT'}
                     </h2>
-                    <p className="text-xs text-[#00897b] dark:text-[#00e5c9] print:text-slate-600 font-medium">
-                      {profile?.tagline || 'Audio-Visual Production, DJ & Event Technology'}
+                    <p className="text-[11px] text-[#00897b] dark:text-[#00e5c9] print:text-slate-600 font-semibold">
+                      {profile?.tagline || 'Premier Audio-Visual Production, DJ & Event Technology'}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-2 text-xs text-slate-500 dark:text-slate-300 print:text-black space-y-1">
-                  <div>{profile?.address}</div>
-                  <div className="font-mono text-[11px] text-slate-700 dark:text-slate-300 print:text-black">
-                    <div>+94 71 035 87 23 (Voice / WhatsApp)</div>
-                    <div>+94 76 468 00 00</div>
-                    <div>+971 54 544 66 09 (UAE)</div>
+                <div className="mt-1.5 text-[10px] text-slate-600 dark:text-slate-300 print:text-slate-700 leading-tight space-y-0.5">
+                  <div>{profile?.address || 'No. 42, Independence Avenue, Colombo 07, Sri Lanka'}</div>
+                  <div>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200 print:text-black">Tel:</span> +94 71 035 8723 / +94 76 468 0000 / +971 54 544 6609
                   </div>
-                  <div>Email: {profile?.email || 'ops@seekersentertainment.lk'}</div>
-                  {/* <div>TIN / Tax #: {profile?.taxNumber} | BR: {profile?.businessRegistration}</div> */}
+                  <div>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200 print:text-black">Email:</span> {profile?.email || 'ops@seekersentertainment.lk'}
+                  </div>
                 </div>
               </div>
 
-              <div className="sm:text-right space-y-1.5">
-                <div className="text-2xl font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
+              <div className="sm:text-right space-y-1">
+                <div className="text-xl font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono tracking-wider">
                   QUOTATION
                 </div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white print:text-black font-mono">
+                <div className="text-xs font-bold text-slate-900 dark:text-white print:text-black font-mono">
                   {quotation.quotationNumber}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 print:text-slate-600">
-                  Date: <strong className="text-slate-800 dark:text-slate-200 print:text-black"> {new Date(quotation.createdAt || new Date()).toLocaleDateString('en-LK', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
+                <div className="text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-600">
+                  Quotation Date: <strong className="text-slate-800 dark:text-slate-200 print:text-black">{formatDate(quotation.createdAt || new Date().toISOString())}</strong>
                 </div>
+                <div className="text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-600">
+                  Event Date: <strong className="text-slate-800 dark:text-slate-200 print:text-black">{quotation.eventDate}</strong>
+                </div>
+                {quotation.validUntil && (
+                  <div className="text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-600">
+                    Valid Until: <strong className="text-slate-800 dark:text-slate-200 print:text-black">{quotation.validUntil}</strong>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Client & Event Scope Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-50 dark:bg-[#0f1824] print:bg-slate-50 p-5 rounded-xl border border-slate-200 dark:border-[#1d2b3c] print:border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 dark:bg-[#0f1824] print:bg-slate-50 p-3 rounded-lg border border-slate-200 dark:border-[#1d2b3c] print:border-slate-200 avoid-break text-xs">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-slate-700 block mb-2">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-slate-700 block mb-1">
                   Quotation Prepared For
                 </span>
-                <div className="text-base font-bold text-slate-900 dark:text-white print:text-black">
+                <div className="text-sm font-bold text-slate-900 dark:text-white print:text-black">
                   {quotation.customerName}
                 </div>
                 {quotation.customerCompany && (
-                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 print:text-slate-700">
+                  <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300 print:text-slate-700">
                     {quotation.customerCompany}
                   </div>
                 )}
                 {quotation.customerPhone && (
-                  <div className="text-xs text-slate-600 dark:text-slate-400 print:text-slate-600 mt-1">
+                  <div className="text-[10.5px] text-slate-600 dark:text-slate-400 print:text-slate-600">
                     Phone: {quotation.customerPhone}
                   </div>
                 )}
                 {quotation.customerEmail && (
-                  <div className="text-xs text-slate-600 dark:text-slate-400 print:text-slate-600">
+                  <div className="text-[10.5px] text-slate-600 dark:text-slate-400 print:text-slate-600">
                     Email: {quotation.customerEmail}
+                  </div>
+                )}
+                {quotation.venue && (
+                  <div className="text-[10.5px] text-slate-600 dark:text-slate-400 print:text-slate-600 truncate">
+                    Venue: {quotation.venue}
                   </div>
                 )}
               </div>
 
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-slate-700 block mb-2">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-slate-700 block mb-1">
                   Event Specifications
                 </span>
-                <div className="text-xs space-y-1 text-slate-600 dark:text-slate-300 print:text-slate-700">
+                <div className="text-[10.5px] space-y-0.5 text-slate-600 dark:text-slate-300 print:text-slate-700">
                   <div>
                     <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Event Title:</span>{' '}
                     <strong className="text-slate-900 dark:text-white print:text-black">{quotation.title}</strong>
@@ -1146,7 +1278,7 @@ export default function QuotationDetailPage() {
                     <strong className="text-slate-900 dark:text-white print:text-black">{quotation.eventType}</strong>
                   </div>
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Scheduled Date:</span>{' '}
+                    <span className="text-slate-500 dark:text-slate-400 print:text-slate-500">Event Date:</span>{' '}
                     <strong className="text-slate-900 dark:text-white print:text-black">{quotation.eventDate}</strong>
                   </div>
                   {quotation.validUntil && (
@@ -1163,82 +1295,109 @@ export default function QuotationDetailPage() {
               </div>
             </div>
 
-            {/* Line Items Table (Category Wise) */}
-            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
+            {/* Line Items Table (Category Wise, Compact A4 Sizing) */}
+            <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 dark:bg-[#121d2b] print:bg-slate-100 uppercase tracking-wider font-bold text-slate-700 dark:text-slate-400 print:text-slate-700 border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
-                  <tr>
-                    <th className="px-4 py-3 w-12">#</th>
-                    <th className="px-4 py-3">Description</th>
-                    <th className="px-4 py-3 text-center w-20">Qty</th>
-                    <th className="px-4 py-3 text-right w-36">Unit Rate (LKR)</th>
-                    <th className="px-4 py-3 text-right w-28">Discount</th>
-                    <th className="px-4 py-3 text-right w-36">Total (LKR)</th>
+                <thead className="bg-slate-100 dark:bg-[#121d2b] print:bg-slate-100 uppercase tracking-wider font-bold text-slate-700 dark:text-slate-400 print:text-slate-700">
+                  <tr className="border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
+                    <th className="px-3 py-1 w-10 text-center text-[10.5px]">#</th>
+                    <th className="px-3 py-1 text-[10.5px]">Service / Item Description</th>
+                    <th className="px-3 py-1 text-center text-[10.5px] w-14">Qty</th>
+                    {!hideItemPrices && (
+                      <th className="px-3 py-1 text-right w-28 text-[10.5px]">Rate (LKR)</th>
+                    )}
+                    {!hideItemPrices && hasAnyItemDiscount && (
+                      <th className="px-3 py-1 text-right w-24 text-[10.5px]">Discount</th>
+                    )}
+                    <th className="px-3 py-1 text-right w-28 text-[10.5px]">Total (LKR)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-[#172332] print:divide-slate-200 text-slate-700 dark:text-slate-300 print:text-slate-800">
+                <tbody className="text-slate-700 dark:text-slate-300 print:text-slate-800">
                   {(() => {
                     let globalIdx = 0;
                     return categoryGroups.map((group, gIdx) => (
                       <React.Fragment key={group.category || gIdx}>
                         {/* Category Header Row */}
-                        <tr className="bg-slate-100/80 dark:bg-[#131e2b] print:bg-slate-100 font-bold border-t border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300">
-                          <td colSpan={6} className="px-4 py-2 text-xs">
+                        <tr className={`bg-slate-50/90 dark:bg-[#131e2b] print:bg-slate-100/90 font-bold ${gIdx > 0 ? 'border-t border-slate-200 dark:border-[#1d2b3c] print:border-slate-300' : ''} avoid-break`}>
+                          <td colSpan={hideItemPrices ? 4 : (hasAnyItemDiscount ? 6 : 5)} className="px-3 py-0.5 text-[10.5px]">
                             <div className="flex items-center justify-between">
-                              <span className="font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-black flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-[#00897b] dark:bg-[#00e5c9] print:bg-slate-700 inline-block" />
+                              <span className="font-bold uppercase tracking-wider text-[#00897b] dark:text-[#00e5c9] print:text-black flex items-center gap-1.5">
+                                <span className="h-1.5 w-1.5 rounded-full bg-[#00897b] dark:bg-[#00e5c9] print:bg-slate-700 inline-block" />
                                 {group.category}
                               </span>
-                              <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400 print:text-slate-600 font-mono">
+                              <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400 print:text-slate-600 font-mono">
                                 {group.items.length} {group.items.length === 1 ? 'item' : 'items'}
                               </span>
                             </div>
                           </td>
                         </tr>
 
-                        {/* Items under Category */}
+                        {/* Items under Category (Compact line spacing matching invoice) */}
                         {group.items.map((item, itemIdx) => {
                           globalIdx++;
                           return (
                             <tr
                               key={item.id || `${group.category}-${itemIdx}`}
-                              className="hover:bg-slate-50/50 dark:hover:bg-[#121c29]/50 transition-colors"
+                              className="hover:bg-slate-50/50 dark:hover:bg-[#121c29]/50 transition-colors avoid-break"
                             >
-                              <td className="px-4 py-3 font-mono text-slate-500 dark:text-slate-400 print:text-slate-500">{globalIdx}</td>
-                              <td className="px-4 py-3">
-                                <div className="font-semibold text-slate-900 dark:text-white print:text-black flex items-center gap-2 flex-wrap">
+                              <td className="px-3 py-0.5 text-center font-mono text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-500 leading-tight">{globalIdx}</td>
+                              <td className="px-3 py-0.5 leading-tight">
+                                <div className="font-medium text-slate-900 dark:text-white print:text-black text-xs leading-tight flex items-center gap-1.5 flex-wrap">
                                   <span>{item.name}</span>
                                   {item.size && (
-                                    <span className="rounded bg-slate-100 dark:bg-[#1a2636] border border-slate-300 dark:border-[#283b52] px-1.5 py-0.5 text-[10px] font-semibold text-[#00897b] dark:text-[#00e5c9]">
+                                    <span className="inline-block rounded bg-slate-100 dark:bg-[#1a2636] print:bg-slate-100 border border-slate-300 dark:border-[#283b52] print:border-slate-300 px-1.5 py-0.5 text-[9.5px] font-semibold text-[#00897b] dark:text-[#00e5c9] print:text-slate-800 leading-none">
                                       {item.size}
                                     </span>
                                   )}
                                 </div>
                               </td>
-                              <td className="px-4 py-3 text-center font-mono font-medium text-slate-800 dark:text-slate-200">
+                              <td className="px-3 py-0.5 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">
                                 {item.quantity !== null && item.quantity !== undefined && item.quantity > 0 ? item.quantity : '—'}
                               </td>
-                              <td className="px-4 py-3 text-right font-mono text-slate-800 dark:text-slate-200">{formatCurrency(item.unitPrice)}</td>
-                              <td className="px-4 py-3 text-right font-mono text-amber-600 dark:text-amber-400 print:text-amber-700">
-                                {item.discount > 0 ? formatCurrency(item.discount) : '-'}
-                              </td>
-                              <td className="px-4 py-3 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black">
-                                {formatCurrency(item.totalPrice)}
-                              </td>
+                              {!hideItemPrices ? (
+                                <>
+                                  <td className="px-3 py-0.5 text-right font-mono text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">
+                                    {formatCurrency(item.unitPrice)}
+                                  </td>
+                                  {hasAnyItemDiscount && (
+                                    <td className="px-3 py-0.5 text-right font-mono text-amber-600 dark:text-amber-400 print:text-amber-700 text-xs leading-tight">
+                                      {item.discount > 0 ? formatCurrency(item.discount) : '-'}
+                                    </td>
+                                  )}
+                                  <td className="px-3 py-0.5 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs leading-tight">
+                                    {formatCurrency(item.totalPrice)}
+                                  </td>
+                                </>
+                              ) : (
+                                <td className="px-3 py-0.5"></td>
+                              )}
                             </tr>
                           );
                         })}
 
-                        {/* Category Subtotal (only shown if multiple categories exist) */}
-                        {categoryGroups.length > 1 && (
-                          <tr className="bg-slate-50/40 dark:bg-[#0e1622]/40 print:bg-slate-50 text-[11px] border-b border-slate-200 dark:border-[#172332] print:border-slate-200">
-                            <td colSpan={5} className="px-4 py-1.5 text-right font-medium text-slate-500 dark:text-slate-400 print:text-slate-600">
-                              Subtotal ({group.category}):
+                        {/* Category Subtotal Row */}
+                        {hideItemPrices ? (
+                          <tr className="bg-slate-50/70 dark:bg-[#0e1622]/70 print:bg-slate-100/80 text-xs border-b border-slate-200 dark:border-[#172332] print:border-slate-300 avoid-break font-bold">
+                            <td colSpan={3} className="px-3 py-0.5 text-right">
+                              <span className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-400 print:text-slate-700 mr-2">
+                                {group.category} Total:
+                              </span>
                             </td>
-                            <td className="px-4 py-1.5 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 print:text-black">
+                            <td className="px-3 py-0.5 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs">
                               {formatCurrency(group.subtotal)}
                             </td>
                           </tr>
+                        ) : (
+                          categoryGroups.length > 1 && (
+                            <tr className="bg-slate-50/40 dark:bg-[#0e1622]/40 print:bg-slate-50 text-[10px] border-b border-slate-200 dark:border-[#172332] print:border-slate-200 avoid-break">
+                              <td colSpan={hasAnyItemDiscount ? 5 : 4} className="px-3 py-0.5 text-right font-medium text-slate-500 dark:text-slate-400 print:text-slate-600">
+                                Subtotal ({group.category}):
+                              </td>
+                              <td className="px-3 py-0.5 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 print:text-black">
+                                {formatCurrency(group.subtotal)}
+                              </td>
+                            </tr>
+                          )
                         )}
                       </React.Fragment>
                     ));
@@ -1246,7 +1405,7 @@ export default function QuotationDetailPage() {
 
                   {quotation.items.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                      <td colSpan={hideItemPrices ? 4 : (hasAnyItemDiscount ? 6 : 5)} className="px-3 py-6 text-center text-slate-400">
                         No line items recorded for this quotation.
                       </td>
                     </tr>
@@ -1255,28 +1414,24 @@ export default function QuotationDetailPage() {
               </table>
             </div>
 
-            {/* Financial Calculation & Bank Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-              <div className="text-xs text-slate-600 dark:text-slate-400 print:text-slate-600 space-y-3">
-                <div>
-                  <span className="font-bold text-slate-900 dark:text-white print:text-black block mb-1">
-                    Bank Details:
+            {/* Financial Calculation & Bank Info Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1.5 avoid-break">
+              <div className="text-xs text-slate-600 dark:text-slate-400 print:text-slate-600 space-y-2">
+                <div className="p-2.5 rounded-lg border border-slate-200 dark:border-[#1d2b3c] bg-slate-50/60 dark:bg-[#0f1824]/60 print:bg-slate-50/60 space-y-0.5 text-[10px]">
+                  <span className="font-bold text-slate-900 dark:text-white print:text-black uppercase tracking-wider text-[9.5px] block mb-0.5">
+                    Bank Settlement Details:
                   </span>
-                  <div className="space-y-0.5 font-mono text-[11px]">
-                    <div className="font-semibold text-slate-800 dark:text-slate-200 print:text-black">
-                      {profile?.name || 'Seekers’s Entertainment (pvt) Ltd'}
-                    </div>
-                    <div className="text-slate-700 dark:text-slate-300">Account: {profile?.bankAccount || '94630427'}</div>
-                    <div className="text-slate-700 dark:text-slate-300">Bank: {profile?.bankName || 'BOC bank'}</div>
-                    <div className="text-slate-700 dark:text-slate-300">Branch: {profile?.bankBranch || 'Walgama'}</div>
+                  <div className="font-mono text-slate-700 dark:text-slate-300 print:text-black">
+                    <div><strong>Beneficiary:</strong> {profile?.name || 'Seekers’s Entertainment (pvt) Ltd'}</div>
+                    <div><strong>Account:</strong> {profile?.bankAccount || '94630427'} • <strong>Bank:</strong> {profile?.bankName || 'BOC bank'} ({profile?.bankBranch || 'Walgama'})</div>
                   </div>
                 </div>
 
                 <div>
-                  <span className="font-bold text-slate-900 dark:text-white print:text-black block mb-1">
+                  <span className="font-bold text-slate-900 dark:text-white print:text-black uppercase tracking-wider text-[9.5px] block mb-0.5">
                     Terms & Conditions:
                   </span>
-                  <p className="text-[11px] leading-relaxed whitespace-pre-line text-slate-600 dark:text-slate-300">
+                  <p className="text-[9.5px] leading-snug whitespace-pre-line text-slate-500 dark:text-slate-400 print:text-slate-700">
                     {quotation.termsAndConditions || profile?.invoiceTerms || `* Payment method can be cash, bank transfer.
 * Payment must be made in full without deducting any tax.
 * Transportation, handling, food, labor charges, are included in this rate.
@@ -1286,16 +1441,16 @@ export default function QuotationDetailPage() {
 
                 {quotation.notes && (
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white print:text-black block mb-1">
-                      Special Instructions / Notes:
+                    <span className="font-bold text-slate-900 dark:text-white print:text-black uppercase tracking-wider text-[9.5px] block mb-0.5">
+                      Special Notes:
                     </span>
-                    <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">{quotation.notes}</p>
+                    <p className="text-[9.5px] leading-snug text-slate-500 dark:text-slate-400 print:text-slate-700">{quotation.notes}</p>
                   </div>
                 )}
               </div>
 
               {/* Calculations Box */}
-              <div className="bg-slate-50 dark:bg-[#0f1824] print:bg-slate-50 p-5 rounded-xl border border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 space-y-2.5 text-xs">
+              <div className="bg-slate-50 dark:bg-[#0f1824] print:bg-slate-50 p-3.5 rounded-lg border border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 space-y-1.5 text-xs self-start">
                 <div className="flex justify-between text-slate-600 dark:text-slate-400 print:text-slate-600">
                   <span>Items Subtotal:</span>
                   <span className="font-mono font-bold text-slate-900 dark:text-white print:text-black">
@@ -1321,18 +1476,18 @@ export default function QuotationDetailPage() {
 
                 {quotation.additionalCharges > 0 && (
                   <div className="flex justify-between text-slate-600 dark:text-slate-400 print:text-slate-600">
-                    <span>Logistics & Crew Transport:</span>
+                    <span>Logistics & Transport:</span>
                     <span className="font-mono font-bold text-slate-900 dark:text-white print:text-black">
                       +{formatCurrency(quotation.additionalCharges)}
                     </span>
                   </div>
                 )}
 
-                <div className="pt-3 border-t border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 flex justify-between items-baseline">
-                  <span className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white print:text-black">
-                    Grand Total
+                <div className="pt-1.5 border-t border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 flex justify-between items-baseline">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white print:text-black">
+                    Grand Total:
                   </span>
-                  <span className="text-2xl font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
+                  <span className="text-lg font-black text-[#00897b] dark:text-[#00e5c9] print:text-slate-900 font-mono">
                     {formatCurrency(quotation.totalAmount)}
                   </span>
                 </div>
@@ -1340,13 +1495,18 @@ export default function QuotationDetailPage() {
             </div>
 
             {/* Footer Signature Row */}
-            <div className="pt-12 grid grid-cols-2 gap-8 text-center text-xs text-slate-500 dark:text-slate-400 print:text-slate-600">
-              <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-2 text-slate-600 dark:text-slate-400">
+            <div className="pt-5 grid grid-cols-2 gap-8 text-center text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-600 avoid-break">
+              <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-1.5 text-slate-600 dark:text-slate-400">
                 Authorized Signature (Seekers Entertainment)
               </div>
-              <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-2 text-slate-600 dark:text-slate-400">
+              <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-1.5 text-slate-600 dark:text-slate-400">
                 Client Acceptance & Confirmation Stamp
               </div>
+            </div>
+
+            {/* Footer Note */}
+            <div className="mt-3 pt-1.5 border-t border-slate-200 dark:border-[#1a2636] text-center text-[9.5px] text-slate-400 dark:text-slate-500 avoid-break">
+              Thank you for choosing Seekers Entertainment. For inquiries regarding this quotation, contact {profile?.email || 'ops@seekersentertainment.lk'}.
             </div>
           </div>
         )}

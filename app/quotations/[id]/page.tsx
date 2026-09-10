@@ -255,11 +255,15 @@ export default function QuotationDetailPage() {
     clone.style.width = '794px'; // 210mm standard A4 width at 96 DPI
     clone.style.minWidth = '794px';
     clone.style.maxWidth = '794px';
+    clone.style.minHeight = '1060px'; // ensures A4 full-page height so mt-auto pins footer note to bottom
+    clone.style.display = 'flex';
+    clone.style.flexDirection = 'column';
+    clone.style.justifyContent = 'space-between';
     clone.style.backgroundColor = '#ffffff';
     clone.style.color = '#0f172a';
     clone.style.boxShadow = 'none';
     clone.style.border = 'none';
-    clone.style.padding = '20px 24px';
+    clone.style.padding = '38px 24px 20px 24px';
     clone.style.margin = '0';
     clone.style.boxSizing = 'border-box';
 
@@ -569,7 +573,7 @@ export default function QuotationDetailPage() {
             @media print {
               @page {
                 size: A4 portrait;
-                margin: 8mm 10mm 8mm 10mm;
+                margin: 12mm 10mm 10mm 10mm;
               }
               html, body {
                 background: #ffffff !important;
@@ -587,6 +591,10 @@ export default function QuotationDetailPage() {
                 margin: 0 !important;
                 width: 100% !important;
                 max-width: 100% !important;
+                min-height: 270mm !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
                 background: #ffffff !important;
                 color: #0f172a !important;
               }
@@ -677,7 +685,7 @@ export default function QuotationDetailPage() {
               className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-all shadow-sm ${hideItemPrices
                 ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-[#00e5c9] hover:bg-emerald-500/20'
                 : 'border-slate-300 dark:border-[#23354b] bg-slate-100 dark:bg-[#141e2b] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1c2c40]'
-              }`}
+                }`}
               title={
                 hideItemPrices
                   ? 'Show individual item rates & totals in table'
@@ -1182,14 +1190,14 @@ export default function QuotationDetailPage() {
           <div
             ref={proposalRef}
             id="quotation-proposal-view"
-            className="printable-quotation rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c131d] p-5 sm:p-7 shadow-xl space-y-3.5 print:border-none print:p-0 print:bg-white print:text-black"
+            className="printable-quotation flex flex-col justify-between min-h-[1050px] rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-white dark:bg-[#0c131d] p-5 pt-8 sm:p-7 sm:pt-10 shadow-xl space-y-3.5 print:border-none print:p-0 print:bg-white print:text-black"
           >
             {/* Header Row: Company Brand + Quote Meta */}
             <div className="flex flex-col sm:flex-row justify-between gap-4 pb-3.5 border-b border-slate-200 dark:border-[#1d2b3c] print:border-slate-300 avoid-break">
               <div>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-auto items-center justify-center rounded-lg overflow-hidden shrink-0">
-                    <img src="/whitelogo.jpg" alt="Seekers Entertainment" className="h-12 w-auto object-contain rounded-md" />
+                  <div className="flex h-14 w-auto items-center justify-center rounded-lg overflow-hidden shrink-0">
+                    <img src="/whitelogo.jpg" alt="Seekers Entertainment" className="h-14 w-auto object-contain rounded-md" />
                   </div>
                   <div>
                     <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white print:text-black">
@@ -1342,7 +1350,7 @@ export default function QuotationDetailPage() {
                             >
                               <td className="px-3 py-0.5 text-center font-mono text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-500 leading-tight">{globalIdx}</td>
                               <td className="px-3 py-0.5 leading-tight">
-                                <div className="font-medium text-slate-900 dark:text-white print:text-black text-xs leading-tight flex items-center gap-1.5 flex-wrap">
+                                <div className="font-medium text-slate-900 dark:text-white print:text-black text-[11px] leading-tight flex items-center gap-1.5 flex-wrap">
                                   <span>{item.name}</span>
                                   {item.size && (
                                     <span className="inline-block rounded bg-slate-100 dark:bg-[#1a2636] print:bg-slate-100 border border-slate-300 dark:border-[#283b52] print:border-slate-300 px-1.5 py-0.5 text-[9.5px] font-semibold text-[#00897b] dark:text-[#00e5c9] print:text-slate-800 leading-none">
@@ -1351,20 +1359,20 @@ export default function QuotationDetailPage() {
                                   )}
                                 </div>
                               </td>
-                              <td className="px-3 py-0.5 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">
+                              <td className="px-3 py-0.5 text-center font-mono font-medium text-slate-800 dark:text-slate-200 print:text-black text-[11px] leading-tight">
                                 {item.quantity !== null && item.quantity !== undefined && item.quantity > 0 ? item.quantity : '—'}
                               </td>
                               {!hideItemPrices ? (
                                 <>
-                                  <td className="px-3 py-0.5 text-right font-mono text-slate-800 dark:text-slate-200 print:text-black text-xs leading-tight">
+                                  <td className="px-3 py-0.5 text-right font-mono text-slate-800 dark:text-slate-200 print:text-black text-[11px] leading-tight">
                                     {formatCurrency(item.unitPrice)}
                                   </td>
                                   {hasAnyItemDiscount && (
-                                    <td className="px-3 py-0.5 text-right font-mono text-amber-600 dark:text-amber-400 print:text-amber-700 text-xs leading-tight">
+                                    <td className="px-3 py-0.5 text-right font-mono text-amber-600 dark:text-amber-400 print:text-amber-700 text-[11px] leading-tight">
                                       {item.discount > 0 ? formatCurrency(item.discount) : '-'}
                                     </td>
                                   )}
-                                  <td className="px-3 py-0.5 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black text-xs leading-tight">
+                                  <td className="px-3 py-0.5 text-right font-mono font-bold text-slate-900 dark:text-white print:text-black text-[11px] leading-tight">
                                     {formatCurrency(item.totalPrice)}
                                   </td>
                                 </>
@@ -1494,19 +1502,22 @@ export default function QuotationDetailPage() {
               </div>
             </div>
 
-            {/* Footer Signature Row */}
-            <div className="pt-5 grid grid-cols-2 gap-8 text-center text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-600 avoid-break">
-              <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-1.5 text-slate-600 dark:text-slate-400">
-                Authorized Signature (Seekers Entertainment)
+            {/* Bottom Page Footer Area */}
+            <div className="mt-auto pt-6 space-y-3 avoid-break">
+              {/* Footer Signature Row */}
+              <div className="grid grid-cols-2 gap-8 text-center text-[10.5px] text-slate-500 dark:text-slate-400 print:text-slate-600 avoid-break">
+                <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-1.5 text-slate-600 dark:text-slate-400">
+                  Authorized Signature (Seekers Entertainment)
+                </div>
+                <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-1.5 text-slate-600 dark:text-slate-400">
+                  Client Acceptance & Confirmation Stamp
+                </div>
               </div>
-              <div className="border-t border-slate-300 dark:border-slate-700 print:border-slate-400 pt-1.5 text-slate-600 dark:text-slate-400">
-                Client Acceptance & Confirmation Stamp
-              </div>
-            </div>
 
-            {/* Footer Note */}
-            <div className="mt-3 pt-1.5 border-t border-slate-200 dark:border-[#1a2636] text-center text-[9.5px] text-slate-400 dark:text-slate-500 avoid-break">
-              Thank you for choosing Seekers Entertainment. For inquiries regarding this quotation, contact {profile?.email || 'ops@seekersentertainment.lk'}.
+              {/* Footer Note */}
+              <div className="pt-2 border-t border-slate-200 dark:border-[#1a2636] text-center text-[9.5px] text-slate-400 dark:text-slate-500 avoid-break">
+                Thank you for choosing Seekers Entertainment. For inquiries regarding this quotation, contact {profile?.email || 'ops@seekersentertainment.lk'}.
+              </div>
             </div>
           </div>
         )}

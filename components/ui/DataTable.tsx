@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -86,28 +86,45 @@ export function DataTable<T>({
       const valA = a[sortKey];
       const valB = b[sortKey];
 
-      if (valA === valB) return 0;
-      if (valA === null || valA === undefined) return 1;
-      if (valB === null || valB === undefined) return -1;
+      if (valA !== valB) {
+        if (valA === null || valA === undefined) return 1;
+        if (valB === null || valB === undefined) return -1;
 
-      if (typeof valA === 'number' && typeof valB === 'number') {
-        return sortOrder === 'asc' ? valA - valB : valB - valA;
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return sortOrder === 'asc' ? valA - valB : valB - valA;
+        }
+
+        return sortOrder === 'asc'
+          ? String(valA).localeCompare(String(valB))
+          : String(valB).localeCompare(String(valA));
       }
 
-      return sortOrder === 'asc'
-        ? String(valA).localeCompare(String(valB))
-        : String(valB).localeCompare(String(valA));
+      // Secondary tie-breaker: newest created first
+      if (a.createdAt && b.createdAt) {
+        return String(b.createdAt).localeCompare(String(a.createdAt));
+      }
+      return 0;
     });
   }, [filteredData, sortKey, sortOrder]);
 
   // Paginate Data
-  const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
+  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
   const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
+    const start = (safeCurrentPage - 1) * pageSize;
     return sortedData.slice(start, start + pageSize);
-  }, [sortedData, currentPage, pageSize]);
+  }, [sortedData, safeCurrentPage, pageSize]);
 
   const handleSort = (key: string) => {
+    setCurrentPage(1);
     if (sortKey === key) {
       if (sortOrder === 'asc') setSortOrder('desc');
       else {
@@ -294,11 +311,11 @@ export function DataTable<T>({
           <span>
             Showing{' '}
             <strong className="text-slate-900 dark:text-white">
-              {filteredData.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}
+              {filteredData.length === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1}
             </strong>{' '}
             to{' '}
             <strong className="text-slate-900 dark:text-white">
-              {Math.min(currentPage * pageSize, filteredData.length)}
+              {Math.min(safeCurrentPage * pageSize, filteredData.length)}
             </strong>{' '}
             of <strong className="text-slate-900 dark:text-white">{filteredData.length}</strong> records
           </span>
@@ -318,7 +335,7 @@ export function DataTable<T>({
                 setPageSize(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2 py-1 text-xs text-slate-900 dark:text-white focus:outline-none"
+              className="rounded border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] px-2 py-1 text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
             >
               {[5, 10, 20, 50].map((size) => (
                 <option key={size} value={size}>
@@ -331,35 +348,35 @@ export function DataTable<T>({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#192636] dark:hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+              disabled={safeCurrentPage === 1}
+              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#192636] dark:hover:text-white disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
               title="First Page"
             >
               <ChevronsLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#192636] dark:hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+              disabled={safeCurrentPage === 1}
+              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#192636] dark:hover:text-white disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
               title="Previous Page"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="px-2 font-medium text-slate-800 dark:text-slate-200">
-              {currentPage} / {totalPages}
+              {safeCurrentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#192636] dark:hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+              disabled={safeCurrentPage === totalPages}
+              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#192636] dark:hover:text-white disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
               title="Next Page"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
             <button
               onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#192636] dark:hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+              disabled={safeCurrentPage === totalPages}
+              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#192636] dark:hover:text-white disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-colors"
               title="Last Page"
             >
               <ChevronsRight className="h-4 w-4" />

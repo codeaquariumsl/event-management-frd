@@ -487,7 +487,7 @@ export default function QuotationDetailPage() {
       pdf.setFontSize(7.5);
       pdf.setTextColor(140, 140, 140);
       pdf.text(
-        `Page ${page + 1} of ${totalPages} • Quotation ${quotation.quotationNumber}`,
+        `Page ${page + 1} of ${totalPages} • Quotation ${quotation?.quotationNumber || ''}`,
         pdfWidth - 12,
         pdfHeight - 5,
         { align: 'right' }

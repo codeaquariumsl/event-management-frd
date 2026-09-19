@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, ArrowRight, KeyRound, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, ArrowRight, KeyRound, Check, AlertCircle, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { consumeSessionExpiredMessage } from '@/lib/auth/sessionManager';
 import { UserRole } from '@/lib/types';
 
 export default function LoginPage() {
@@ -19,6 +20,14 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [availableUsers, setAvailableUsers] = useState<Array<{ name: string; email: string; role: string }>>([]);
 
+  // Check for session expired notification
+  useEffect(() => {
+    const consumedMsg = consumeSessionExpiredMessage();
+    if (consumedMsg) {
+      showToast(`⚠️ Session Expired: Please log in again.`, 'warning');
+    }
+  }, [showToast]);
+
   // Load existing operators for quick profile selection
   useEffect(() => {
     fetch('http://localhost:5000/api/users')
@@ -27,13 +36,9 @@ export default function LoginPage() {
         if (Array.isArray(data) && data.length > 0) {
           setAvailableUsers(data.map((u: any) => ({ name: u.name, email: u.email, role: u.role })));
           setEmail(data[0].email);
-        } else {
-
         }
       })
-      .catch(() => {
-
-      });
+      .catch(() => {});
   }, []);
 
   // If already authenticated, redirect to command center

@@ -47,8 +47,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshSession();
+
+    const handleSessionExpiredEvent = () => {
+      setToken(null);
+      setUser(null);
+      setIsLoading(false);
+    };
+
     window.addEventListener('seekers_auth_changed', refreshSession);
-    return () => window.removeEventListener('seekers_auth_changed', refreshSession);
+    window.addEventListener('seekers_session_expired', handleSessionExpiredEvent);
+
+    return () => {
+      window.removeEventListener('seekers_auth_changed', refreshSession);
+      window.removeEventListener('seekers_session_expired', handleSessionExpiredEvent);
+    };
   }, []);
 
   const login = async (email: string, password: string) => {

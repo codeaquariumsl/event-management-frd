@@ -1,3 +1,5 @@
+import { handleSessionExpired, isSessionExpiredMessage } from '../auth/sessionManager';
+
 // Base API Client Configuration
 // This enables seamless communication with the live Node.js + MongoDB REST backend.
 
@@ -47,9 +49,10 @@ export const apiClient = {
 
     if (!response.ok) {
       let errorMessage = `API Error [${response.status}]`;
+      let errorData: any = null;
       try {
-        const errorData = await response.json();
-        if (errorData.message) {
+        errorData = await response.json();
+        if (errorData && errorData.message) {
           errorMessage = errorData.message;
         }
       } catch {
@@ -58,6 +61,12 @@ export const apiClient = {
           if (errorBody) errorMessage = errorBody;
         } catch {}
       }
+
+      // Check if session invalid or expired
+      if (isSessionExpiredMessage(errorMessage, response.status)) {
+        handleSessionExpired(errorMessage);
+      }
+
       throw new Error(errorMessage);
     }
 

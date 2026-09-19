@@ -1,5 +1,6 @@
 import { UserAccount } from '../types';
 import { apiClient } from './client';
+import { handleSessionExpired, isSessionExpiredMessage } from '../auth/sessionManager';
 
 export interface LoginResponse {
   success: boolean;
@@ -95,8 +96,13 @@ export const authService = {
         localStorage.setItem('seekers_auth_user', JSON.stringify(res.user));
         return res.user;
       }
-    } catch {
-      // Fall through to cached user
+    } catch (err: any) {
+      const msg = err?.message || '';
+      if (isSessionExpiredMessage(msg)) {
+        handleSessionExpired(msg);
+        return null;
+      }
+      // Fall through to cached user only for network errors
     }
 
     return this.getCurrentUser();

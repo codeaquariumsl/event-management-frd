@@ -159,15 +159,17 @@ export default function EventsPage() {
   }, [events]);
 
   const filteredEvents = useMemo(() => {
-    return events.filter((evt) => {
-      if (statusFilter === 'Active') {
-        if (evt.status !== 'Confirmed' && evt.status !== 'In Progress') return false;
-      } else if (statusFilter !== 'ALL' && evt.status !== statusFilter) {
-        return false;
-      }
-      if (typeFilter !== 'ALL' && evt.eventType !== typeFilter) return false;
-      return true;
-    });
+    return events
+      .filter((evt) => {
+        if (statusFilter === 'Active') {
+          if (evt.status !== 'Confirmed' && evt.status !== 'In Progress') return false;
+        } else if (statusFilter !== 'ALL' && evt.status !== statusFilter) {
+          return false;
+        }
+        if (typeFilter !== 'ALL' && evt.eventType !== typeFilter) return false;
+        return true;
+      })
+      .sort((a, b) => (a.eventDate || '').localeCompare(b.eventDate || ''));
   }, [events, statusFilter, typeFilter]);
 
   const handleDelete = async () => {
@@ -366,6 +368,8 @@ export default function EventsPage() {
         <DataTable
           data={filteredEvents}
           columns={columns}
+          defaultSortKey="eventDate"
+          defaultSortOrder="asc"
           keyExtractor={(evt) => evt.id}
           searchPlaceholder="Search events by name, client, or venue..."
           searchFilter={(evt, q) =>

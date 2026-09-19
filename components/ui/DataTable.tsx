@@ -7,6 +7,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   Search,
   Filter,
   Download,
@@ -33,6 +35,8 @@ interface DataTableProps<T> {
   exportFileName?: string;
   extraFilters?: React.ReactNode;
   defaultPageSize?: number;
+  defaultSortKey?: string;
+  defaultSortOrder?: 'asc' | 'desc';
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: React.ReactNode;
@@ -50,14 +54,16 @@ export function DataTable<T>({
   exportFileName = 'data_export',
   extraFilters,
   defaultPageSize = 10,
+  defaultSortKey,
+  defaultSortOrder = 'asc',
   emptyTitle = 'No records found',
   emptyDescription = 'There are no items to display matching your filter criteria.',
   emptyAction,
   emptyIcon = Filter,
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortKey, setSortKey] = useState<string | null>(defaultSortKey ?? null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(defaultSortOrder);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -223,12 +229,15 @@ export function DataTable<T>({
                     <div className="inline-flex items-center gap-1.5">
                       <span>{col.header}</span>
                       {col.sortable && (
-                        <ArrowUpDown
-                          className={cn(
-                            'h-3 w-3',
-                            sortKey === col.key ? 'text-[#00897b] dark:text-[#00e5c9]' : 'text-slate-400 dark:text-slate-600'
-                          )}
-                        />
+                        sortKey === col.key ? (
+                          sortOrder === 'asc' ? (
+                            <ArrowUp className="h-3 w-3 text-[#00897b] dark:text-[#00e5c9]" />
+                          ) : (
+                            <ArrowDown className="h-3 w-3 text-[#00897b] dark:text-[#00e5c9]" />
+                          )
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 text-slate-400 dark:text-slate-600" />
+                        )
                       )}
                     </div>
                   </th>

@@ -492,11 +492,11 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 sm:space-y-5">
-        {/* Compact Executive Command Bar & Date Period Switcher */}
+      <div className="space-y-3 sm:space-y-4">
+        {/* Compact Executive Command Bar with Period Select Dropdown */}
         <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-[#1f3144] bg-gradient-to-r from-teal-50/80 via-slate-50 to-white dark:from-[#0b1522] dark:via-[#0f1d2d] dark:to-[#121824] p-4 sm:p-5 shadow-sm dark:shadow-lg transition-colors duration-200">
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="space-y-1 max-w-2xl">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-1 max-w-xl">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                   {new Date().getHours() < 12
@@ -512,89 +512,50 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
-              <Link
-                href="/recurring-events"
-                className="rounded-lg border border-slate-200 dark:border-[#233549] bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1c2e42] hover:border-slate-300 dark:hover:border-[#354f6b] transition-colors"
-              >
-                Recurring Schedules
-              </Link>
-              <Link
-                href="/events/new"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00e5c9]/25 transition-all"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Create Event</span>
-              </Link>
-            </div>
-          </div>
+            {/* Period Select Dropdown & Badge (replaces action buttons) */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 bg-white/90 dark:bg-[#0d1724]/90 p-1.5 rounded-xl border border-slate-200 dark:border-[#1f3044] shadow-sm">
+                <div className="flex items-center gap-1.5 px-1.5 text-[#00897b] dark:text-[#00e5c9]">
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider hidden sm:inline">Period:</span>
+                </div>
 
-          {/* Integrated Date Period Control Panel */}
-          <div className="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-[#1a293d] flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
-                Period:
-              </span>
+                <select
+                  value={datePeriod}
+                  onChange={(e) => {
+                    const val = e.target.value as DatePeriod;
+                    setDatePeriod(val);
+                    setShowCustomRangeInputs(val === 'custom');
+                  }}
+                  className="rounded-lg border border-slate-200 dark:border-[#273a50] bg-slate-50 dark:bg-[#121e2d] px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00e5c9] cursor-pointer"
+                >
+                  <option value="today">Today</option>
+                  <option value="this_week">This Week</option>
+                  <option value="this_month">This Month ({new Date().toLocaleString('default', { month: 'short', year: 'numeric' })})</option>
+                  <option value="last_month">Last Month</option>
+                  <option value="this_quarter">This Quarter (Q{Math.floor(new Date().getMonth() / 3) + 1})</option>
+                  <option value="this_year">Year to Date ({new Date().getFullYear()})</option>
+                  <option value="all_time">All Time</option>
+                  <option value="custom">Custom Range...</option>
+                </select>
 
-              {[
-                { id: 'today', label: 'Today' },
-                { id: 'this_week', label: 'This Week' },
-                { id: 'this_month', label: 'This Month' },
-                { id: 'last_month', label: 'Last Month' },
-                { id: 'this_quarter', label: 'This Quarter' },
-                { id: 'this_year', label: 'Year to Date' },
-                { id: 'all_time', label: 'All Time' },
-                { id: 'custom', label: 'Custom' },
-              ].map((p) => {
-                const isActive = datePeriod === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => {
-                      setDatePeriod(p.id as DatePeriod);
-                      if (p.id === 'custom') {
-                        setShowCustomRangeInputs(true);
-                      } else {
-                        setShowCustomRangeInputs(false);
-                      }
-                    }}
-                    className={cn(
-                      'px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all',
-                      isActive
-                        ? 'bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-[#041816] shadow-sm shadow-[#00e5c9]/30 ring-1 ring-[#00a894] dark:ring-[#00e5c9]'
-                        : 'bg-white/80 dark:bg-[#0d1724]/80 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-[#1f3044] hover:border-slate-300 dark:hover:border-[#2f4662] hover:bg-white dark:hover:bg-[#121f30]'
-                    )}
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Active Range Badge */}
-            <div className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-[#0e1927] border border-slate-200 dark:border-[#1f3044] text-[11px]">
-                <span className="font-semibold text-slate-900 dark:text-white font-mono">
+                <div className="px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-[#00e5c9]/10 border border-teal-200/60 dark:border-[#00e5c9]/20 text-[11px] font-mono font-bold text-[#00897b] dark:text-[#00e5c9] whitespace-nowrap">
                   {periodBounds.label}
-                </span>
-                <span className="text-[10px] text-[#00897b] dark:text-[#00e5c9] font-bold">
-                  ({filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'})
-                </span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Collapsible Custom Date Range Picker */}
           {showCustomRangeInputs && datePeriod === 'custom' && (
-            <div className="mt-3 p-3 rounded-lg bg-white dark:bg-[#0a121e] border border-slate-200 dark:border-[#1e3046] flex flex-wrap items-center gap-3 animate-in fade-in-50 duration-150">
+            <div className="mt-3.5 pt-3 border-t border-slate-200/80 dark:border-[#1a293d] flex flex-wrap items-center gap-3 animate-in fade-in-50 duration-150">
               <div className="flex items-center gap-2">
                 <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Start Date:</label>
                 <input
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="rounded border border-slate-300 dark:border-[#263c56] bg-slate-50 dark:bg-[#0e1826] px-2.5 py-1 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00e5c9]"
+                  className="rounded-lg border border-slate-300 dark:border-[#263c56] bg-white dark:bg-[#0e1826] px-2.5 py-1 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00e5c9]"
                 />
               </div>
 
@@ -604,13 +565,13 @@ export default function DashboardPage() {
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="rounded border border-slate-300 dark:border-[#263c56] bg-slate-50 dark:bg-[#0e1826] px-2.5 py-1 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00e5c9]"
+                  className="rounded-lg border border-slate-300 dark:border-[#263c56] bg-white dark:bg-[#0e1826] px-2.5 py-1 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00e5c9]"
                 />
               </div>
 
               <button
                 onClick={() => setShowCustomRangeInputs(false)}
-                className="px-3 py-1 rounded bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-[#041816] text-xs font-bold hover:opacity-90"
+                className="px-3 py-1 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] text-white dark:text-[#041816] text-xs font-bold hover:opacity-90 transition-opacity"
               >
                 Apply Range
               </button>

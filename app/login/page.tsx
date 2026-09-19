@@ -11,7 +11,7 @@ import { UserRole } from '@/lib/types';
 export default function LoginPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading, getFirstAllowedRoute } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,12 +41,12 @@ export default function LoginPage() {
       .catch(() => {});
   }, []);
 
-  // If already authenticated, redirect to command center
+  // If already authenticated, redirect to allowed workspace
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/');
+      router.push(getFirstAllowedRoute());
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, getFirstAllowedRoute]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +56,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       showToast('✓ Welcome back! Authentication successful.');
-      router.push('/');
+      router.push(getFirstAllowedRoute());
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please verify credentials.');
     } finally {

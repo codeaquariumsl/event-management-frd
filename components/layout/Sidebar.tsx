@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { eventService } from '@/lib/api/eventService';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -44,6 +45,7 @@ export function Sidebar({
   onCloseMobile,
 }: SidebarProps) {
   const pathname = usePathname();
+  const { hasPermission } = useAuth();
   const [mounted, setMounted] = React.useState(false);
   const [eventsCount, setEventsCount] = React.useState<number | undefined>(cachedEventsBadge);
 
@@ -66,22 +68,24 @@ export function Sidebar({
   }, []);
 
   const navItems = [
-    { label: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { label: 'Calendar', href: '/calendar', icon: Calendar },
-    { label: 'Quotations', href: '/quotations', icon: FileSpreadsheet },
-    { label: 'Recurring Events', href: '/recurring-events', icon: Clock3 },
-    { label: 'Events', href: '/events', icon: CalendarDays, badge: mounted ? eventsCount : undefined },
-    { label: 'Customers', href: '/customers', icon: ClipboardList },
-    { label: 'Customer Payments', href: '/customer-payments', icon: CreditCard },
-    { label: 'Event Types', href: '/event-types', icon: Layers },
-    { label: 'Services Catalog', href: '/services', icon: Sparkles },
-    { label: 'Inventory Gear', href: '/inventory', icon: Boxes },
-    { label: 'Staff Management', href: '/staff', icon: Users },
-    { label: 'Staff Payments', href: '/staff-payments', icon: WalletCards },
-    { label: 'Reports', href: '/reports', icon: FileBarChart },
-    { label: 'User & Access', href: '/users', icon: UserCheck },
-    { label: 'Settings', href: '/settings', icon: Settings },
+    { label: 'Dashboard', href: '/', icon: LayoutDashboard, permission: 'dashboard.view' },
+    { label: 'Calendar', href: '/calendar', icon: Calendar, permission: 'calendar.view' },
+    { label: 'Quotations', href: '/quotations', icon: FileSpreadsheet, permission: 'quotations.view' },
+    { label: 'Recurring Events', href: '/recurring-events', icon: Clock3, permission: 'recurring.view' },
+    { label: 'Events', href: '/events', icon: CalendarDays, badge: mounted ? eventsCount : undefined, permission: 'events.view' },
+    { label: 'Customers', href: '/customers', icon: ClipboardList, permission: 'customers.view' },
+    { label: 'Customer Payments', href: '/customer-payments', icon: CreditCard, permission: 'customer_payments.view' },
+    { label: 'Event Types', href: '/event-types', icon: Layers, permission: 'event_types.view' },
+    { label: 'Services Catalog', href: '/services', icon: Sparkles, permission: 'services.view' },
+    { label: 'Inventory Gear', href: '/inventory', icon: Boxes, permission: 'inventory.view' },
+    { label: 'Staff Management', href: '/staff', icon: Users, permission: 'staff.view' },
+    { label: 'Staff Payments', href: '/staff-payments', icon: WalletCards, permission: 'staff_payments.view' },
+    { label: 'Reports', href: '/reports', icon: FileBarChart, permission: 'reports.view' },
+    { label: 'User & Access', href: '/users', icon: UserCheck, permission: 'users.view' },
+    { label: 'Settings', href: '/settings', icon: Settings, permission: 'settings.view' },
   ];
+
+  const visibleNavItems = navItems.filter((item) => hasPermission(item.permission));
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -139,7 +143,7 @@ export function Sidebar({
 
         {/* Nav Links with Smooth Independent Scroll */}
         <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-2.5 py-2 scroll-smooth sidebar-scroll">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
 
@@ -184,18 +188,8 @@ export function Sidebar({
           })}
         </nav>
 
-        {/* Footer Collapse Toggle & Status */}
+        {/* Footer Collapse Toggle */}
         <div className="p-3 shrink-0 mt-auto border-t border-slate-200 dark:border-[#182332] space-y-2">
-          {/* {!isCollapsed && (
-            <div className="rounded-lg border border-slate-200 dark:border-[#1d2c3e] bg-slate-50 dark:bg-[#0c131d] p-2.5 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-[#00897b] dark:text-[#00e5c9] shrink-0" />
-              <div className="truncate">
-                <span className="block text-slate-900 dark:text-white font-medium text-[11px]">System Ready</span>
-                <span className="block text-[10px] text-slate-500">Storage Synced</span>
-              </div>
-            </div>
-          )} */}
-
           <button
             onClick={onToggleCollapse}
             className="hidden lg:flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-[#1b2838] bg-slate-50 dark:bg-[#0d1520] py-2 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#162332] hover:text-slate-900 dark:hover:text-white transition-colors"

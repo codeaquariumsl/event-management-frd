@@ -28,9 +28,16 @@ import { AppShell } from '@/components/layout/AppShell';
 import { inventoryService } from '@/lib/api/inventoryService';
 import { InventoryItem, InventoryCategory } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function InventoryPage() {
   const { showToast } = useToast();
+  const { hasPermission } = useAuth();
+
+  const canCreate = hasPermission('inventory.create');
+  const canEdit = hasPermission('inventory.edit');
+  const canDelete = hasPermission('inventory.delete');
+
   const [activeTab, setActiveTab] = useState<'items' | 'categories'>('items');
 
   // Data States
@@ -280,20 +287,24 @@ export default function InventoryPage() {
           ]}
           actions={
             <div className="flex items-center gap-2">
-              <button
-                onClick={openCreateCategoryModal}
-                className="flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-[#162333] border border-slate-300 dark:border-[#23354c] px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#1c2c40] transition-colors"
-              >
-                <Plus className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
-                New Category
-              </button>
-              <button
-                onClick={openCreateItemModal}
-                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#00e5c9] to-[#00b8a2] px-4 py-2 text-sm font-semibold text-black transition-all hover:brightness-110 shadow-lg shadow-[#00e5c9]/20"
-              >
-                <Plus className="h-4 w-4" />
-                Add Equipment / Service
-              </button>
+              {canCreate && (
+                <button
+                  onClick={openCreateCategoryModal}
+                  className="flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-[#162333] border border-slate-300 dark:border-[#23354c] px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#1c2c40] transition-colors"
+                >
+                  <Plus className="h-3.5 w-3.5 text-[#00897b] dark:text-[#00e5c9]" />
+                  New Category
+                </button>
+              )}
+              {canCreate && (
+                <button
+                  onClick={openCreateItemModal}
+                  className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#00e5c9] to-[#00b8a2] px-4 py-2 text-sm font-semibold text-black transition-all hover:brightness-110 shadow-lg shadow-[#00e5c9]/20"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Equipment / Service
+                </button>
+              )}
             </div>
           }
         />
@@ -511,20 +522,24 @@ export default function InventoryPage() {
                           {/* Actions */}
                           <td className="px-5 py-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                onClick={() => openEditItemModal(item)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#182535] transition-colors"
-                                title="Edit item"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => setDeleteTarget({ type: 'item', item })}
-                                className="p-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
-                                title="Delete item"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              {canEdit && (
+                                <button
+                                  onClick={() => openEditItemModal(item)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#182535] transition-colors"
+                                  title="Edit item"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  onClick={() => setDeleteTarget({ type: 'item', item })}
+                                  className="p-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+                                  title="Delete item"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

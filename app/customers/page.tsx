@@ -30,10 +30,16 @@ import { customerService } from '@/lib/api/customerService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Customer, CustomerType } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function CustomersPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { hasPermission } = useAuth();
+
+  const canCreate = hasPermission('customers.create');
+  const canEdit = hasPermission('customers.edit');
+  const canDelete = hasPermission('customers.delete');
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
@@ -197,13 +203,15 @@ export default function CustomersPage() {
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin text-[#00e5c9]' : ''}`} />
               </button>
-              <button
-                onClick={handleCreate}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#00e5c9] to-[#00b8a2] px-4 py-2.5 text-xs font-bold text-black hover:brightness-110 shadow-lg shadow-[#00e5c9]/20 transition-all"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Create New Customer</span>
-              </button>
+              {canCreate && (
+                <button
+                  onClick={handleCreate}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#00e5c9] to-[#00b8a2] px-4 py-2.5 text-xs font-bold text-black hover:brightness-110 shadow-lg shadow-[#00e5c9]/20 transition-all"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Create New Customer</span>
+                </button>
+              )}
             </div>
           }
         />
@@ -307,23 +315,27 @@ export default function CustomersPage() {
               >
                 <Eye className="h-3.5 w-3.5" />
               </button>
-              <button
-                onClick={(e) => handleEdit(c, e)}
-                className="rounded p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-slate-900 dark:hover:text-white transition-colors"
-                title="Edit Customer"
-              >
-                <Edit2 className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteTarget(c);
-                }}
-                className="rounded p-1.5 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
-                title="Delete Customer"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              {canEdit && (
+                <button
+                  onClick={(e) => handleEdit(c, e)}
+                  className="rounded p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-slate-900 dark:hover:text-white transition-colors"
+                  title="Edit Customer"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteTarget(c);
+                  }}
+                  className="rounded p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-rose-400 transition-colors"
+                  title="Delete Customer"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           )}
         />

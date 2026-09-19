@@ -276,7 +276,17 @@ export type UserRole =
   | 'Production Manager'
   | 'Finance Officer'
   | 'Crew Coordinator'
-  | 'Read Only';
+  | 'Read Only'
+  | (string & {});
+
+export interface RoleDefinition {
+  id?: string;
+  name: string;
+  description: string;
+  isSystem?: boolean;
+  permissions: string[];
+  usersCount?: number;
+}
 
 export interface UserAccount {
   id: string;

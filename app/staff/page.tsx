@@ -26,10 +26,17 @@ import { staffService } from '@/lib/api/staffService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Staff, StaffRole, EmploymentType } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function StaffPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { hasPermission } = useAuth();
+
+  const canCreate = hasPermission('staff.create');
+  const canEdit = hasPermission('staff.edit');
+  const canDelete = hasPermission('staff.delete');
+  const canRecordPayment = hasPermission('staff_payments.create');
 
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
@@ -177,16 +184,18 @@ export default function StaffPage() {
           subtitle="Roster of resident DJs, VJs, sound engineers, lighting technicians, stage directors, and logistics staff"
           breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Staff' }]}
           actions={
-            <button
-              onClick={() => {
-                setEditingStaff(null);
-                setIsStaffModalOpen(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/25 transition-all"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Crew / Staff</span>
-            </button>
+            canCreate ? (
+              <button
+                onClick={() => {
+                  setEditingStaff(null);
+                  setIsStaffModalOpen(true);
+                }}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/25 transition-all"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add Crew / Staff</span>
+              </button>
+            ) : undefined
           }
         />
 
@@ -246,37 +255,43 @@ export default function StaffPage() {
               >
                 <Eye className="h-3.5 w-3.5" />
               </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditingStaff(s);
-                  setIsStaffModalOpen(true);
-                }}
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
-                title="Edit Staff Member"
-              >
-                <Edit2 className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPaymentTargetStaff(s);
-                }}
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
-                title="Record Staff Payment"
-              >
-                <DollarSign className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteTargetStaff(s);
-                }}
-                className="rounded p-1 text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                title="Delete Staff Member"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              {canEdit && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingStaff(s);
+                    setIsStaffModalOpen(true);
+                  }}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
+                  title="Edit Staff Member"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {canRecordPayment && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPaymentTargetStaff(s);
+                  }}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
+                  title="Record Staff Payment"
+                >
+                  <DollarSign className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteTargetStaff(s);
+                  }}
+                  className="rounded p-1 text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                  title="Delete Staff Member"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           )}
         />

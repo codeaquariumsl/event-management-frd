@@ -24,10 +24,13 @@ import { CompanyProfile, ServiceCatalogItem } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme, Theme } from '@/lib/theme/ThemeContext';
 import { formatCurrency } from '@/lib/utils';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
   const { theme, resolvedTheme, setTheme } = useTheme();
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission('settings.edit');
   const [profile, setProfile] = useState<CompanyProfile>({
     name: 'Seekers’s Entertainment (pvt) Ltd',
     tagline: 'Premier Audio-Visual Production, DJ & Event Technology',
@@ -267,13 +270,15 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex justify-end pt-2">
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-5 py-2 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-sm transition-colors"
-                >
-                  <Save className="h-4 w-4" />
-                  <span>Save Company Settings</span>
-                </button>
+                {canEdit && (
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-5 py-2 text-xs font-bold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-sm transition-colors"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span>Save Company Settings</span>
+                  </button>
+                )}
               </div>
             </form>
           </div>

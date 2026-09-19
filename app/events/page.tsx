@@ -33,6 +33,7 @@ import { eventTypeService } from '@/lib/api/eventTypeService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { EventItem, EventStatus, EventType, EventTypeItem } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 function EventStatusSelect({
   status,
@@ -106,6 +107,12 @@ function EventStatusSelect({
 export default function EventsPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { hasPermission } = useAuth();
+
+  const canCreate = hasPermission('events.create');
+  const canEdit = hasPermission('events.edit');
+  const canDelete = hasPermission('events.delete');
+  const canRecordPayment = hasPermission('customer_payments.create');
 
   const [events, setEvents] = useState<EventItem[]>([]);
   const [eventTypes, setEventTypes] = useState<EventTypeItem[]>([]);
@@ -298,13 +305,15 @@ export default function EventsPage() {
           subtitle="Manage audio-visual productions, customer bookings, crew assignments, and invoicing"
           breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Events' }]}
           actions={
-            <Link
-              href="/events/new"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/25 transition-all"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Create New Event</span>
-            </Link>
+            canCreate ? (
+              <Link
+                href="/events/new"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#00e5c9] px-4 py-2.5 text-xs font-bold text-[#041816] hover:bg-[#1affda] shadow-lg shadow-[#00e5c9]/25 transition-all"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create New Event</span>
+              </Link>
+            ) : undefined
           }
         />
 
@@ -431,27 +440,31 @@ export default function EventsPage() {
                 <Eye className="h-3.5 w-3.5" />
               </button>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/events/${evt.id}/edit`);
-                }}
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
-                title="Edit Event"
-              >
-                <Edit className="h-3.5 w-3.5" />
-              </button>
+              {canEdit && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/events/${evt.id}/edit`);
+                  }}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-colors"
+                  title="Edit Event"
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                </button>
+              )}
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPaymentEvent(evt);
-                }}
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                title="Record Payment"
-              >
-                <CreditCard className="h-3.5 w-3.5" />
-              </button>
+              {canRecordPayment && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPaymentEvent(evt);
+                  }}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182637] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                  title="Record Payment"
+                >
+                  <CreditCard className="h-3.5 w-3.5" />
+                </button>
+              )}
 
               <button
                 onClick={(e) => {
@@ -463,7 +476,7 @@ export default function EventsPage() {
               >
                 <Printer className="h-3.5 w-3.5" />
               </button>
-              {evt.status != 'Completed' && (
+              {canDelete && evt.status != 'Completed' && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

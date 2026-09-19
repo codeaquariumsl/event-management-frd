@@ -29,10 +29,17 @@ import { AppShell } from '@/components/layout/AppShell';
 import { quotationService } from '@/lib/api/quotationService';
 import { Quotation, QuotationStatus } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function QuotationsPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { hasPermission } = useAuth();
+
+  const canCreate = hasPermission('quotations.create');
+  const canEdit = hasPermission('quotations.edit');
+  const canDelete = hasPermission('quotations.delete');
+  const canConvertEvent = hasPermission('events.create');
 
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,13 +140,15 @@ export default function QuotationsPage() {
           { label: 'Quotations' },
         ]}
         actions={
-          <Link
-            href="/quotations/new"
-            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#00e5c9] to-[#00b8a2] px-4 py-2 text-sm font-semibold text-black transition-all hover:brightness-110 shadow-lg shadow-[#00e5c9]/20"
-          >
-            <Plus className="h-4 w-4" />
-            New Quotation
-          </Link>
+          canCreate ? (
+            <Link
+              href="/quotations/new"
+              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#00e5c9] to-[#00b8a2] px-4 py-2 text-sm font-semibold text-black transition-all hover:brightness-110 shadow-lg shadow-[#00e5c9]/20"
+            >
+              <Plus className="h-4 w-4" />
+              New Quotation
+            </Link>
+          ) : undefined
         }
       />
 
@@ -312,11 +321,11 @@ export default function QuotationsPage() {
                   {/* Actions */}
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      {/* Convert to Event Button - allows creating multiple events from one quotation */}
-                      {q.status !== 'Rejected' && (
+                      {/* Convert to Event */}
+                      {canConvertEvent && q.status === 'Accepted' && (
                         <button
                           onClick={() => handleConvertToEvent(q)}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#00a894]/10 dark:bg-[#00e5c9]/10 text-[#00897b] dark:text-[#00e5c9] hover:bg-[#00a894]/20 dark:hover:bg-[#00e5c9]/20 border border-[#00a894]/30 dark:border-[#00e5c9]/30 text-xs font-semibold transition-colors"
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#00e5c9]/15 hover:bg-[#00e5c9]/25 text-[#00897b] dark:text-[#00e5c9] border border-[#00e5c9]/30 text-xs font-semibold transition-all shadow-sm"
                           title="Convert this quotation into an active Event"
                         >
                           <Sparkles className="h-3.5 w-3.5" />
@@ -334,22 +343,26 @@ export default function QuotationsPage() {
                       </Link>
 
                       {/* Edit */}
-                      <Link
-                        href={`/quotations/${q.id}?edit=true`}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#182535] transition-colors"
-                        title="Edit Quotation"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Link>
+                      {canEdit && (
+                        <Link
+                          href={`/quotations/${q.id}?edit=true`}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#182535] transition-colors"
+                          title="Edit Quotation"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Link>
+                      )}
 
                       {/* Delete */}
-                      <button
-                        onClick={() => setDeleteTarget(q)}
-                        className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
-                        title="Delete Quotation"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {canDelete && (
+                        <button
+                          onClick={() => setDeleteTarget(q)}
+                          className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                          title="Delete Quotation"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

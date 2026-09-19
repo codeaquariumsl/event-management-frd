@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { UserAccount } from '../types';
 import { authService } from '../api/authService';
+import { checkUserPermission, SYSTEM_MODULES } from './permissions';
 
 interface AuthContextType {
   user: UserAccount | null;
@@ -13,6 +14,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  hasModuleAccess: (moduleId: string) => boolean;
+  getFirstAllowedRoute: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,10 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener('seekers_auth_changed', refreshSession);
+    window.addEventListener('seekers_roles_updated', refreshSession);
     window.addEventListener('seekers_session_expired', handleSessionExpiredEvent);
 
     return () => {
       window.removeEventListener('seekers_auth_changed', refreshSession);
+      window.removeEventListener('seekers_roles_updated', refreshSession);
       window.removeEventListener('seekers_session_expired', handleSessionExpiredEvent);
     };
   }, []);
@@ -80,11 +86,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
-  const hasPermission = (permission: string): boolean => {
-    if (!user) return false;
-    if (user.role === 'Super Admin') return true;
-    return user.permissions?.includes(permission) || false;
-  };
+  const hasPermission = useCallback(
+    (permission: string): boolean => {
+      if (!user) return false;
+      return checkUserPermission(user.permissions, user.role, permission);
+    },
+    [user]
+  );
+
+  const hasAnyPermission = useCallback(
+    (permissions: string[]): boolean => {
+      if (!user) return false;
+      if (user.role === 'Super Admin' || user.permissions?.includes('*')) return true;
+      return permissions.some((perm) => hasPermission(perm));
+    },
+    [user, hasPermission]
+  );
+
+  const hasModuleAccess = useCallback(
+    (moduleId: string): boolean => {
+      if (!user) return false;
+      if (user.role === 'Super Admin' || user.permissions?.includes('*')) return true;
+      const mod = SYSTEM_MODULES.find((m) => m.id === moduleId);
+      if (!mod) return hasPermission(`${moduleId}.view`);
+      return mod.actions.some((act) => hasPermission(act.key));
+    },
+    [user, hasPermission]
+  );
+
+  const getFirstAllowedRoute = useCallback((): string => {
+    if (!user) return '/login';
+    if (user.role === 'Super Admin' || user.permissions?.includes('*')) return '/';
+
+    // If dashboard is permitted, return '/'
+    if (hasPermission('dashboard.view')) return '/';
+
+    // Otherwise, find first allowed module route
+    for (const mod of SYSTEM_MODULES) {
+      const viewKey = mod.actions.find((a) => a.actionType === 'view')?.key || mod.actions[0]?.key;
+      if (viewKey && hasPermission(viewKey)) {
+        return mod.route;
+      }
+    }
+
+    return '/';
+  }, [user, hasPermission]);
 
   return (
     <AuthContext.Provider
@@ -96,6 +142,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         hasPermission,
+        hasAnyPermission,
+        hasModuleAccess,
+        getFirstAllowedRoute,
       }}
     >
       {children}

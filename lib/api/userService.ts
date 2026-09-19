@@ -1,8 +1,9 @@
-import { UserAccount, UserRole } from '../types';
+import { UserAccount, UserRole, RoleDefinition } from '../types';
 import { apiClient } from './client';
-import { ROLE_PERMISSIONS_MATRIX } from '../auth/permissions';
+import { ROLE_PERMISSIONS_MATRIX, SYSTEM_MODULES } from '../auth/permissions';
 
 export const userService = {
+  // ================= USERS API =================
   async getUsers(): Promise<UserAccount[]> {
     try {
       const users = await apiClient.request<UserAccount[]>('/users');
@@ -104,9 +105,75 @@ export const userService = {
     return true;
   },
 
-  async getRolesMatrix(): Promise<Record<UserRole, string[]>> {
+  // ================= ROLES API =================
+  async getRoles(): Promise<RoleDefinition[]> {
     try {
-      const matrix = await apiClient.request<Record<UserRole, string[]>>('/users/roles/matrix');
+      const roles = await apiClient.request<RoleDefinition[]>('/roles');
+      if (Array.isArray(roles)) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('seekers_roles', JSON.stringify(roles));
+        }
+        return roles;
+      }
+    } catch (err) {
+      console.warn('Backend API /roles unreachable:', err);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('seekers_roles');
+        if (cached) return JSON.parse(cached);
+      }
+    }
+
+    // Fallback standard roles
+    return Object.entries(ROLE_PERMISSIONS_MATRIX).map(([name, permissions]) => ({
+      name,
+      description: `Default system authorization policy for ${name}.`,
+      isSystem: true,
+      permissions,
+      usersCount: 0,
+    }));
+  },
+
+  async createRole(data: { name: string; description?: string; permissions: string[] }): Promise<RoleDefinition> {
+    const saved = await apiClient.request<RoleDefinition>('/roles', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('seekers_roles_updated'));
+      window.dispatchEvent(new Event('seekers_auth_changed'));
+    }
+    return saved;
+  },
+
+  async updateRole(name: string, data: { description?: string; permissions?: string[] }): Promise<RoleDefinition> {
+    const updated = await apiClient.request<RoleDefinition>(`/roles/${encodeURIComponent(name)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('seekers_roles_updated'));
+      window.dispatchEvent(new Event('seekers_auth_changed'));
+    }
+    return updated;
+  },
+
+  async deleteRole(name: string): Promise<boolean> {
+    await apiClient.request<{ success: boolean }>(`/roles/${encodeURIComponent(name)}`, {
+      method: 'DELETE',
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('seekers_roles_updated'));
+      window.dispatchEvent(new Event('seekers_auth_changed'));
+    }
+    return true;
+  },
+
+  async getRolesMatrix(): Promise<Record<string, string[]>> {
+    try {
+      const matrix = await apiClient.request<Record<string, string[]>>('/roles/matrix');
       if (matrix) return matrix;
     } catch {
       // Fallback

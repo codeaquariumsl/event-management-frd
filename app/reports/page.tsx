@@ -24,8 +24,12 @@ import { paymentService } from '@/lib/api/paymentService';
 import { eventTypeService } from '@/lib/api/eventTypeService';
 import { formatCurrency } from '@/lib/utils';
 import { EventItem, Staff, Customer, CustomerPayment, StaffPayment, EventTypeItem } from '@/lib/types';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function ReportsPage() {
+  const { hasPermission } = useAuth();
+  const canExport = hasPermission('reports.export');
+
   const [reportCategory, setReportCategory] = useState<'financial' | 'events' | 'staff' | 'customers'>('financial');
   const [dateRange, setDateRange] = useState('All Time');
 
@@ -251,21 +255,25 @@ export default function ReportsPage() {
                 <option value="Year to Date">Year to Date ({new Date().getFullYear()})</option>
               </select>
 
-              <button
-                onClick={handlePrint}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#182637] transition-colors"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                <span>Print</span>
-              </button>
+              {canExport && (
+                <>
+                  <button
+                    onClick={handlePrint}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-[#233549] bg-slate-100 dark:bg-[#14202e] px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#182637] transition-colors"
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    <span>Print</span>
+                  </button>
 
-              <button
-                onClick={handleExportCSV}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-2 text-xs font-bold text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>Export CSV</span>
-              </button>
+                  <button
+                    onClick={handleExportCSV}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-3.5 py-2 text-xs font-bold text-white dark:text-black hover:bg-[#008f7e] dark:hover:bg-[#1affda]"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Export CSV</span>
+                  </button>
+                </>
+              )}
             </div>
           }
         />

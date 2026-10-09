@@ -51,4 +51,19 @@ export const paymentService = {
     });
     return saved;
   },
+
+  async updateStaffPayment(id: string, data: Partial<StaffPayment>): Promise<StaffPayment> {
+    const updated = await apiClient.request<StaffPayment>(`/payments/staff/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return updated;
+  },
+
+  async deleteStaffPayment(id: string): Promise<boolean> {
+    await apiClient.request<{ success: boolean }>(`/payments/staff/${id}`, {
+      method: 'DELETE',
+    });
+    return true;
+  },
 };

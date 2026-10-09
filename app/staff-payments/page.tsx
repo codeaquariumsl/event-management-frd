@@ -11,24 +11,35 @@ import {
   Building,
   ArrowUpRight,
   Sparkles,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useToast } from '@/components/ui/Toast';
 import { StaffPaymentModal } from '@/features/staff/StaffPaymentModal';
+import { EditStaffPaymentTransactionModal } from '@/features/staff/EditStaffPaymentTransactionModal';
 import { paymentService } from '@/lib/api/paymentService';
 import { staffService } from '@/lib/api/staffService';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { StaffPayment, StaffPayrollSummary, PaymentType } from '@/lib/types';
+import { StaffPayment, StaffPayrollSummary, PaymentType, Staff } from '@/lib/types';
 
 export default function StaffPaymentsPage() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'transactions' | 'payroll'>('payroll');
   const [payments, setPayments] = useState<StaffPayment[]>([]);
   const [payrollSummary, setPayrollSummary] = useState<StaffPayrollSummary[]>([]);
   const [selectedMonth, setSelectedMonth] = useState('2026-09');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPayoutStaff, setSelectedPayoutStaff] = useState<Staff | undefined>(undefined);
+  const [payoutDefaultAmount, setPayoutDefaultAmount] = useState<number | undefined>(undefined);
+  const [editingPayment, setEditingPayment] = useState<StaffPayment | null>(null);
+  const [deleteTargetPayment, setDeleteTargetPayment] = useState<StaffPayment | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadData = async () => {
     try {
@@ -53,6 +64,27 @@ export default function StaffPaymentsPage() {
   const totalNetPay = payrollSummary.reduce((sum, p) => sum + p.netPay, 0);
   const totalPaid = payrollSummary.reduce((sum, p) => sum + p.paidAmount, 0);
   const totalOutstanding = payrollSummary.reduce((sum, p) => sum + p.balance, 0);
+
+  const handleDeletePayment = async () => {
+    if (!deleteTargetPayment) return;
+    setIsDeleting(true);
+    try {
+      await paymentService.deleteStaffPayment(deleteTargetPayment.id);
+      showToast(`✓ Payment ${deleteTargetPayment.id} deleted successfully`);
+      loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete payment', 'error');
+    } finally {
+      setIsDeleting(false);
+      setDeleteTargetPayment(null);
+    }
+  };
+
+  const handleClosePaymentModal = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedPayoutStaff(undefined);
+    setPayoutDefaultAmount(undefined);
+  };
 
   // Transactions columns
   const transactionColumns: Column<StaffPayment>[] = [
@@ -82,8 +114,20 @@ export default function StaffPaymentsPage() {
     {
       key: 'eventName',
       header: 'Linked Event / Purpose',
-      className: 'max-w-[220px] truncate text-slate-400',
+      className: 'max-w-[200px] truncate text-slate-400',
       render: (p) => p.eventName || p.notes || '—',
+    },
+    {
+      key: 'monthYear',
+      header: 'Payroll Month',
+      sortable: true,
+      className: 'w-28 text-slate-300 font-mono text-xs',
+      render: (p) => (
+        <span className="inline-flex items-center gap-1 font-mono text-slate-700 dark:text-slate-300">
+          <Calendar className="h-3 w-3 text-[#00897b] dark:text-[#00e5c9]" />
+          {p.monthYear || p.date?.slice(0, 7) || '—'}
+        </span>
+      ),
     },
     {
       key: 'date',
@@ -110,6 +154,29 @@ export default function StaffPaymentsPage() {
       sortable: true,
       className: 'text-center w-24',
       render: (p) => <StatusBadge status={p.status} size="sm" />,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      className: 'text-right w-20',
+      render: (p) => (
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            onClick={() => setEditingPayment(p)}
+            title="Edit Payment"
+            className="rounded p-1.5 text-slate-400 hover:text-[#00897b] dark:hover:text-[#00e5c9] hover:bg-slate-100 dark:hover:bg-[#1a293b] transition-colors"
+          >
+            <Edit2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => setDeleteTargetPayment(p)}
+            title="Delete Payment"
+            className="rounded p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ),
     },
   ];
 
@@ -179,6 +246,29 @@ export default function StaffPaymentsPage() {
       header: 'Status',
       className: 'text-center w-24',
       render: (p) => <StatusBadge status={p.status} size="sm" />,
+    },
+    {
+      key: 'actions',
+      header: 'Action',
+      className: 'text-right w-20',
+      render: (p) => (
+        <button
+          onClick={() => {
+            setSelectedPayoutStaff({
+              id: p.staffId,
+              name: p.staffName,
+              role: p.role,
+              employmentType: p.employmentType,
+            } as any);
+            setPayoutDefaultAmount(p.balance > 0 ? p.balance : p.netPay);
+            setIsPaymentModalOpen(true);
+          }}
+          className="inline-flex items-center gap-1 rounded bg-[#00a894]/10 dark:bg-[#00e5c9]/10 hover:bg-[#00a894]/20 dark:hover:bg-[#00e5c9]/20 text-[#00897b] dark:text-[#00e5c9] px-2.5 py-1 text-xs font-semibold transition-colors"
+        >
+          <DollarSign className="h-3 w-3" />
+          <span>Pay</span>
+        </button>
+      ),
     },
   ];
 
@@ -307,8 +397,31 @@ export default function StaffPaymentsPage() {
       {/* Record Payment Modal */}
       <StaffPaymentModal
         isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
+        onClose={handleClosePaymentModal}
+        staff={selectedPayoutStaff}
+        defaultAmount={payoutDefaultAmount}
+        defaultMonth={selectedMonth}
         onSuccess={loadData}
+      />
+
+      {/* Edit Payment Modal */}
+      <EditStaffPaymentTransactionModal
+        isOpen={!!editingPayment}
+        onClose={() => setEditingPayment(null)}
+        payment={editingPayment}
+        onSuccess={loadData}
+      />
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={!!deleteTargetPayment}
+        onClose={() => setDeleteTargetPayment(null)}
+        onConfirm={handleDeletePayment}
+        title="Delete Staff Payment"
+        message={`Are you sure you want to delete payment record ${deleteTargetPayment?.id} (${formatCurrency(deleteTargetPayment?.amount || 0)} for ${deleteTargetPayment?.staffName})? This will remove the payout from transactions and reverse any deductions.`}
+        confirmLabel="Delete Payment"
+        isDestructive={true}
+        isLoading={isDeleting}
       />
     </AppShell>
   );

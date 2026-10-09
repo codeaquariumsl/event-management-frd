@@ -1,79 +1,48 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { PaymentType, PaymentMethod, Staff, EventItem } from '@/lib/types';
-import { staffService } from '@/lib/api/staffService';
-import { eventService } from '@/lib/api/eventService';
+import { StaffPayment, PaymentMethod, PaymentType } from '@/lib/types';
 import { paymentService } from '@/lib/api/paymentService';
 import { formatCurrency } from '@/lib/utils';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 
-interface StaffPaymentModalProps {
+interface EditStaffPaymentTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  staff?: Staff;
-  eventId?: string;
-  eventName?: string;
-  defaultAmount?: number;
-  defaultMonth?: string;
+  payment: StaffPayment | null;
   onSuccess?: () => void;
 }
 
-export function StaffPaymentModal({
+export function EditStaffPaymentTransactionModal({
   isOpen,
   onClose,
-  staff,
-  eventId,
-  eventName,
-  defaultAmount,
-  defaultMonth,
+  payment,
   onSuccess,
-}: StaffPaymentModalProps) {
+}: EditStaffPaymentTransactionModalProps) {
   const { showToast } = useToast();
-  const [staffList, setStaffList] = useState<Staff[]>(staff ? [staff] : []);
-  const [events, setEvents] = useState<EventItem[]>([]);
-
-  const [selectedStaffId, setSelectedStaffId] = useState(staff?.id || '');
-  const [selectedEventId, setSelectedEventId] = useState(eventId || '');
-  const [paymentType, setPaymentType] = useState<PaymentType>(eventId ? 'Event Payment' : 'Salary');
-  const [amount, setAmount] = useState<number>(defaultAmount || 25000);
+  const [paymentType, setPaymentType] = useState<PaymentType>('Salary');
+  const [amount, setAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Bank Transfer');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [monthYear, setMonthYear] = useState<string>(
-    defaultMonth || new Date().toISOString().slice(0, 7)
-  );
+  const [date, setDate] = useState('');
+  const [monthYear, setMonthYear] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    staffService.getStaff().then((stf) => {
-      if (Array.isArray(stf) && stf.length > 0) {
-        setStaffList(stf);
-        if (!selectedStaffId) setSelectedStaffId(staff?.id || stf[0].id);
-      }
-    });
-    eventService.getEvents().then((evts) => {
-      if (Array.isArray(evts)) setEvents(evts);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      if (staff?.id) {
-        setSelectedStaffId(staff.id);
-      }
-      if (defaultMonth) {
-        setMonthYear(defaultMonth);
-      }
-      if (defaultAmount !== undefined) {
-        setAmount(defaultAmount);
-      }
+    if (payment) {
+      setPaymentType(payment.paymentType || 'Salary');
+      setAmount(payment.amount || 0);
+      setPaymentMethod(payment.paymentMethod || 'Bank Transfer');
+      setDate(payment.date || '');
+      setMonthYear(payment.monthYear || (payment.date ? payment.date.slice(0, 7) : ''));
+      setReferenceNumber(payment.referenceNumber || '');
+      setNotes(payment.notes || '');
     }
-  }, [isOpen, staff, defaultMonth, defaultAmount]);
+  }, [payment]);
 
-  const currentStaff = staffList.find((s) => s.id === selectedStaffId);
+  if (!payment) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,30 +53,23 @@ export function StaffPaymentModal({
 
     setIsSubmitting(true);
     try {
-      const targetEvent = events.find((ev) => ev.id === selectedEventId);
-
-      await paymentService.recordStaffPayment({
-        staffId: selectedStaffId,
-        staffName: currentStaff?.name || 'Staff Member',
-        eventId: selectedEventId || undefined,
-        eventName: targetEvent?.name || eventName || undefined,
+      await paymentService.updateStaffPayment(payment.id, {
         paymentType,
-        monthYear: monthYear || date.slice(0, 7),
-        date,
         amount: Number(amount),
         paidAmount: Number(amount),
         balance: 0,
-        status: 'Paid',
+        monthYear: monthYear || date.slice(0, 7),
+        date,
         paymentMethod,
         referenceNumber,
         notes,
       });
 
-      showToast(`✓ Payment of ${formatCurrency(Number(amount))} to ${currentStaff?.name} recorded`);
+      showToast(`✓ Payment ${payment.id} for ${payment.staffName} updated successfully`);
       if (onSuccess) onSuccess();
       onClose();
     } catch (err: any) {
-      showToast(err.message || 'Failed to record staff payment', 'error');
+      showToast(err.message || 'Failed to update payment', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -117,26 +79,29 @@ export function StaffPaymentModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Record Staff Payment / Payout"
-      subtitle="Issue event compensation, monthly salary, or travel advance"
+      title="Edit Staff Payment Record"
+      subtitle={`Modify payment details and payroll attribution for ${payment.staffName}`}
       maxWidth="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-        {/* Staff Member */}
-        <div>
-          <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Staff Member *</label>
-          <select
-            value={selectedStaffId}
-            onChange={(e) => setSelectedStaffId(e.target.value)}
-            disabled={!!staff}
-            className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none disabled:opacity-75"
-          >
-            {staffList.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} ({s.role} • {s.employmentType})
-              </option>
-            ))}
-          </select>
+        {/* Staff & ID Info Card */}
+        <div className="rounded-xl border border-slate-200 dark:border-[#1d2b3c] bg-slate-50 dark:bg-[#0c1420] p-3.5 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Staff Member
+            </span>
+            <span className="text-sm font-bold text-slate-900 dark:text-white block">
+              {payment.staffName}
+            </span>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Payment ID
+            </span>
+            <span className="text-xs font-mono font-bold text-[#00897b] dark:text-[#00e5c9]">
+              {payment.id}
+            </span>
+          </div>
         </div>
 
         {/* Payment Type & Method */}
@@ -171,32 +136,6 @@ export function StaffPaymentModal({
             </select>
           </div>
         </div>
-
-        {/* Link to Event if applicable */}
-        {paymentType === 'Event Payment' && (
-          <div>
-            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Linked Event</label>
-            <select
-              value={selectedEventId}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSelectedEventId(val);
-                const ev = events.find((item) => item.id === val);
-                if (ev?.eventDate) {
-                  setMonthYear(ev.eventDate.slice(0, 7));
-                }
-              }}
-              className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
-            >
-              <option value="">-- Select Event --</option>
-              {events.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.name} ({ev.eventDate})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
 
         {/* Payroll Month & Payment Date */}
         <div className="grid grid-cols-2 gap-4">
@@ -258,13 +197,16 @@ export function StaffPaymentModal({
           />
         </div>
 
-        {/* Bank info display */}
-        {currentStaff?.bankDetails && (
-          <div className="rounded-lg bg-slate-50/80 dark:bg-[#0c141f] border border-slate-200 dark:border-[#1e2e41] p-3 text-slate-600 dark:text-slate-400 text-[11px]">
-            <span className="text-slate-900 dark:text-white font-semibold block mb-0.5">Direct Bank Information:</span>
-            {currentStaff.bankDetails.bankName} • Account: <strong className="text-slate-900 dark:text-white font-mono">{currentStaff.bankDetails.accountNumber}</strong> ({currentStaff.bankDetails.branch})
-          </div>
-        )}
+        <div>
+          <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Internal Notes</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            placeholder="Additional context or remarks..."
+            className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white placeholder-slate-400 focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none"
+          />
+        </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-[#1c2a3a]">
@@ -277,9 +219,10 @@ export function StaffPaymentModal({
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00a894]/20 dark:shadow-[#00e5c9]/20 transition-all"
+            disabled={isSubmitting}
+            className="rounded-lg bg-[#00a894] dark:bg-[#00e5c9] px-4 py-2 text-xs font-semibold text-white dark:text-[#041816] hover:bg-[#008f7e] dark:hover:bg-[#1affda] shadow-md shadow-[#00a894]/20 dark:shadow-[#00e5c9]/20 transition-all disabled:opacity-50"
           >
-            Record Payout
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>

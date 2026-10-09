@@ -259,7 +259,8 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-[#233549] text-slate-400 text-[11px] uppercase">
-                    <th className="py-2.5 px-3">Date</th>
+                    <th className="py-2.5 px-3">Payment Date</th>
+                    <th className="py-2.5 px-3">Payroll Month</th>
                     <th className="py-2.5 px-3">Type</th>
                     <th className="py-2.5 px-3">Event / Context</th>
                     <th className="py-2.5 px-3">Method</th>
@@ -272,6 +273,7 @@ export default function StaffProfilePage({ params }: { params: Promise<{ id: str
                   {paymentHistory.map((p) => (
                     <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-[#101824]">
                       <td className="py-3 px-3 text-slate-300">{formatDate(p.date)}</td>
+                      <td className="py-3 px-3 font-mono text-slate-300">{p.monthYear || p.date?.slice(0, 7) || '—'}</td>
                       <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">{p.paymentType}</td>
                       <td className="py-3 px-3 text-slate-400">{p.eventName || p.notes || '—'}</td>
                       <td className="py-3 px-3 text-slate-300">{p.paymentMethod}</td>

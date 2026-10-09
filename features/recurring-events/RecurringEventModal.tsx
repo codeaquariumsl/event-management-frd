@@ -429,10 +429,10 @@ export function RecurringEventModal({
                   onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
                   className="w-full rounded-lg border border-slate-300 dark:border-[#233549] bg-white dark:bg-[#111c29] p-2.5 text-slate-900 dark:text-white focus:border-[#00897b] dark:focus:border-[#00e5c9] focus:outline-none font-medium"
                 >
-                  <option value="Weekly">Weekly</option>
+                  {/* <option value="Weekly">Weekly</option>
                   <option value="Biweekly">Biweekly</option>
                   <option value="Monthly">Monthly</option>
-                  <option value="Daily">Daily</option>
+                  <option value="Daily">Daily</option> */}
                   <option value="Custom">Custom</option>
                 </select>
               </div>

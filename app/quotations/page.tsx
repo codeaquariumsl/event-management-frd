@@ -49,7 +49,16 @@ export default function QuotationsPage() {
   const loadData = async () => {
     try {
       const data = await quotationService.getAll();
-      if (Array.isArray(data)) setQuotations(data);
+      if (Array.isArray(data)) {
+        const sorted = [...data].sort((a, b) => {
+          const numA = a.quotationNumber || '';
+          const numB = b.quotationNumber || '';
+          const cmp = numB.localeCompare(numA, undefined, { numeric: true, sensitivity: 'base' });
+          if (cmp !== 0) return cmp;
+          return (b.createdAt || '').localeCompare(a.createdAt || '');
+        });
+        setQuotations(sorted);
+      }
     } catch {}
   };
 
@@ -78,19 +87,27 @@ export default function QuotationsPage() {
       .reduce((sum, q) => sum + (q.totalAmount || 0), 0);
   }, [quotations]);
 
-  // Filtered List
+  // Filtered List (sorted with latest / highest quotation number first)
   const filteredQuotations = useMemo(() => {
-    return quotations.filter((q) => {
-      const matchesSearch =
-        q.quotationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (q.customerCompany && q.customerCompany.toLowerCase().includes(searchQuery.toLowerCase()));
+    return quotations
+      .filter((q) => {
+        const matchesSearch =
+          q.quotationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          q.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (q.customerCompany && q.customerCompany.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      if (!matchesSearch) return false;
-      if (statusFilter !== 'All' && q.status !== statusFilter) return false;
-      return true;
-    });
+        if (!matchesSearch) return false;
+        if (statusFilter !== 'All' && q.status !== statusFilter) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const numA = a.quotationNumber || '';
+        const numB = b.quotationNumber || '';
+        const cmp = numB.localeCompare(numA, undefined, { numeric: true, sensitivity: 'base' });
+        if (cmp !== 0) return cmp;
+        return (b.createdAt || '').localeCompare(a.createdAt || '');
+      });
   }, [quotations, searchQuery, statusFilter]);
 
   const handleDelete = async () => {

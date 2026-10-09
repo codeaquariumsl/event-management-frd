@@ -18,6 +18,13 @@ export const quotationService = {
         const cached = localStorage.getItem('seekers_quotations');
         if (cached) {
           let list: Quotation[] = JSON.parse(cached);
+          list.sort((a, b) => {
+            const numA = a.quotationNumber || '';
+            const numB = b.quotationNumber || '';
+            const cmp = numB.localeCompare(numA, undefined, { numeric: true, sensitivity: 'base' });
+            if (cmp !== 0) return cmp;
+            return (b.createdAt || '').localeCompare(a.createdAt || '');
+          });
           if (filters?.status && filters.status !== 'All') {
             list = list.filter((q) => q.status === filters.status);
           }

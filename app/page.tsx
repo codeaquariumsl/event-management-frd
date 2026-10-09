@@ -169,6 +169,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [payments, setPayments] = useState<CustomerPayment[]>([]);
   const [staffList, setStaffList] = useState<Staff[]>([]);
@@ -189,30 +191,40 @@ export default function DashboardPage() {
   });
   const [showCustomRangeInputs, setShowCustomRangeInputs] = useState(false);
 
+  const load = async (manual = false) => {
+    if (manual) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
+    try {
+      const [evts, custs, pays, staff, summary] = await Promise.all([
+        eventService.getEvents(),
+        customerService.getCustomers(),
+        paymentService.getCustomerPayments(),
+        staffService.getStaff(),
+        reportService.getDashboardMetrics(),
+      ]);
+      if (Array.isArray(evts)) setEvents(evts);
+      if (Array.isArray(pays)) setPayments(pays);
+      if (Array.isArray(custs)) setCustomersCount(custs.length);
+      if (Array.isArray(staff)) setStaffList(staff);
+      if (summary) setDashboardSummary(summary);
+    } catch (err) {
+      console.warn('Dashboard fetch error:', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
-    const load = async () => {
-      try {
-        const [evts, custs, pays, staff, summary] = await Promise.all([
-          eventService.getEvents(),
-          customerService.getCustomers(),
-          paymentService.getCustomerPayments(),
-          staffService.getStaff(),
-          reportService.getDashboardMetrics(),
-        ]);
-        if (Array.isArray(evts)) setEvents(evts);
-        if (Array.isArray(pays)) setPayments(pays);
-        if (Array.isArray(custs)) setCustomersCount(custs.length);
-        if (Array.isArray(staff)) setStaffList(staff);
-        if (summary) setDashboardSummary(summary);
-      } catch (err) {
-        console.warn('Dashboard fetch error:', err);
-      }
-    };
-    load();
+    load(false);
 
-    window.addEventListener('seekers_store_updated', load);
-    return () => window.removeEventListener('seekers_store_updated', load);
+    const handleUpdate = () => load(true);
+    window.addEventListener('seekers_store_updated', handleUpdate);
+    return () => window.removeEventListener('seekers_store_updated', handleUpdate);
   }, []);
 
   // Compute Active Period Boundaries
@@ -495,6 +507,9 @@ export default function DashboardPage() {
       <div className="space-y-3 sm:space-y-4">
         {/* Compact Executive Command Bar with Period Select Dropdown */}
         <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-[#1f3144] bg-gradient-to-r from-teal-50/80 via-slate-50 to-white dark:from-[#0b1522] dark:via-[#0f1d2d] dark:to-[#121824] p-4 sm:p-5 shadow-sm dark:shadow-lg transition-colors duration-200">
+          {(isLoading || isRefreshing) && (
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#00a894] dark:via-[#00e5c9] to-transparent animate-pulse" />
+          )}
           <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-1 max-w-xl">
               <div className="flex items-center gap-2">
@@ -512,7 +527,7 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Period Select Dropdown & Badge (replaces action buttons) */}
+            {/* Period Select Dropdown & Badge & Refresh Button */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               <div className="flex items-center gap-2 bg-white/90 dark:bg-[#0d1724]/90 p-1.5 rounded-xl border border-slate-200 dark:border-[#1f3044] shadow-sm">
                 <div className="flex items-center gap-1.5 px-1.5 text-[#00897b] dark:text-[#00e5c9]">
@@ -543,6 +558,22 @@ export default function DashboardPage() {
                   {periodBounds.label}
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => load(true)}
+                disabled={isLoading || isRefreshing}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-[#1f3044] bg-white/90 dark:bg-[#0d1724]/90 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-[#00e5c9]/50 hover:text-[#00897b] dark:hover:text-[#00e5c9] transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+                title="Refresh Dashboard Data"
+              >
+                <RotateCcw
+                  className={cn(
+                    'h-3.5 w-3.5',
+                    (isLoading || isRefreshing) && 'animate-spin text-[#00897b] dark:text-[#00e5c9]'
+                  )}
+                />
+                <span className="hidden sm:inline">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+              </button>
             </div>
           </div>
 
@@ -589,6 +620,7 @@ export default function DashboardPage() {
             trend="up"
             icon={CalendarDays}
             accentColor="teal"
+            isLoading={isLoading}
             onClick={() => router.push('/events')}
           />
           <StatCard
@@ -599,6 +631,7 @@ export default function DashboardPage() {
             trend="up"
             icon={Clock}
             accentColor="purple"
+            isLoading={isLoading}
             onClick={() => router.push('/events')}
           />
           <StatCard
@@ -609,6 +642,7 @@ export default function DashboardPage() {
             trend="up"
             icon={TrendingUp}
             accentColor="emerald"
+            isLoading={isLoading}
             onClick={() => router.push('/events')}
           />
           <StatCard
@@ -619,6 +653,7 @@ export default function DashboardPage() {
             trend="neutral"
             icon={Users}
             accentColor="blue"
+            isLoading={isLoading}
             onClick={() => router.push('/staff')}
           />
           <StatCard
@@ -629,6 +664,7 @@ export default function DashboardPage() {
             trend="up"
             icon={Users}
             accentColor="purple"
+            isLoading={isLoading}
             onClick={() => router.push('/customers')}
           />
           <StatCard
@@ -639,6 +675,7 @@ export default function DashboardPage() {
             trend="down"
             icon={CreditCard}
             accentColor="amber"
+            isLoading={isLoading}
             onClick={() => router.push('/customer-payments')}
           />
           <StatCard
@@ -649,6 +686,7 @@ export default function DashboardPage() {
             trend="neutral"
             icon={WalletCards}
             accentColor="blue"
+            isLoading={isLoading}
             onClick={() => router.push('/staff-payments')}
           />
           <StatCard
@@ -659,6 +697,7 @@ export default function DashboardPage() {
             trend="up"
             icon={CircleDollarSign}
             accentColor="teal"
+            isLoading={isLoading}
             onClick={() => router.push('/reports')}
           />
         </div>
@@ -680,7 +719,11 @@ export default function DashboardPage() {
                 {periodBounds.label}
               </span>
             </div>
-            <ModernRevenueChart data={dynamicRevenueChartData} periodLabel={periodBounds.periodTitle} />
+            <ModernRevenueChart
+              data={dynamicRevenueChartData}
+              periodLabel={periodBounds.periodTitle}
+              isLoading={isLoading}
+            />
           </div>
 
           {/* Event Status Donut (1 col) */}
@@ -692,11 +735,15 @@ export default function DashboardPage() {
                 </h2>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">Distribution for {periodBounds.periodTitle}</p>
               </div>
-              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
-                {filteredEvents.length} Total
-              </span>
+              {isLoading ? (
+                <div className="h-3 w-12 bg-slate-200 dark:bg-[#1a283a] rounded animate-pulse" />
+              ) : (
+                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+                  {filteredEvents.length} Total
+                </span>
+              )}
             </div>
-            <EventStatusChart stats={statusStats} />
+            <EventStatusChart stats={statusStats} isLoading={isLoading} />
           </div>
         </div>
 
@@ -757,7 +804,30 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-[#182535]">
-                    {displayedUpcomingEvents.length === 0 ? (
+                    {isLoading ? (
+                      Array.from({ length: 5 }).map((_, idx) => (
+                        <tr key={idx} className="animate-pulse animate-shimmer">
+                          <td className="py-2.5 px-2">
+                            <div className="h-3.5 bg-slate-200 dark:bg-[#1a283a] rounded w-36" />
+                          </td>
+                          <td className="py-2.5 px-2">
+                            <div className="h-3.5 bg-slate-200 dark:bg-[#1a283a] rounded w-28" />
+                          </td>
+                          <td className="py-2.5 px-2">
+                            <div className="h-3.5 bg-slate-200 dark:bg-[#1a283a] rounded w-20" />
+                          </td>
+                          <td className="py-2.5 px-2">
+                            <div className="h-3.5 bg-slate-200 dark:bg-[#1a283a] rounded w-24" />
+                          </td>
+                          <td className="py-2.5 px-2 text-right">
+                            <div className="h-3.5 bg-slate-200 dark:bg-[#1a283a] rounded w-16 ml-auto" />
+                          </td>
+                          <td className="py-2.5 px-2">
+                            <div className="h-5 bg-slate-200 dark:bg-[#1a283a] rounded-full w-16 mx-auto" />
+                          </td>
+                        </tr>
+                      ))
+                    ) : displayedUpcomingEvents.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-400 text-xs">
                           No {tableFilter !== 'All' ? tableFilter.toLowerCase() : ''} productions found in {periodBounds.periodTitle.toLowerCase()}.
@@ -852,7 +922,23 @@ export default function DashboardPage() {
 
               {activityTab === 'payments' ? (
                 <div className="space-y-2">
-                  {filteredPayments.length === 0 ? (
+                  {isLoading ? (
+                    Array.from({ length: 4 }).map((_, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-[#0e1724] border border-slate-200 dark:border-[#1b293a] animate-pulse animate-shimmer"
+                      >
+                        <div className="space-y-1.5 flex-1">
+                          <div className="h-3 bg-slate-200 dark:bg-[#1a283a] rounded w-1/2" />
+                          <div className="h-2.5 bg-slate-200 dark:bg-[#1a283a] rounded w-1/3" />
+                        </div>
+                        <div className="space-y-1.5 w-16 text-right">
+                          <div className="h-3 bg-slate-200 dark:bg-[#1a283a] rounded w-full ml-auto" />
+                          <div className="h-2.5 bg-slate-200 dark:bg-[#1a283a] rounded w-10 ml-auto" />
+                        </div>
+                      </div>
+                    ))
+                  ) : filteredPayments.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-slate-300 dark:border-[#233549] p-4 text-center text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-[#0d1624]">
                       No payment receipts in {periodBounds.periodTitle.toLowerCase()}.
                     </div>
@@ -885,7 +971,7 @@ export default function DashboardPage() {
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2.5">
                     Equipment & talent distribution for {periodBounds.periodTitle}
                   </p>
-                  <ServiceDistributionChart data={serviceDistributionData} />
+                  <ServiceDistributionChart data={serviceDistributionData} isLoading={isLoading} />
                 </div>
               )}
             </div>
@@ -894,9 +980,13 @@ export default function DashboardPage() {
               <span className="text-[11px]">
                 {activityTab === 'payments' ? 'Total collected in period' : 'Based on period contracts'}
               </span>
-              <span className="text-[11px] font-mono text-slate-900 dark:text-white font-bold">
-                {activityTab === 'payments' ? formatCurrency(revenueInPeriod, true) : `${filteredEvents.length} Events`}
-              </span>
+              {isLoading ? (
+                <div className="h-3 w-16 bg-slate-200 dark:bg-[#1a283a] rounded animate-pulse" />
+              ) : (
+                <span className="text-[11px] font-mono text-slate-900 dark:text-white font-bold">
+                  {activityTab === 'payments' ? formatCurrency(revenueInPeriod, true) : `${filteredEvents.length} Events`}
+                </span>
+              )}
             </div>
           </div>
         </div>

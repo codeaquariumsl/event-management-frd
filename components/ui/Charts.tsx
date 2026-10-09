@@ -15,12 +15,14 @@ interface ModernRevenueChartProps {
   data?: RevenueDataPoint[];
   periodLabel?: string;
   className?: string;
+  isLoading?: boolean;
 }
 
 export function ModernRevenueChart({
   data = [],
   periodLabel = 'Selected Period',
   className,
+  isLoading = false,
 }: ModernRevenueChartProps) {
   const [viewMode, setViewMode] = useState<'area' | 'bar'>('area');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -117,6 +119,54 @@ export function ModernRevenueChart({
     const y = paddingY + graphHeight - ratio * graphHeight;
     return { val, y };
   });
+
+  if (isLoading) {
+    return (
+      <div className={cn('flex flex-col gap-3 animate-pulse animate-shimmer overflow-hidden', className)}>
+        {/* Metrics Banner Skeleton */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 rounded-xl bg-slate-50/80 dark:bg-[#0a111a]/80 border border-slate-200/80 dark:border-[#1a2738]">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col px-2 py-1 space-y-1.5">
+              <div className="h-2.5 w-16 bg-slate-200 dark:bg-[#1a283a] rounded" />
+              <div className="h-4 w-24 bg-slate-200 dark:bg-[#1a283a] rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Chart Canvas Skeleton */}
+        <div className="relative w-full h-44 sm:h-52 rounded-xl bg-slate-50/50 dark:bg-[#08101a]/50 border border-dashed border-slate-200 dark:border-[#1a2738] flex flex-col justify-end p-4 overflow-hidden">
+          {/* Subtle grid ticks */}
+          <div className="absolute inset-0 flex flex-col justify-between p-4 opacity-40">
+            <div className="border-b border-dashed border-slate-200 dark:border-[#182637] w-full" />
+            <div className="border-b border-dashed border-slate-200 dark:border-[#182637] w-full" />
+            <div className="border-b border-dashed border-slate-200 dark:border-[#182637] w-full" />
+          </div>
+
+          {/* Animated placeholder waveform/bars */}
+          <div className="relative z-10 flex items-end justify-between gap-2.5 sm:gap-4 h-28 w-full px-2">
+            {[35, 55, 40, 80, 60, 90, 45, 65].map((heightPct, idx) => (
+              <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                <div
+                  style={{ height: `${heightPct}%` }}
+                  className="w-full max-w-[28px] rounded-t-md bg-gradient-to-t from-slate-200 to-slate-100 dark:from-[#132337] dark:to-[#1a2f4a] opacity-75"
+                />
+                <div className="h-2 w-6 bg-slate-200 dark:bg-[#1a283a] rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Legend Footer Skeleton */}
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-3">
+            <div className="h-3 w-24 bg-slate-200 dark:bg-[#1a283a] rounded" />
+            <div className="h-3 w-32 bg-slate-200 dark:bg-[#1a283a] rounded" />
+          </div>
+          <div className="h-3 w-28 bg-slate-200 dark:bg-[#1a283a] rounded" />
+        </div>
+      </div>
+    );
+  }
 
   const activePoint = hoveredIndex !== null && points[hoveredIndex] ? points[hoveredIndex] : null;
 
@@ -525,9 +575,48 @@ interface EventStatusChartProps {
     inProgress: number;
     cancelled: number;
   };
+  isLoading?: boolean;
 }
 
-export function EventStatusChart({ stats }: EventStatusChartProps) {
+export function EventStatusChart({ stats, isLoading = false }: EventStatusChartProps) {
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full justify-between gap-3.5 py-0.5 animate-pulse animate-shimmer overflow-hidden">
+        {/* Donut Chart Skeleton */}
+        <div className="flex items-center justify-center py-2">
+          <div className="relative flex items-center justify-center">
+            <div className="h-28 w-28 rounded-full border-4 border-slate-200 dark:border-[#172537] bg-slate-100 dark:bg-[#0c1624]" />
+            <div className="absolute h-18 w-18 rounded-full bg-white dark:bg-[#0c1420] flex flex-col items-center justify-center border border-slate-200 dark:border-[#1d2b3c] space-y-1">
+              <div className="h-4 w-6 bg-slate-200 dark:bg-[#1a283a] rounded" />
+              <div className="h-2 w-8 bg-slate-200 dark:bg-[#1a283a] rounded" />
+            </div>
+          </div>
+        </div>
+
+        {/* Status List Skeleton */}
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between p-1.5 rounded-lg border border-slate-200/60 dark:border-[#182638] bg-slate-50/60 dark:bg-[#0e1724]"
+            >
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-slate-300 dark:bg-[#1d2d42]" />
+                <div className="h-3 w-16 bg-slate-200 dark:bg-[#1a283a] rounded" />
+              </div>
+              <div className="h-3 w-10 bg-slate-200 dark:bg-[#1a283a] rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom indicator skeleton */}
+        <div className="pt-2 border-t border-slate-100 dark:border-[#1a2738]">
+          <div className="h-7 w-full rounded-lg bg-slate-100 dark:bg-[#0e1724] border border-slate-200 dark:border-[#1a2738]" />
+        </div>
+      </div>
+    );
+  }
+
   const data = stats || {
     confirmed: 0,
     pending: 0,
@@ -676,10 +765,32 @@ export interface ServiceDistributionItem {
 
 interface ServiceDistributionChartProps {
   data?: ServiceDistributionItem[];
+  isLoading?: boolean;
 }
 
-export function ServiceDistributionChart({ data }: ServiceDistributionChartProps) {
+export function ServiceDistributionChart({ data, isLoading = false }: ServiceDistributionChartProps) {
   const defaultColors = ['bg-[#00e5c9]', 'bg-[#7c5cff]', 'bg-[#ffb703]', 'bg-[#3b82f6]', 'bg-[#ec4899]', 'bg-[#10b981]'];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3 text-xs animate-pulse animate-shimmer overflow-hidden">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div key={idx} className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <div className="h-2.5 w-24 bg-slate-200 dark:bg-[#1a283a] rounded" />
+              <div className="h-2.5 w-10 bg-slate-200 dark:bg-[#1a283a] rounded" />
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-[#162130] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-slate-300 dark:bg-[#1f3044]"
+                style={{ width: `${80 - idx * 18}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (!data || data.length === 0) {
     return (

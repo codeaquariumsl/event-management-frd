@@ -13,6 +13,7 @@ interface StatCardProps {
   className?: string;
   compact?: boolean;
   onClick?: () => void;
+  isLoading?: boolean;
 }
 
 export function StatCard({
@@ -26,6 +27,7 @@ export function StatCard({
   className,
   compact = false,
   onClick,
+  isLoading = false,
 }: StatCardProps) {
   const accentStyles = {
     teal: 'text-[#00e5c9] bg-[#00e5c9]/10 border-[#00e5c9]/25 group-hover:border-[#00e5c9]/50',
@@ -34,6 +36,41 @@ export function StatCard({
     emerald: 'text-[#34d399] bg-[#10b981]/10 border-[#10b981]/25 group-hover:border-[#10b981]/50',
     blue: 'text-[#60a5fa] bg-[#3b82f6]/10 border-[#3b82f6]/25 group-hover:border-[#3b82f6]/50',
   };
+
+  if (isLoading) {
+    if (compact) {
+      return (
+        <div
+          className={cn(
+            'relative rounded-xl bg-white dark:bg-[#0e1622] border border-slate-200 dark:border-[#1d2b3c] p-2.5 sm:px-3 sm:py-2.5 shadow-sm flex items-center gap-2.5 min-w-0 animate-pulse animate-shimmer overflow-hidden',
+            className
+          )}
+        >
+          <div className="rounded-lg h-8 w-8 bg-slate-200 dark:bg-[#1a293d] shrink-0" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="h-2.5 w-16 bg-slate-200 dark:bg-[#1a293d] rounded" />
+            <div className="h-4 w-20 bg-slate-200 dark:bg-[#1a293d] rounded" />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={cn(
+          'relative rounded-xl bg-white dark:bg-[#0e1622] border border-slate-200 dark:border-[#1d2b3c] p-5 shadow-sm animate-pulse animate-shimmer overflow-hidden space-y-4',
+          className
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="h-3 w-24 bg-slate-200 dark:bg-[#1a293d] rounded" />
+          <div className="h-9 w-9 bg-slate-200 dark:bg-[#1a293d] rounded-lg" />
+        </div>
+        <div className="h-7 w-32 bg-slate-200 dark:bg-[#1a293d] rounded" />
+        <div className="h-3 w-20 bg-slate-200 dark:bg-[#1a293d] rounded" />
+      </div>
+    );
+  }
 
   if (compact) {
     return (
